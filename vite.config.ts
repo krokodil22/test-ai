@@ -11,7 +11,10 @@ export default defineConfig(({ mode, command }) => {
   const localDevelopment = command === 'serve' && external?.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(external.hostname);
   if (external && external.protocol !== 'https:' && !localDevelopment) throw new Error('VITE_MODEL_BASE_URL must use HTTPS');
   const remote = external?.origin || '';
-  const csp = `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self' ${remote}; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'`;
+  const translatorResource = env.VITE_TRANSLATOR_BASE_URL;
+  const translatorExternal = translatorResource && /^[a-z]+:/i.test(translatorResource) ? new URL(translatorResource) : undefined;
+  if (translatorExternal && translatorExternal.protocol !== 'https:' && !(command === 'serve' && translatorExternal.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(translatorExternal.hostname))) throw Error('VITE_TRANSLATOR_BASE_URL must use HTTPS');
+  const csp = `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self' ${remote} ${translatorExternal?.origin || ''}; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'`;
   return {
     base: env.VITE_BASE_PATH || './',
     define: { __COMPARISON_TEST_ENGINE__: JSON.stringify(process.env.E2E_MOCK === '1') },
@@ -20,6 +23,7 @@ export default defineConfig(({ mode, command }) => {
     resolve: {
       alias: {
         '#gpu': fileURLToPath(new URL(process.env.E2E_MOCK === '1' ? './tests/fixtures/gpu.ts' : './src/gpu.ts', import.meta.url)),
+        '#translator-backend': fileURLToPath(new URL(process.env.E2E_MOCK === '1' ? './tests/fixtures/translator.ts' : './src/translator.ts', import.meta.url)),
         ...(process.env.E2E_MOCK === '1' ? { '@mlc-ai/web-llm': fileURLToPath(new URL('./tests/fixtures/webllm.ts', import.meta.url)) } : {}),
       },
     },
@@ -35,7 +39,7 @@ export default defineConfig(({ mode, command }) => {
         await copyPublicAssets(resolve('public'), resolve(options.dir!), source.directory);
       },
     }],
-    build: { target: 'es2022', chunkSizeWarningLimit: 6500, rollupOptions: { input: { main: resolve('index.html'), compare: resolve('compare.html') } } },
+    build: { target: 'es2022', chunkSizeWarningLimit: 6500, rollupOptions: { input: { main: resolve('index.html'), compare: resolve('compare.html'), translate: resolve('translate.html') } } },
     test: { include: ['tests/unit/**/*.test.{ts,mjs}'] },
   };
 });

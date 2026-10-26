@@ -3,7 +3,7 @@ import { tokenUpperBound } from './context';
 import type { PromptMessage } from './types';
 
 export const COMPARISON_STAGES = ['direct', 'translate-input', 'english-answer', 'translate-output'] as const;
-export const TRANSLATION_PROTOCOL = 'explicit-task-v2';
+export const TRANSLATION_PROTOCOL = 'qwen-ru-en-opus-en-ru-v1';
 // Translation should retain repeated names and terms. In WebLLM 0.2.79 the
 // explicit zero additive penalties bypass the model's repetition penalty.
 export const TRANSLATION_OPTIONS = { temperature: 0, top_p: 1, frequency_penalty: 0, presence_penalty: 0 } as const;
@@ -22,6 +22,7 @@ export const COMPARISON_EXAMPLES = [
 
 export interface StageRequest {
   stage: ComparisonStage;
+  sourceText: string;
   messages: PromptMessage[];
   maxTokens: number;
   temperature: number;
@@ -96,7 +97,7 @@ export async function compareAnswers(prompt: string, run: StageRunner, onUpdate:
     const messages: PromptMessage[] = translation ? translationMessages(name, system, text) : [{ role: 'system', content: system }, { role: 'user', content: text }];
     checkContext(messages, maxTokens);
     onUpdate({ phase: 'start', stage: name });
-    const result = await run({ stage: name, messages, maxTokens, temperature: translation ? TRANSLATION_OPTIONS.temperature : GENERATION_OPTIONS.temperature, topP: translation ? TRANSLATION_OPTIONS.top_p : GENERATION_OPTIONS.top_p, seed, ...(translation ? { frequencyPenalty: TRANSLATION_OPTIONS.frequency_penalty, presencePenalty: TRANSLATION_OPTIONS.presence_penalty } : {}) });
+    const result = await run({ stage: name, sourceText: text, messages, maxTokens, temperature: translation ? TRANSLATION_OPTIONS.temperature : GENERATION_OPTIONS.temperature, topP: translation ? TRANSLATION_OPTIONS.top_p : GENERATION_OPTIONS.top_p, seed, ...(translation ? { frequencyPenalty: TRANSLATION_OPTIONS.frequency_penalty, presencePenalty: TRANSLATION_OPTIONS.presence_penalty } : {}) });
     if (isStopped()) throw new ComparisonStopped();
     if (!result.text.trim()) throw new ComparisonInputError(`Этап «${STAGE_LABELS[name]}» вернул пустой текст.`);
     if (translation && result.finish !== 'length') checkTranslationShape(text, result.text);

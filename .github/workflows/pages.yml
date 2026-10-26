@@ -17,11 +17,13 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm test
       - name: Download verified WebLLM resources (not committed to Git)
         run: npm run model:download
       - run: npm run model:download -- --verify
+      - run: npm run translator:download
+      - run: npm run translator:download -- --verify
       - name: Build for the repository path
         run: npm run build
         env:

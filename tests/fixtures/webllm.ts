@@ -30,16 +30,17 @@ export class MLCEngine {
     const system = request.messages[0].content;
     const translation = system.startsWith('Translate the user message');
     const prompt = translation ? rawPrompt.match(/<source_text>\n([\s\S]*)\n<\/source_text>/)?.[1] || '' : rawPrompt;
+    const slow = prompt.includes('[slow-opus]') || prompt.includes('SLOW_OPUS') ? ' SLOW_OPUS' : prompt.includes('[slow]') || prompt.includes('SLOW') ? ' SLOW' : '';
     if (translation && (request.messages.length !== 4 || request.temperature !== 0 || request.frequency_penalty !== 0 || request.presence_penalty !== 0)) throw new Error('Translation settings or task framing were lost');
     if (prompt.includes('[oom]')) throw new Error('GPU out of memory');
     if (prompt.includes('[lost]')) throw new Error('GPU device lost');
     this.locked = true;
     let text = '**Здравствуйте!** Это тестовый ответ.\n\n```javascript\nconst message = "Привет";\nconsole.log(message);\n```\n\n' + 'Текст появляется постепенно. '.repeat(3);
-    if (system.startsWith('Translate the user message from Russian to English.')) text = prompt.includes('[translation-empty]') ? '' : 'TEST_ENGLISH_QUESTION: Write a short story.' + (prompt.includes('[slow]') ? ' SLOW' : '');
+    if (system.startsWith('Translate the user message from Russian to English.')) text = prompt.includes('[translation-empty]') ? '' : 'TEST_ENGLISH_QUESTION: Write a short story.' + slow;
     if (translation && prompt.includes('[translation-drift]')) text = 'Once upon a time there was an animal. '.repeat(8);
     if (system.startsWith('You are') && system.includes('Respond in fluent English')) {
       if (!prompt.startsWith('TEST_ENGLISH_QUESTION')) throw new Error('English stage received wrong input');
-      text = 'TEST_ENGLISH_ANSWER: A test pig learned to swim with help.' + (prompt.includes('SLOW') ? ' SLOW' : '');
+      text = 'TEST_ENGLISH_ANSWER: A test pig learned to swim with help.' + slow;
     }
     if (system.startsWith('Translate the user message from English into natural Russian.')) {
       if (!prompt.startsWith('TEST_ENGLISH_ANSWER')) throw new Error('Final translation received wrong source');

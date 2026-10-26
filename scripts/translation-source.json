@@ -1,0 +1,58 @@
+{
+  "modelId": "Xenova/opus-mt-en-ru",
+  "repository": "Xenova/opus-mt-en-ru",
+  "revision": "e050376e960175e8ddc5cff85025dc8436cddd68",
+  "license": "Apache-2.0",
+  "directory": "opus-mt-en-ru",
+  "downloadBytes": 83699926,
+  "transformers": "3.8.1",
+  "runtime": {
+    "path": "runtime.wasm",
+    "bytes": 21596019,
+    "sha256": "c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39"
+  },
+  "files": [
+    {
+      "path": "config.json",
+      "bytes": 1376,
+      "sha256": "db16bf0ea7bac239273214c3b9ab44577884227371a9a25e0191b7baf8d6f167",
+      "upstreamHash": "cbee9bc43dcbf54f4fbfa95133cb6337f74ccafc"
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 293,
+      "sha256": "885345001ac4f978b5e295a04eb6bd6c346ebc7381e30d5b3dd927b178d8a5ef",
+      "upstreamHash": "40ef46c574097d9a2dd14ba2e63ae537674d864d"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 7205388,
+      "sha256": "981cd3d9fef6bb4dda8082afda716b65deb6717cb3ef35ac0b57002c09dec2bb",
+      "upstreamHash": "3b14111caaaf9af454726e1677c64b26339ad521"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 280,
+      "sha256": "cafb5494f14bc8d395cc02ddaeeb0f8d85b0d9e20fd48371b5edc104cc2020ba",
+      "upstreamHash": "1ab2429ac7dc477fb709fcd1965f732d11bbc777"
+    },
+    {
+      "path": "special_tokens_map.json",
+      "bytes": 74,
+      "sha256": "5e4d1f5e759d74cb1c2fe1d165cfc62b5237aa904de759380cd6f43042eec723",
+      "upstreamHash": "79ae7ea5bf033de69d0055820c57885e3d377bbb"
+    },
+    {
+      "path": "onnx/encoder_model_quantized.onnx",
+      "bytes": 51628446,
+      "sha256": "97f28d8295d231b7da721ded06fa8c034787df2122cd8f85b904abdc4d15bd53",
+      "upstreamHash": "97f28d8295d231b7da721ded06fa8c034787df2122cd8f85b904abdc4d15bd53"
+    },
+    {
+      "path": "onnx/decoder_model_merged_quantized.onnx",
+      "bytes": 58931576,
+      "sha256": "7efefcd793a5663bc204224a92a123524f3dfe2ffad59e5f73d6734d1b11ad04",
+      "upstreamHash": "7efefcd793a5663bc204224a92a123524f3dfe2ffad59e5f73d6734d1b11ad04"
+    }
+  ]
+}

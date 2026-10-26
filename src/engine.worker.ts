@@ -7,11 +7,13 @@ import { buildContext } from './context';
 import { explainError } from './errors';
 import { compareAnswers, ComparisonStopped, ComparisonInputError } from './comparison';
 import type { StageRequest } from './comparison';
+import { TranslatorClient } from './translator-client';
 import type { WorkerEvent, WorkerRequest } from './types';
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 const send = (event: WorkerEvent) => scope.postMessage(event);
 let engine: MLCEngine | undefined;
+let translator: TranslatorClient | undefined;
 let active: string | undefined;
 let stopped = false;
 let loading = false;
@@ -21,6 +23,18 @@ const nativeFetch = globalThis.fetch.bind(globalThis);
 
 async function comparisonStage(request: StageRequest) {
   const start = performance.now();
+  if (request.stage === 'translate-output') {
+    if (!translator) throw new ComparisonInputError('Для обратного перевода нужен локальный OPUS-MT. Откройте обновлённую страницу эксперимента.');
+    try {
+      const text = await translator.translate(request.sourceText, (done, total) => send({ type: 'comparison-progress', id: active!, done, total }));
+      if (stopped || fatal) throw new ComparisonStopped();
+      return { text, finish: 'complete' as const, seconds: (performance.now() - start) / 1000 };
+    } catch (error) {
+      if (stopped || fatal) throw new ComparisonStopped();
+      if (error instanceof Error && /Слишком длинное предложение|достиг лимита|пустое предложение/.test(error.message)) throw new ComparisonInputError(error.message);
+      throw error;
+    }
+  }
   await engine!.resetChat();
   if (stopped || fatal) throw new ComparisonStopped();
   const stream = await engine!.chat.completions.create({ messages: request.messages, stream: true, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed, ...(request.frequencyPenalty !== undefined ? { frequency_penalty: request.frequencyPenalty, presence_penalty: request.presencePenalty } : {}) });
@@ -40,7 +54,7 @@ async function comparisonStage(request: StageRequest) {
   return { text, finish, seconds: (performance.now() - start) / 1000 };
 }
 
-async function init(base: string) {
+async function init(base: string, translatorBase?: string) {
   if (engine || loading) return;
   loading = true;
   try {
@@ -92,20 +106,25 @@ async function init(base: string) {
           overrides: MODEL_CHAT_OPTIONS,
         }],
       },
-      initProgressCallback: report => send({ type: 'progress', progress: report.progress, text: report.text }),
+      initProgressCallback: report => send({ type: 'progress', progress: report.progress * (translatorBase ? 0.8 : 1), text: report.text }),
     });
     await engine.reload(MODEL_ID);
+    if (translatorBase && !fatal) {
+      translator = new TranslatorClient((value, text) => send({ type: 'progress', progress: 0.8 + value * 0.2, text }));
+      await translator.init(translatorBase);
+    }
     if (!fatal) send({ type: 'ready' });
   } catch (error) {
+    translator?.terminate();
     fatal = true;
     send({ type: 'error', message: explainError(error), fatal: true });
   } finally { loading = false; }
 }
 
 scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
-  if (data.type === 'init') { await init(data.base); return; }
+  if (data.type === 'init') { await init(data.base, data.translatorBase); return; }
   if (data.type === 'stop') {
-    if (active === data.id) { stopped = true; void engine?.interruptGenerate(); }
+    if (active === data.id) { stopped = true; void engine?.interruptGenerate(); translator?.stop(); }
     return;
   }
   if (data.type !== 'generate' && data.type !== 'compare') return;

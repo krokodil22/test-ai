@@ -13,9 +13,11 @@
     "model:download": "node scripts/download-model.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test && playwright test --config playwright.cors.config.ts",
-    "test:gpu": "playwright test --config playwright.gpu.config.ts"
+    "test:gpu": "playwright test --config playwright.gpu.config.ts",
+    "translator:download": "node scripts/download-translator.mjs"
   },
   "dependencies": {
+    "@huggingface/transformers": "3.8.1",
     "@mlc-ai/web-llm": "0.2.79",
     "dompurify": "3.4.17",
     "highlight.js": "11.11.1",

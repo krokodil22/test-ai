@@ -43,9 +43,10 @@ test('compares through the real worker protocol, exports labeled test results, p
   const file = await downloadPromise;
   const report = JSON.parse(await readFile((await file.path())!, 'utf8'));
   expect(report.testing).toBe(true);
-  expect(report.settings.translation.protocol).toBe('explicit-task-v2');
-  expect(report.settings.translation.temperature).toBe(0);
-  expect(report.settings.translation.effectiveRepetitionPenalty).toBe(1);
+  expect(report.settings.translation.protocol).toBe('qwen-ru-en-opus-en-ru-v1');
+  expect(report.settings.translation.output.modelId).toBe('Xenova/opus-mt-en-ru');
+  expect(report.settings.translation.input.temperature).toBe(0);
+  expect(report.settings.translation.input.effectiveRepetitionPenalty).toBe(1);
   expect(report.reports[0].result.stages).toHaveLength(4);
   expect(report.reports[0].result.prompt).toBe('Личный тест СЕКРЕТ-963');
   expect(await page.evaluate(() => localStorage.getItem('ryadom:chats:v1'))).toBe('{"existing":"history"}');
@@ -86,6 +87,22 @@ test('reports an empty translation as incomplete and allows retry', async ({ pag
   await expect(page.locator('#comparison-run')).toBeEnabled();
 });
 
+test('stops the separate CPU worker during the final translation and can compare again', async ({ page }) => {
+  await page.goto('compare.html');
+  await expect(page.locator('#comparison-load')).toBeEnabled();
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled();
+  await page.locator('#comparison-prompt').fill('Вопрос [slow-opus]');
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#step-translate-output')).toHaveAttribute('data-state', 'running');
+  await page.locator('#comparison-stop').click();
+  await expect(page.locator('#comparison-stop')).toBeHidden();
+  await expect(page.locator('#comparison-export')).toBeDisabled();
+  await page.locator('#comparison-prompt').fill('Ещё вопрос');
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-export')).toBeEnabled();
+});
+
 test('does not continue when the input translator invents a story', async ({ page }) => {
   await page.goto('compare.html');
   await expect(page.locator('#comparison-load')).toBeEnabled();
@@ -113,7 +130,7 @@ test('opens from chat settings in the same tab, reuses its cache and fits a narr
   await page.locator('#comparison-open').click();
   await expect(page).toHaveURL(/\/test-ai\/compare\.html$/);
   await expect(page.locator('h1')).toContainText('Помогает ли перевод');
-  await expect(page.locator('#comparison-load')).toHaveText('Запустить из кеша');
+  await expect(page.locator('#comparison-load')).toContainText('из кеша');
   await page.locator('#comparison-load').click();
   await expect(page.locator('#comparison-run')).toBeEnabled();
   expect(modelRequests).toBe(loadedRequests);

@@ -1,6 +1,7 @@
 node_modules/
 dist/
 public/models/
+public/translations/
 .env.local
 .env.*.local
 test-results/
