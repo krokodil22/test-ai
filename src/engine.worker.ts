@@ -5,6 +5,8 @@ import { MODEL_ID, MODEL_CHAT_OPTIONS, MAX_REPLY_TOKENS, GENERATION_OPTIONS } fr
 import { loadModelInfo, removeLegacyModelCache } from './cache';
 import { buildContext } from './context';
 import { explainError } from './errors';
+import { compareAnswers, ComparisonStopped, ComparisonInputError } from './comparison';
+import type { StageRequest } from './comparison';
 import type { WorkerEvent, WorkerRequest } from './types';
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
@@ -16,6 +18,27 @@ let loading = false;
 let fatal = false;
 let resourceHashes = new Map<string, string>();
 const nativeFetch = globalThis.fetch.bind(globalThis);
+
+async function comparisonStage(request: StageRequest) {
+  const start = performance.now();
+  await engine!.resetChat();
+  if (stopped || fatal) throw new ComparisonStopped();
+  const stream = await engine!.chat.completions.create({ messages: request.messages, stream: true, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed });
+  let text = '';
+  let finish: 'complete' | 'length' = 'complete';
+  for await (const chunk of stream) {
+    if (fatal) break;
+    if (stopped) { void engine!.interruptGenerate(); continue; }
+    const choice = chunk.choices[0];
+    if (choice?.delta.content) {
+      text += choice.delta.content;
+      send({ type: 'comparison-token', id: active!, stage: request.stage, text: choice.delta.content });
+    }
+    if (choice?.finish_reason === 'length') finish = 'length';
+  }
+  if (stopped || fatal) throw new ComparisonStopped();
+  return { text, finish, seconds: (performance.now() - start) / 1000 };
+}
 
 async function init(base: string) {
   if (engine || loading) return;
@@ -85,13 +108,30 @@ scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
     if (active === data.id) { stopped = true; void engine?.interruptGenerate(); }
     return;
   }
-  if (data.type !== 'generate') return;
+  if (data.type !== 'generate' && data.type !== 'compare') return;
   if (active || loading || !engine || fatal) {
     send({ type: 'error', id: data.id, message: 'Модель занята или не запущена.', fatal: false });
     return;
   }
   active = data.id;
   stopped = false;
+  if (data.type === 'compare') {
+    try {
+      const result = await compareAnswers(data.prompt, comparisonStage, update => {
+        if (update.phase === 'start') send({ type: 'comparison-stage', id: data.id, stage: update.stage });
+        else send({ type: 'comparison-result', id: data.id, result: update.result });
+      }, () => stopped || fatal);
+      send({ type: 'comparison-done', id: data.id, result, stopped: false });
+    } catch (error) {
+      if (error instanceof ComparisonStopped) { if (!fatal) send({ type: 'comparison-done', id: data.id, stopped: true }); }
+      else {
+        const recoverable = error instanceof ComparisonInputError;
+        fatal = !recoverable;
+        send({ type: 'error', id: data.id, message: recoverable ? error.message : explainError(error), fatal });
+      }
+    } finally { active = undefined; }
+    return;
+  }
   try {
     const context = buildContext(data.messages);
     send({ type: 'context', id: active, dropped: context.dropped });

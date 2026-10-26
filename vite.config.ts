@@ -14,6 +14,7 @@ export default defineConfig(({ mode, command }) => {
   const csp = `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self' ${remote}; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'`;
   return {
     base: env.VITE_BASE_PATH || './',
+    define: { __COMPARISON_TEST_ENGINE__: JSON.stringify(process.env.E2E_MOCK === '1') },
     publicDir: command === 'build' ? false : 'public',
     worker: { format: 'es' },
     resolve: {
@@ -34,7 +35,7 @@ export default defineConfig(({ mode, command }) => {
         await copyPublicAssets(resolve('public'), resolve(options.dir!), source.directory);
       },
     }],
-    build: { target: 'es2022', chunkSizeWarningLimit: 6500 },
+    build: { target: 'es2022', chunkSizeWarningLimit: 6500, rollupOptions: { input: { main: resolve('index.html'), compare: resolve('compare.html') } } },
     test: { include: ['tests/unit/**/*.test.{ts,mjs}'] },
   };
 });

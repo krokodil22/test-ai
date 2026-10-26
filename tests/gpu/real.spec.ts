@@ -10,8 +10,30 @@ test('identical production files work in the domain root and repository subpath'
     await page.locator('#settings-open').click();
     await expect(page.locator('#resource-location')).toHaveText(`http://127.0.0.1:4173${path}models/qwen2.5-1.5b/`);
     await page.locator('#settings-close').click();
+    await page.goto(path + 'compare.html');
+    await expect(page.locator('h1')).toContainText('Помогает ли перевод');
+    await expect(page.locator('#model-status')).not.toContainText('Проверяем');
+    await expect(page.locator('#comparison-test-engine')).toHaveCount(0);
   }
   expect(failures).toEqual([]);
+});
+test('REAL MODEL: exports a direct versus English-bridge experiment for human review', async ({ page }) => {
+  test.skip(!existsSync('dist/models/qwen2.5-1.5b/model-info.json'), 'Verified model resources are not built.');
+  await page.goto('/compare.html');
+  await expect(page.locator('#model-status')).not.toContainText('Проверяем');
+  test.skip(await page.locator('#comparison-load').isDisabled(), 'A compatible WebGPU adapter with shader-f16 is unavailable.');
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled({ timeout: 600000 });
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-stop')).toBeVisible();
+  await expect(page.locator('#comparison-stop')).toBeHidden({ timeout: 600000 });
+  await expect(page.locator('#comparison-export')).toBeEnabled();
+  const download = page.waitForEvent('download');
+  await page.locator('#comparison-export').click();
+  const file = await download;
+  await test.info().attach('real-model-comparison', { path: (await file.path())!, contentType: 'application/json' });
+  // This produces real outputs and timings; there is no automatic claim that
+  // either story is better. Read the artifact to assess translation fidelity.
 });
 test('production page checks real WebGPU before making model requests', async ({ page }) => {
   const modelRequests: string[] = [];

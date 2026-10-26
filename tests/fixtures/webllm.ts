@@ -27,14 +27,24 @@ export class MLCEngine {
   async interruptGenerate() { this.interrupted = true; }
   chat = { completions: { create: async (request: { messages: Array<{ content: string }> }) => {
     const prompt = request.messages.at(-1)!.content;
+    const system = request.messages[0].content;
     if (prompt.includes('[oom]')) throw new Error('GPU out of memory');
     if (prompt.includes('[lost]')) throw new Error('GPU device lost');
     this.locked = true;
-    const text = '**Здравствуйте!** Это тестовый ответ.\n\n```javascript\nconst message = "Привет";\nconsole.log(message);\n```\n\n' + 'Текст появляется постепенно. '.repeat(3);
+    let text = '**Здравствуйте!** Это тестовый ответ.\n\n```javascript\nconst message = "Привет";\nconsole.log(message);\n```\n\n' + 'Текст появляется постепенно. '.repeat(3);
+    if (system.startsWith('Translate the user message from Russian to English.')) text = prompt.includes('[translation-empty]') ? '' : 'TEST_ENGLISH_QUESTION: Write a short story.' + (prompt.includes('[slow]') ? ' SLOW' : '');
+    if (system.startsWith('You are') && system.includes('Respond in fluent English')) {
+      if (!prompt.startsWith('TEST_ENGLISH_QUESTION')) throw new Error('English stage received wrong input');
+      text = 'TEST_ENGLISH_ANSWER: A test pig learned to swim with help.' + (prompt.includes('SLOW') ? ' SLOW' : '');
+    }
+    if (system.startsWith('Translate the user message from English into natural Russian.')) {
+      if (!prompt.startsWith('TEST_ENGLISH_ANSWER')) throw new Error('Final translation received wrong source');
+      text = 'Тестовый русский перевод английского ответа.';
+    }
     const engine = this;
     return (async function* () {
       for (let i = 0; i < text.length; i += 5) {
-        await new Promise(resolve => setTimeout(resolve, 15));
+        await new Promise(resolve => setTimeout(resolve, prompt.includes('[slow]') || prompt.includes('SLOW') ? 50 : 15));
         if (engine.interrupted) break;
         yield { choices: [{ delta: { content: text.slice(i, i + 5) } }] };
       }
