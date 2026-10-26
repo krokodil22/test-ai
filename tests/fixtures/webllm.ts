@@ -25,14 +25,18 @@ export class MLCEngine {
   }
   async resetChat() { if (this.locked) throw new Error('Model stream lock was not released'); this.interrupted = false; }
   async interruptGenerate() { this.interrupted = true; }
-  chat = { completions: { create: async (request: { messages: Array<{ content: string }> }) => {
-    const prompt = request.messages.at(-1)!.content;
+  chat = { completions: { create: async (request: { messages: Array<{ content: string }>; temperature?: number; frequency_penalty?: number; presence_penalty?: number }) => {
+    const rawPrompt = request.messages.at(-1)!.content;
     const system = request.messages[0].content;
+    const translation = system.startsWith('Translate the user message');
+    const prompt = translation ? rawPrompt.match(/<source_text>\n([\s\S]*)\n<\/source_text>/)?.[1] || '' : rawPrompt;
+    if (translation && (request.messages.length !== 4 || request.temperature !== 0 || request.frequency_penalty !== 0 || request.presence_penalty !== 0)) throw new Error('Translation settings or task framing were lost');
     if (prompt.includes('[oom]')) throw new Error('GPU out of memory');
     if (prompt.includes('[lost]')) throw new Error('GPU device lost');
     this.locked = true;
     let text = '**Здравствуйте!** Это тестовый ответ.\n\n```javascript\nconst message = "Привет";\nconsole.log(message);\n```\n\n' + 'Текст появляется постепенно. '.repeat(3);
     if (system.startsWith('Translate the user message from Russian to English.')) text = prompt.includes('[translation-empty]') ? '' : 'TEST_ENGLISH_QUESTION: Write a short story.' + (prompt.includes('[slow]') ? ' SLOW' : '');
+    if (translation && prompt.includes('[translation-drift]')) text = 'Once upon a time there was an animal. '.repeat(8);
     if (system.startsWith('You are') && system.includes('Respond in fluent English')) {
       if (!prompt.startsWith('TEST_ENGLISH_QUESTION')) throw new Error('English stage received wrong input');
       text = 'TEST_ENGLISH_ANSWER: A test pig learned to swim with help.' + (prompt.includes('SLOW') ? ' SLOW' : '');

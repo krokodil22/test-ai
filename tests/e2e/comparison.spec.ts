@@ -43,6 +43,9 @@ test('compares through the real worker protocol, exports labeled test results, p
   const file = await downloadPromise;
   const report = JSON.parse(await readFile((await file.path())!, 'utf8'));
   expect(report.testing).toBe(true);
+  expect(report.settings.translation.protocol).toBe('explicit-task-v2');
+  expect(report.settings.translation.temperature).toBe(0);
+  expect(report.settings.translation.effectiveRepetitionPenalty).toBe(1);
   expect(report.reports[0].result.stages).toHaveLength(4);
   expect(report.reports[0].result.prompt).toBe('Личный тест СЕКРЕТ-963');
   expect(await page.evaluate(() => localStorage.getItem('ryadom:chats:v1'))).toBe('{"existing":"history"}');
@@ -78,6 +81,19 @@ test('reports an empty translation as incomplete and allows retry', async ({ pag
   await page.locator('#comparison-prompt').fill('Вопрос [translation-empty]');
   await page.locator('#comparison-run').click();
   await expect(page.locator('#comparison-notice')).toContainText('пустой текст');
+  await expect(page.locator('#comparison-export')).toBeDisabled();
+  await expect(page.locator('#step-english-answer')).toHaveAttribute('data-state', 'pending');
+  await expect(page.locator('#comparison-run')).toBeEnabled();
+});
+
+test('does not continue when the input translator invents a story', async ({ page }) => {
+  await page.goto('compare.html');
+  await expect(page.locator('#comparison-load')).toBeEnabled();
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled();
+  await page.locator('#comparison-prompt').fill('Придумай рассказ [translation-drift]');
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-notice')).toContainText('Длина перевода');
   await expect(page.locator('#comparison-export')).toBeDisabled();
   await expect(page.locator('#step-english-answer')).toHaveAttribute('data-state', 'pending');
   await expect(page.locator('#comparison-run')).toBeEnabled();

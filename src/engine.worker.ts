@@ -23,7 +23,7 @@ async function comparisonStage(request: StageRequest) {
   const start = performance.now();
   await engine!.resetChat();
   if (stopped || fatal) throw new ComparisonStopped();
-  const stream = await engine!.chat.completions.create({ messages: request.messages, stream: true, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed });
+  const stream = await engine!.chat.completions.create({ messages: request.messages, stream: true, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed, ...(request.frequencyPenalty !== undefined ? { frequency_penalty: request.frequencyPenalty, presence_penalty: request.presencePenalty } : {}) });
   let text = '';
   let finish: 'complete' | 'length' = 'complete';
   for await (const chunk of stream) {

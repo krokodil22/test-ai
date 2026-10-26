@@ -1,7 +1,7 @@
 import './style.css';
 import './compare.css';
 import { BOT_NAME, MODEL_NAME, MODEL_ID, MODEL_REVISION, MODEL_ESTIMATE, MAX_INPUT_CHARS, MAX_REPLY_TOKENS, MODEL_CHAT_OPTIONS, GENERATION_OPTIONS, resourceBase } from './config';
-import { COMPARISON_EXAMPLES, COMPARISON_STAGES, STAGE_LABELS } from './comparison';
+import { COMPARISON_EXAMPLES, COMPARISON_STAGES, STAGE_LABELS, TRANSLATION_PROTOCOL, TRANSLATION_OPTIONS } from './comparison';
 import type { ComparisonResult, ComparisonStage, StageResult } from './comparison';
 import { isModelCached } from './cache';
 import { probeGpu } from '#gpu';
@@ -20,7 +20,7 @@ document.querySelector('#comparison-app')!.innerHTML = `
   <ol class="compare-steps">${COMPARISON_STAGES.map((stage, i) => `<li id="step-${stage}" data-state="pending"><span>${i + 1}</span><div><strong>${STAGE_LABELS[stage]}</strong><small id="status-${stage}">Ожидает запуска</small></div></li>`).join('')}</ol>
   <div class="compare-results"><article><div class="compare-result-head"><h2>Напрямую на русском</h2><span id="direct-time">—</span></div><div id="result-direct" class="compare-output">Здесь появится обычный ответ.</div></article><article><div class="compare-result-head"><h2>Через английский</h2><span id="bridge-time">—</span></div><div id="result-translated" class="compare-output">Здесь появится русский перевод английского ответа.</div></article></div>
   <details class="compare-intermediate"><summary>Посмотреть перевод запроса и английский ответ</summary><h3>Запрос после перевода RU → EN</h3><div id="result-input" class="compare-output">—</div><h3>Ответ модели на английском</h3><div id="result-english" class="compare-output">—</div></details>
-  <footer class="compare-footer"><p id="comparison-summary">Оцените связность, естественность русского языка и сохранение смысла. Автоматического «победителя» нет.</p><p>В обоих вариантах seed = 42 и лимит ответа — 512 токенов. Для обратного перевода выделено до 1024 токенов. Промежуточные тексты могут содержать ошибки: это проверка гипотезы, не включённый режим чата.</p><p>Запросы не добавляются в историю чата. Результаты хранятся только в памяти этой вкладки; JSON сохраняется по вашей кнопке на устройство. Закройте другие вкладки с запущенной моделью, чтобы освободить GPU.</p></footer>
+  <footer class="compare-footer"><p id="comparison-summary">Оцените связность, естественность русского языка и сохранение смысла. Автоматического «победителя» нет.</p><p>В обоих вариантах seed = 42 и лимит ответа — 512 токенов. Для обратного перевода выделено до 1024 токенов. Перевод выполняется с temperature = 0 и без штрафа за повторы: имена и термины должны сохраняться. Проверка длины отсекает грубые отклонения, но не проверяет смысл. Qwen может ошибиться в переводе: это проверка гипотезы, не включённый режим чата.</p><p>Запросы не добавляются в историю чата. Результаты хранятся только в памяти этой вкладки; JSON сохраняется по вашей кнопке на устройство. Закройте другие вкладки с запущенной моделью, чтобы освободить GPU.</p></footer>
 </main>`;
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -165,7 +165,7 @@ prompt.addEventListener('input', update);
 $('back-chat').addEventListener('click', terminate);
 window.addEventListener('pagehide', terminate);
 exportButton.addEventListener('click', () => {
-  const data = { schema: 1, modelId: MODEL_ID, revision: MODEL_REVISION, engine: __COMPARISON_TEST_ENGINE__ ? 'Test double (not inference)' : 'WebLLM 0.2.79', testing: __COMPARISON_TEST_ENGINE__, settings: { answer: { ...GENERATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS }, translation: { temperature: 0.1, top_p: 1, inputMaxTokens: MAX_REPLY_TOKENS, outputMaxTokens: MAX_REPLY_TOKENS * 2 }, repetitionPenalty: MODEL_CHAT_OPTIONS.repetition_penalty }, reports };
+  const data = { schema: 1, modelId: MODEL_ID, revision: MODEL_REVISION, engine: __COMPARISON_TEST_ENGINE__ ? 'Test double (not inference)' : 'WebLLM 0.2.79', testing: __COMPARISON_TEST_ENGINE__, settings: { answer: { ...GENERATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS }, translation: { protocol: TRANSLATION_PROTOCOL, ...TRANSLATION_OPTIONS, inputMaxTokens: MAX_REPLY_TOKENS, outputMaxTokens: MAX_REPLY_TOKENS * 2, effectiveRepetitionPenalty: 1 }, repetitionPenalty: MODEL_CHAT_OPTIONS.repetition_penalty }, reports };
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
   const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'tetrikanets-comparison.json'; anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);

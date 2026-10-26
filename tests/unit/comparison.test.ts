@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { compareAnswers, ComparisonInputError, ComparisonStopped } from '../../src/comparison';
+import { compareAnswers, checkTranslationShape, ComparisonInputError, ComparisonStopped } from '../../src/comparison';
 import type { StageRequest, StageRunner, ComparisonUpdate } from '../../src/comparison';
 
 it('isolates four stages, passes English intermediates correctly, and records actual stage timings', async () => {
@@ -13,8 +13,17 @@ it('isolates four stages, passes English intermediates correctly, and records ac
   const result = await compareAnswers('Придумай рассказ про свинку', run, update => updates.push(update), () => false);
   expect(requests.map(request => request.stage)).toEqual(['direct', 'translate-input', 'english-answer', 'translate-output']);
   expect(requests[2].messages.at(-1)?.content).toBe(replies[1]);
-  expect(requests[3].messages.at(-1)?.content).toBe(replies[2]);
-  expect(requests.every(request => request.messages.length === 2 && request.seed === 42)).toBe(true);
+  expect(requests[3].messages.at(-1)?.content).toContain(`<source_text>\n${replies[2]}\n</source_text>`);
+  expect(requests[1].messages.at(-1)?.content).toContain('<source_text>\nПридумай рассказ про свинку\n</source_text>');
+  expect(requests.map(request => request.messages.length)).toEqual([2, 4, 2, 4]);
+  expect(requests.every(request => request.seed === 42)).toBe(true);
+  for (const request of [requests[1], requests[3]]) {
+    expect(request.temperature).toBe(0);
+    expect(request.frequencyPenalty).toBe(0);
+    expect(request.presencePenalty).toBe(0);
+  }
+  expect(requests[0].frequencyPenalty).toBeUndefined();
+  expect(requests[2].frequencyPenalty).toBeUndefined();
   expect(result.prompt).toBe('Придумай рассказ про свинку');
   expect(result.directSeconds).toBe(1);
   expect(result.bridgeSeconds).toBe(9);
@@ -48,4 +57,21 @@ it('checks the translation context before calling the model', async () => {
   const run: StageRunner = async () => { calls++; return { text: calls === 3 ? 'x'.repeat(4000) : 'Text', finish: 'complete', seconds: 1 }; };
   await expect(compareAnswers('Вопрос', run, () => {}, () => false)).rejects.toThrow('не помещается в контекст');
   expect(calls).toBe(3);
+});
+
+it('stops when a short instruction is answered with a story instead of being translated', async () => {
+  let calls = 0;
+  const run: StageRunner = async () => {
+    calls++;
+    return { text: calls === 2 ? 'Once upon a time there was a little animal. '.repeat(9) : 'Прямой ответ', finish: 'complete', seconds: 1 };
+  };
+  await expect(compareAnswers('Придумай короткий рассказ про свинку', run, () => {}, () => false)).rejects.toThrow('Длина перевода');
+  expect(calls).toBe(2);
+});
+
+it('allows ordinary translation expansion and repeated names without claiming semantic validation', () => {
+  expect(() => checkTranslationShape('Напиши рассказ про свинку, которая не умеет плавать.', 'Write a story about a little pig that does not know how to swim.')).not.toThrow();
+  expect(() => checkTranslationShape('Piggy saw the farmer. Piggy thanked the farmer.', 'Свинка увидела фермера. Свинка поблагодарила фермера.')).not.toThrow();
+  // Length cannot detect substitutions; keep this limitation explicit.
+  expect(() => checkTranslationShape('A pig swims.', 'Пёсик плавает.')).not.toThrow();
 });
