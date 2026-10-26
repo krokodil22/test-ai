@@ -1,0 +1,9 @@
+node_modules/
+dist/
+public/models/
+.env.local
+.env.*.local
+test-results/
+playwright-report/
+.cache/
+*.log
