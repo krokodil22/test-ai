@@ -14,7 +14,7 @@ const project = fileURLToPath(new URL('../', import.meta.url));
 const source = JSON.parse(await readFile(new URL('./model-source.json', import.meta.url), 'utf8'));
 const argv = process.argv.slice(2);
 const valueOf = name => { const i = argv.indexOf(name); if (i < 0) return undefined; if (!argv[i + 1] || argv[i + 1].startsWith('--')) throw new Error(`Missing value for ${name}`); return argv[i + 1]; };
-const destination = resolve(project, valueOf('--output') || 'public/models/qwen2.5-0.5b');
+const destination = resolve(project, valueOf('--output') || `public/models/${source.directory}`);
 const requestedRevision = valueOf('--revision') || source.revision;
 const MB = n => `${(n / 1e6).toFixed(1)} MB`;
 function pathFor(name) {

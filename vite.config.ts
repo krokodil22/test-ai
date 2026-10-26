@@ -1,9 +1,12 @@
 import { defineConfig, loadEnv } from 'vite';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+import source from './scripts/model-source.json' with { type: 'json' };
+import { copyPublicAssets } from './scripts/static-assets.mjs';
 
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  const resource = env.VITE_MODEL_BASE_URL || 'models/qwen2.5-0.5b/';
+  const resource = env.VITE_MODEL_BASE_URL || `models/${source.directory}/`;
   const external = /^[a-z]+:/i.test(resource) ? new URL(resource) : undefined;
   const localDevelopment = command === 'serve' && external?.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(external.hostname);
   if (external && external.protocol !== 'https:' && !localDevelopment) throw new Error('VITE_MODEL_BASE_URL must use HTTPS');
@@ -11,6 +14,7 @@ export default defineConfig(({ mode, command }) => {
   const csp = `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self' ${remote}; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-src 'none'`;
   return {
     base: env.VITE_BASE_PATH || './',
+    publicDir: command === 'build' ? false : 'public',
     worker: { format: 'es' },
     resolve: {
       alias: {
@@ -23,8 +27,14 @@ export default defineConfig(({ mode, command }) => {
       transformIndexHtml(html) {
         return html.replace('<!-- security-policy -->', command === 'build' ? `<meta http-equiv="Content-Security-Policy" content="${csp}">` : '');
       },
+    }, {
+      name: 'copy-active-model',
+      apply: 'build',
+      async writeBundle(options) {
+        await copyPublicAssets(resolve('public'), resolve(options.dir!), source.directory);
+      },
     }],
     build: { target: 'es2022', chunkSizeWarningLimit: 6500 },
-    test: { include: ['tests/unit/**/*.test.ts'] },
+    test: { include: ['tests/unit/**/*.test.{ts,mjs}'] },
   };
 });

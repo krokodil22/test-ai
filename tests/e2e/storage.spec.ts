@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 for (const cors of [true, false]) {
   test(`real second-origin storage, CORS ${cors ? 'enabled' : 'missing'}`, async ({ page, context }) => {
-    const base = 'http://127.0.0.1:5176/models/qwen2.5-0.5b/';
+    const base = 'http://127.0.0.1:5176/models/qwen2.5-1.5b/';
     // Test-server control is outside the application's browser/network context.
     await page.request.post('http://127.0.0.1:5176/control', { data: { allowCors: cors } });
     const requests: Array<{ url: string; method: string; body: string | null }> = [];

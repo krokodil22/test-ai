@@ -1,7 +1,8 @@
 /// <reference lib="webworker" />
 import { MLCEngine } from '@mlc-ai/web-llm';
 import { probeGpu, monitorGpu } from '#gpu';
-import { MODEL_ID, CONTEXT_TOKENS, MAX_REPLY_TOKENS, validateModelInfo } from './config';
+import { MODEL_ID, CONTEXT_TOKENS, MAX_REPLY_TOKENS, GENERATION_OPTIONS } from './config';
+import { loadModelInfo, removeLegacyModelCache } from './cache';
 import { buildContext } from './context';
 import { explainError } from './errors';
 import type { WorkerEvent, WorkerRequest } from './types';
@@ -51,11 +52,8 @@ async function init(base: string) {
       }
       return response;
     };
-    const metadataCache = await caches.open('ryadom/metadata-v1');
-    const infoUrl = `${base}model-info.json`;
-    const response = await metadataCache.match(infoUrl) || await fetch(infoUrl);
-    const info = validateModelInfo(await response.clone().json());
-    await metadataCache.put(infoUrl, response);
+    await removeLegacyModelCache();
+    const info = await loadModelInfo(base);
     send({ type: 'size', bytes: info.downloadBytes });
     resourceHashes = new Map(info.files.map(file => [new URL(file.path, base).href, file.sha256]));
     engine = new MLCEngine({
@@ -103,9 +101,7 @@ scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
       messages: context.messages,
       stream: true,
       max_tokens: MAX_REPLY_TOKENS,
-      temperature: 0.65,
-      top_p: 0.9,
-      frequency_penalty: 0.2,
+      ...GENERATION_OPTIONS,
     });
     let reason: 'complete' | 'length' = 'complete';
     for await (const chunk of stream) {

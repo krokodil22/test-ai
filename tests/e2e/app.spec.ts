@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import type { Page, BrowserContext, Request } from '@playwright/test';
 import { createHash } from 'node:crypto';
-const modelId = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC';
+const modelId = 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC';
 const files = [
   { path: 'model.wasm', scope: 'webllm/wasm', body: 'wasm-test-fixture' },
   { path: 'resolve/main/mlc-chat-config.json', scope: 'webllm/config', body: '{}' },
@@ -13,7 +13,7 @@ async function resources(context: BrowserContext, options: { fail?: boolean; cor
   const resourceFiles = files.map(file => ({ ...file }));
   if (options.external) resourceFiles[2].body = JSON.stringify({ externalURL: 'https://unconfigured.example/leak' });
   const info = {
-    schema: 1, modelId, revision: 'test-fixture', downloadBytes: 400000000,
+    schema: 1, modelId, revision: '9bd564b064631febf14deadcac492efb761d60c3', downloadBytes: 879804433,
     files: resourceFiles.map(({ path, scope, body }) => ({ path, scope, bytes: Buffer.byteLength(body), sha256: createHash('sha256').update(body).digest('hex') })),
   };
   const requests: Request[] = [];
@@ -177,3 +177,37 @@ test('history deletion propagates to other tabs and is not restored by an old ta
   await second.close();
   expect(await page.evaluate(() => localStorage.getItem('ryadom:chats:v1'))).not.toContain('Личная переписка');
 });
+
+for (const location of ['legacy-directory', 'same-url', 'stale-revision'] as const) {
+  test(`upgrades ${location} cache without mixing model weights or deleting history`, async ({ page, context }) => {
+    const requests = await resources(context);
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('ryadom:chats:v1')) localStorage.setItem('ryadom:chats:v1', JSON.stringify({ activeId: 'retained', conversations: [{ id: 'retained', title: 'Старый чат', createdAt: 1, messages: [{ id: 'user-old', role: 'user', content: 'Сохранённый вопрос' }, { id: 'answer-old', role: 'assistant', content: 'Сохранённый ответ' }] }] }));
+    });
+    await page.goto('./');
+    await expect(page.locator('#load-model')).toBeEnabled();
+    await page.evaluate(async ({ location, modelId }) => {
+      const base = new URL('models/qwen2.5-1.5b/', document.baseURI).href;
+      const oldBase = location === 'legacy-directory' ? base.replace('qwen2.5-1.5b', 'qwen2.5-0.5b') : base;
+      const metadata = await caches.open('ryadom/metadata-v1');
+      await metadata.put(oldBase + 'model-info.json', new Response(JSON.stringify({ schema: 1, modelId: location === 'stale-revision' ? modelId : 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', revision: 'old', downloadBytes: 10, files: [] })));
+      await (await caches.open('webllm/wasm')).put(oldBase + 'model.wasm', new Response('OLD incompatible WASM'));
+      await (await caches.open('webllm/model')).put(oldBase + 'resolve/main/old-weights.bin', new Response('OLD weights'));
+      await (await caches.open('webllm/model')).put(new URL('/another-app/keep.bin', document.baseURI).href, new Response('unrelated'));
+    }, { location, modelId });
+    await page.reload();
+    await expect(page.locator('#quick-start')).toBeVisible();
+    await page.locator('#quick-start').click();
+    await expect(page.locator('#engine-status')).toContainText('Готов к разговору');
+    await expect(page.locator('.message-user')).toContainText('Сохранённый вопрос');
+    expect(requests.filter(request => request.url().includes('/models/'))).toHaveLength(6);
+    const cacheState = await page.evaluate(async () => {
+      const keys = (await (await caches.open('webllm/model')).keys()).map(request => request.url);
+      const metadata = await (await (await caches.open('ryadom/metadata-v1')).match(new URL('models/qwen2.5-1.5b/model-info.json', document.baseURI).href))!.json();
+      return { keys, modelId: metadata.modelId };
+    });
+    expect(cacheState.modelId).toBe(modelId);
+    expect(cacheState.keys.some(key => key.includes('old-weights') || key.includes('qwen2.5-0.5b'))).toBe(false);
+    expect(cacheState.keys.some(key => key.includes('/another-app/keep.bin'))).toBe(true);
+  });
+}

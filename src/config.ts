@@ -1,15 +1,24 @@
-export const MODEL_ID = 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC';
-export const MODEL_NAME = 'Qwen2.5 · 0.5B';
+import source from '../scripts/model-source.json';
+
+export const MODEL_ID = source.modelId;
+export const MODEL_REVISION = source.revision;
+export const MODEL_NAME = source.displayName;
+export const MODEL_DESCRIPTION = source.description;
+export const MODEL_RESOURCE_PATH = `models/${source.directory}/`;
+export const MODEL_GPU_MEMORY = `≈ ${(source.vramRequiredMB / 1000).toFixed(1).replace('.', ',')} ГБ памяти GPU`;
+export const MODEL_RAM = `${source.ramRecommendedGB} ГБ свободной RAM`;
+export const LEGACY_MODEL_IDS: readonly string[] = source.legacyModelIds;
 export const CONTEXT_TOKENS = 4096;
 export const MAX_REPLY_TOKENS = 512;
 export const MAX_INPUT_CHARS = 1200;
-export const SYSTEM_PROMPT = 'Ты — Рядом, внимательный ИИ-помощник. Отвечай на русском языке, ясно и кратко. Если не знаешь ответ, так и скажи. Не выдумывай факты.';
-export const MODEL_ESTIMATE = '289 МБ';
+export const SYSTEM_PROMPT = 'Ты — Рядом, внимательный ИИ-помощник. Отвечай на естественном русском языке, ясно и кратко. Меняй язык только по просьбе пользователя. Соблюдай грамматику. Если не знаешь ответ, скажи об этом. Не выдумывай факты.';
+export const MODEL_ESTIMATE = formatBytes(source.downloadBytes);
+export const GENERATION_OPTIONS = { temperature: 0.35, top_p: 0.85, frequency_penalty: 0, presence_penalty: 0 } as const;
 export const CACHE_SCOPES = ['webllm/model', 'webllm/config', 'webllm/wasm', 'ryadom/metadata-v1'] as const;
 
 export function resourceBase(pageUrl: string = location.href): string {
   const appBase = new URL(import.meta.env.BASE_URL, pageUrl);
-  const configured = import.meta.env.VITE_MODEL_BASE_URL || 'models/qwen2.5-0.5b/';
+  const configured = import.meta.env.VITE_MODEL_BASE_URL || MODEL_RESOURCE_PATH;
   const url = new URL(configured.endsWith('/') ? configured : `${configured}/`, appBase);
   if (url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))) {
     throw new Error('Ресурсы модели должны загружаться по HTTPS. HTTP допустим только на localhost.');
@@ -28,7 +37,7 @@ export interface ModelInfo {
 
 export function validateModelInfo(value: unknown): ModelInfo {
   const info = value as ModelInfo;
-  if (info?.schema !== 1 || info.modelId !== MODEL_ID || !Array.isArray(info.files) || info.files.length < 4 || !Number.isFinite(info.downloadBytes) || info.downloadBytes <= 0) {
+  if (info?.schema !== 1 || info.modelId !== MODEL_ID || info.revision !== MODEL_REVISION || !Array.isArray(info.files) || info.files.length < 4 || !Number.isFinite(info.downloadBytes) || info.downloadBytes <= 0) {
     throw new Error('Некорректный model-info.json. Выполните npm run model:download и опубликуйте все ресурсы.');
   }
   for (const file of info.files) {

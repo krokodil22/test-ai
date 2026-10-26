@@ -8,7 +8,7 @@ const files = [
   { path: 'resolve/main/ndarray-cache.json', scope: 'webllm/model', body: '{"records":[]}' },
   { path: 'resolve/main/tokenizer.json', scope: 'webllm/model', body: '{}' },
 ];
-const info = { schema: 1, modelId: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', revision: 'fixture', downloadBytes: 289000000, files: files.map(({ path, scope, body }) => ({ path, scope, bytes: body.length, sha256: createHash('sha256').update(body).digest('hex') })) };
+const info = { schema: 1, modelId: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC', revision: '9bd564b064631febf14deadcac492efb761d60c3', downloadBytes: 879804433, files: files.map(({ path, scope, body }) => ({ path, scope, bytes: body.length, sha256: createHash('sha256').update(body).digest('hex') })) };
 createServer(async (request, response) => {
   if (request.url === '/health') { response.end('ok'); return; }
   if (request.url === '/control' && request.method === 'POST') {

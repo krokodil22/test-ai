@@ -27,6 +27,8 @@ jobs:
         env:
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
       - run: touch dist/.nojekyll
+      - name: Check published site is within the GitHub Pages size limit
+        run: node scripts/check-pages-size.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

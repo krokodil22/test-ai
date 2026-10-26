@@ -8,7 +8,7 @@ test('identical production files work in the domain root and repository subpath'
     await expect(page.locator('h1')).toContainText('вашей мысли');
     await expect(page.locator('#compatibility')).not.toContainText('Проверяем');
     await page.locator('#settings-open').click();
-    await expect(page.locator('#resource-location')).toHaveText(`http://127.0.0.1:4173${path}models/qwen2.5-0.5b/`);
+    await expect(page.locator('#resource-location')).toHaveText(`http://127.0.0.1:4173${path}models/qwen2.5-1.5b/`);
     await page.locator('#settings-close').click();
   }
   expect(failures).toEqual([]);
@@ -28,7 +28,7 @@ test('production page checks real WebGPU before making model requests', async ({
   await page.screenshot({ path: 'test-results/production-webgpu-check.png', fullPage: true });
 });
 test('REAL MODEL: first load, chat, stop, cache reload, independent cleanup and network audit', async ({ page }) => {
-  test.skip(!existsSync('dist/models/qwen2.5-0.5b/model-info.json'), 'Full verified model resources are not built. Run npm run model:download and npm run build before this test.');
+  test.skip(!existsSync('dist/models/qwen2.5-1.5b/model-info.json'), 'Full verified model resources are not built. Run npm run model:download and npm run build before this test.');
   await page.goto('/');
   await expect(page.locator('#compatibility')).not.toContainText('Проверяем');
   test.skip(await page.locator('#load-model').isDisabled(), 'A compatible WebGPU adapter with shader-f16 is unavailable in this browser.');
@@ -40,6 +40,17 @@ test('REAL MODEL: first load, chat, stop, cache reload, independent cleanup and 
   await page.locator('#send').click();
   await expect(page.locator('#stop')).toBeHidden({ timeout: 180000 });
   await expect(page.locator('.message-assistant')).toContainText(/Париж/i);
+  // Small language regressions on the actual model, never a mock substitute.
+  for (const [prompt, expected] of [
+    ['Исправь грамматическую ошибку в предложении: «Они идёт домой». Ответь только исправленным предложением.', /Они идут домой/i],
+    ['Переведи на русский: Good morning. Ответь только переводом.', /Доброе утро/i],
+  ] as const) {
+    await page.locator('#new-chat').click();
+    await page.locator('#prompt').fill(prompt);
+    await page.locator('#send').click();
+    await expect(page.locator('#stop')).toBeHidden({ timeout: 180000 });
+    await expect(page.locator('.message-assistant')).toContainText(expected);
+  }
   await page.locator('#prompt').fill('Расскажи подробно об истории Франции.');
   await page.locator('#send').click();
   await expect(page.locator('.message-assistant').last().locator('.message-content')).not.toHaveText('', { timeout: 120000 });

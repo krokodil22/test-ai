@@ -2,7 +2,7 @@ import './style.css';
 import { icon, spark } from './icons';
 import { probeGpu } from '#gpu';
 import { explainError } from './errors';
-import { MODEL_NAME, MODEL_ESTIMATE, MAX_INPUT_CHARS, resourceBase, formatBytes } from './config';
+import { MODEL_NAME, MODEL_ESTIMATE, MAX_INPUT_CHARS, resourceBase, formatBytes, MODEL_DESCRIPTION, MODEL_GPU_MEMORY, MODEL_RAM } from './config';
 import { isModelCached, removeModelCache } from './cache';
 import { markdown } from './markdown';
 import { readHistory, saveHistory, deleteHistory, MAX_CHATS, MAX_MESSAGES, HISTORY_KEY } from './storage';
@@ -35,8 +35,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         <h1>Давайте начнём<br><span>с вашей мысли.</span></h1>
         <p class="welcome-description">Спросите, придумайте, разберитесь в сложном.<br>Ваш ИИ-помощник работает прямо в браузере.</p>
         <div id="model-card" class="model-card">
-          <div class="model-card-head"><span class="model-card-icon">${icon('chip')}</span><div><h2 id="model-card-title">Маленькая модель. Большие идеи.</h2><p id="model-card-description">Одна загрузка — и можно общаться.</p></div><span id="model-card-tag" class="model-card-tag">ЛОКАЛЬНО</span></div>
-          <div class="model-facts"><span>${icon('download')} <b id="download-size">${MODEL_ESTIMATE}</b> один раз</span><span>${icon('chip')} ~1 ГБ памяти GPU</span><span>${icon('leaf')} Без регистрации</span></div>
+          <div class="model-card-head"><span class="model-card-icon">${icon('chip')}</span><div><h2 id="model-card-title">Модель для общения по-русски</h2><p id="model-card-description">Одна загрузка — и можно общаться.</p></div><span id="model-card-tag" class="model-card-tag">ЛОКАЛЬНО</span></div>
+          <div class="model-facts"><span>${icon('download')} <b id="download-size">${MODEL_ESTIMATE}</b> один раз</span><span>${icon('chip')} ${MODEL_GPU_MEMORY}</span><span>${icon('leaf')} Без регистрации</span></div>
           <div id="load-progress" class="load-progress" hidden><div class="progress-label"><span id="progress-text">Подготовка…</span><span id="progress-percent">0%</span></div><progress id="progress" max="1" value="0" aria-label="Загрузка модели"></progress></div>
           <button id="load-model" class="primary-button">${icon('download')} <span>Скачать и запустить</span> ${icon('chevron')}</button>
           <button id="cancel-load" class="text-button" hidden>Отменить загрузку</button>
@@ -65,7 +65,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </main>
   <dialog id="settings" class="settings-dialog" aria-labelledby="settings-title">
     <div class="dialog-header"><div><span class="eyebrow">ВАШЕ УСТРОЙСТВО</span><h2 id="settings-title">Настройки и данные</h2></div><button id="settings-close" class="icon-button" aria-label="Закрыть настройки">${icon('close')}</button></div>
-    <section class="settings-section"><h3>${icon('chip')} Локальная модель</h3><p><strong>Qwen2.5 0.5B Instruct · q4f16_1</strong><br>Лицензия Apache 2.0 · WebLLM 0.2.79</p><p>Загрузка: <span id="settings-size">${MODEL_ESTIMATE}</span>. Около 1 ГБ памяти GPU и 2–3 ГБ свободной RAM. Контекст — 4 096 токенов, ответ — до 512 токенов.</p><p>Модель небольшая: русский язык поддерживается, но ответы могут быть неточными. Старые реплики исключаются из контекста, оставаясь в истории.</p><div id="cache-status" class="cache-status">Проверяем кеш…</div><button id="settings-start" class="secondary-button">Запустить модель</button><button id="delete-model" class="secondary-button">${icon('trash')} Удалить скачанную модель</button></section>
+    <section class="settings-section"><h3>${icon('chip')} Локальная модель</h3><p><strong>${MODEL_DESCRIPTION}</strong><br>Лицензия Apache 2.0 · WebLLM 0.2.79</p><p>Загрузка: <span id="settings-size">${MODEL_ESTIMATE}</span>. ${MODEL_GPU_MEMORY}, желательно 2–3 ГБ с запасом, и ${MODEL_RAM}. Контекст — 4 096 токенов, ответ — до 512 токенов.</p><p>Модель поддерживает русский язык, но ответы могут быть неточными. После обновления с 0.5B рекомендуем начать новый чат. Старые реплики исключаются из контекста, оставаясь в истории.</p><div id="cache-status" class="cache-status">Проверяем кеш…</div><button id="settings-start" class="secondary-button">Запустить модель</button><button id="delete-model" class="secondary-button">${icon('trash')} Удалить модель и старые версии</button></section>
     <section class="settings-section"><h3>${icon('chat')} История переписки</h3><p>Чаты сохраняются в этом браузере. Общая история и кеш модели удаляются отдельно. Не используйте общий профиль браузера для личной переписки.</p><button id="delete-history" class="danger-button">${icon('trash')} Удалить всю историю</button></section>
     <section class="settings-section privacy-details"><h3>${icon('lock')} Как устроена приватность</h3><p>Ответы генерируются в Web Worker на вашем GPU. Сервер получает только запросы статических файлов. Внешних API, аналитики и телеметрии нет. Изображения и ссылки из ответов не загружаются.</p><p>Кеш может быть удалён браузером автоматически. Интерфейс сайта требует соединения при открытии; гарантированный офлайн-запуск всей страницы не предусмотрен.</p><p>Ресурсы модели: <code id="resource-location"></code></p></section>
   </dialog>
@@ -207,7 +207,7 @@ function updateUi() {
   $('engine-status').innerHTML = `<span class="status-dot ${state === 'ready' || busy ? 'green' : ''}"></span>${labels[state]}`;
   $('generation-status').hidden = !busy && state !== 'loading';
   $('generation-status').textContent = busy ? 'Рядом обдумывает ответ…' : state === 'loading' ? 'Подготавливаем модель…' : '';
-  $('model-card-title').textContent = state === 'ready' || busy ? 'Всё готово. Я рядом.' : 'Маленькая модель. Большие идеи.';
+  $('model-card-title').textContent = state === 'ready' || busy ? 'Всё готово. Я рядом.' : 'Модель для общения по-русски';
   $('model-card-description').textContent = state === 'ready' || busy ? 'Задайте вопрос — ответ появится прямо здесь.' : cached ? 'Ресурсы в кеше. Осталось запустить модель.' : 'Одна загрузка — и можно общаться.';
   loadButton.querySelector('span')!.textContent = cached ? 'Запустить из кеша' : 'Скачать и запустить';
   $('cache-status').textContent = cached ? 'Ресурсы модели сохранены в браузере' : 'Модель не сохранена полностью. Частично загруженные файлы тоже можно удалить.';
@@ -375,7 +375,7 @@ $('delete-history').addEventListener('click', () => {
   catch { toast('Браузер запретил очистку истории'); }
 });
 $('delete-model').addEventListener('click', async () => {
-  if (state === 'generating' || state === 'loading' || !confirm('Удалить скачанные ресурсы модели? Переписка сохранится.')) return;
+  if (state === 'generating' || state === 'loading' || !confirm('Удалить скачанные ресурсы модели и прежних версий? Переписка сохранится.')) return;
   const button = $<HTMLButtonElement>('delete-model');
   button.disabled = true;
   stopWorker(); state = 'idle';

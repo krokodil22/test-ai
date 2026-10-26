@@ -1,17 +1,26 @@
 {
-  "modelId": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-  "repository": "mlc-ai/Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-  "revision": "32ff081fe7e4dfe4ffb167b94c66fdf11e02b8ad",
+  "modelId": "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+  "repository": "mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+  "revision": "9bd564b064631febf14deadcac492efb761d60c3",
   "runtime": {
     "webllm": "0.2.79",
-    "url": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/00fe7a40e57e5e8eb9fef87526a4bf28ad5846c0/web-llm-models/v0_2_48/Qwen2-0.5B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm",
-    "bytes": 3762958,
-    "sha256": "eeef8ad5c1e668b066a3edc2e7f5d48e78d0749c869d87c00270406d95537c63"
+    "url": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/00fe7a40e57e5e8eb9fef87526a4bf28ad5846c0/web-llm-models/v0_2_48/Qwen2-1.5B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm",
+    "bytes": 4098672,
+    "sha256": "14ef8ff95b20cc099df70d365babd18dc8023936eeacc2f459bac21e0a4f9dfa"
   },
   "license": {
     "name": "Apache-2.0",
-    "model_card": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct",
-    "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+    "model_card": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct",
+    "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
     "gitBlob": "6634c8cc3133b3848ec74b9f275acaaa1ea618ab"
-  }
+  },
+  "displayName": "Qwen2.5 · 1.5B",
+  "description": "Qwen2.5 1.5B Instruct · q4f16_1",
+  "directory": "qwen2.5-1.5b",
+  "downloadBytes": 879804433,
+  "vramRequiredMB": 1629.75,
+  "ramRecommendedGB": "3–4",
+  "legacyModelIds": [
+    "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
+  ]
 }
