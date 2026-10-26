@@ -2,7 +2,7 @@ import './style.css';
 import { icon, spark } from './icons';
 import { probeGpu } from '#gpu';
 import { explainError } from './errors';
-import { MODEL_NAME, MODEL_ESTIMATE, MAX_INPUT_CHARS, resourceBase, formatBytes, MODEL_DESCRIPTION, MODEL_GPU_MEMORY, MODEL_RAM } from './config';
+import { BOT_NAME, MODEL_NAME, MODEL_ESTIMATE, MAX_INPUT_CHARS, resourceBase, formatBytes, MODEL_DESCRIPTION, MODEL_GPU_MEMORY, MODEL_RAM } from './config';
 import { isModelCached, removeModelCache } from './cache';
 import { markdown } from './markdown';
 import { readHistory, saveHistory, deleteHistory, MAX_CHATS, MAX_MESSAGES, HISTORY_KEY } from './storage';
@@ -12,7 +12,7 @@ import type { Message, WorkerEvent, WorkerRequest } from './types';
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
   <aside class="sidebar" id="sidebar" aria-label="История чатов">
-    <a class="brand" href="#" aria-label="Рядом — главная"><span class="brand-mark">${spark()}</span><span>рядом<span class="brand-dot">.</span></span></a>
+    <a class="brand" href="#" aria-label="${BOT_NAME} — главная"><span class="brand-mark">${spark()}</span><span class="brand-name"><span>Великий</span> <strong>Тетриканец</strong></span></a>
     <div class="workspace-label">ВАШЕ ПРОСТРАНСТВО</div>
     <button id="new-chat" class="new-chat">${icon('plus')} Новый чат <span>${icon('arrow')}</span></button>
     <div class="history-heading"><span>Недавние чаты</span><span id="chat-count">0</span></div>
@@ -25,13 +25,13 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </aside>
   <main class="main">
     <header class="topbar">
-      <div class="topbar-left"><button id="menu-toggle" class="icon-button mobile-menu" aria-label="Открыть историю">${icon('menu')}</button><span class="topbar-title">Локальный чат</span><span class="header-separator"></span><span class="model-label">${MODEL_NAME}</span></div>
+      <div class="topbar-left"><button id="menu-toggle" class="icon-button mobile-menu" aria-label="Открыть историю">${icon('menu')}</button><span class="topbar-title">${BOT_NAME}</span><span class="header-separator"></span><span class="model-label">${MODEL_NAME}</span></div>
       <button id="quick-start" class="secondary-button quick-start" hidden>Запустить модель</button><div class="private-badge">${icon('lock')} <span>Только на вашем устройстве</span></div>
     </header>
     <div id="scroll-area" class="scroll-area">
       <section id="welcome" class="welcome">
         <div class="welcome-emblem">${spark()}<span class="emblem-orbit"></span></div>
-        <div class="eyebrow"><span class="small-dot"></span> ИНТЕЛЛЕКТ, КОТОРЫЙ РЯДОМ</div>
+        <div class="eyebrow"><span class="small-dot"></span> ВАШ ПРИВАТНЫЙ ИИ-ПОМОЩНИК</div>
         <h1>Давайте начнём<br><span>с вашей мысли.</span></h1>
         <p class="welcome-description">Спросите, придумайте, разберитесь в сложном.<br>Ваш ИИ-помощник работает прямо в браузере.</p>
         <div id="model-card" class="model-card">
@@ -44,8 +44,8 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         </div>
         <div class="suggestions-label">С ЧЕГО НАЧНЁМ?</div>
         <div class="suggestions">
-          <button class="suggestion" data-prompt="Объясни простыми словами, как работают нейросети."><span class="suggestion-icon peach">${icon('book')}</span><strong>Понять сложное</strong><span>Объясните мне простыми словами…</span>${icon('chevron')}</button>
-          <button class="suggestion" data-prompt="Предложи пять необычных идей для творческого выходного."><span class="suggestion-icon purple">${icon('bulb')}</span><strong>Найти идею</strong><span>Давайте придумаем что-нибудь…</span>${icon('chevron')}</button>
+          <button class="suggestion" data-prompt="Объясни простыми словами, как работают нейросети."><span class="suggestion-icon mint">${icon('book')}</span><strong>Понять сложное</strong><span>Объясните мне простыми словами…</span>${icon('chevron')}</button>
+          <button class="suggestion" data-prompt="Предложи пять необычных идей для творческого выходного."><span class="suggestion-icon pink">${icon('bulb')}</span><strong>Найти идею</strong><span>Давайте придумаем что-нибудь…</span>${icon('chevron')}</button>
           <button class="suggestion" data-prompt="Покажи пример функции на JavaScript, которая удаляет дубликаты из массива, и объясни код."><span class="suggestion-icon blue">${icon('code')}</span><strong>Разобраться с кодом</strong><span>Помогите написать или объяснить…</span>${icon('chevron')}</button>
         </div>
       </section>
@@ -59,7 +59,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         <textarea id="prompt" rows="1" maxlength="${MAX_INPUT_CHARS}" placeholder="Какая мысль у вас сегодня?" aria-describedby="input-help"></textarea>
         <div class="composer-bottom"><span id="engine-status" class="engine-status"><span class="status-dot"></span> Модель не запущена</span><span id="character-count" class="character-count"></span><button id="cancel-inline" class="stop-button" type="button" hidden>Отменить</button><button id="stop" class="stop-button" type="button" hidden><span></span> Остановить</button><button id="send" class="send-button" type="submit" aria-label="Отправить" disabled>${icon('arrow')}</button></div>
       </form>
-      <div class="composer-note"><span>Рядом может ошибаться. Проверяйте важные факты.</span><span id="input-help">Enter — отправить <span>·</span> Shift + Enter — новая строка</span></div>
+      <div class="composer-note"><span>${BOT_NAME} может ошибаться. Проверяйте важные факты.</span><span id="input-help">Enter — отправить <span>·</span> Shift + Enter — новая строка</span></div>
       <div class="bottom-signature">Сделано для ваших мыслей <span>${spark()}</span> С уважением к вашей приватности</div>
     </div>
   </main>
@@ -151,7 +151,7 @@ function renderMessages(streaming = false) {
     const article = document.createElement('article');
     article.className = `message message-${message.role}`;
     article.dataset.messageId = message.id;
-    article.innerHTML = `<div class="message-avatar">${message.role === 'assistant' ? spark() : 'В'}</div><div class="message-body"><div class="message-author">${message.role === 'assistant' ? 'Рядом' : 'Вы'}${message.role === 'assistant' ? '<span>ЛОКАЛЬНЫЙ ИИ</span>' : ''}</div><div class="message-content"></div><div class="message-meta"></div></div>`;
+    article.innerHTML = `<div class="message-avatar">${message.role === 'assistant' ? spark() : 'В'}</div><div class="message-body"><div class="message-author">${message.role === 'assistant' ? BOT_NAME : 'Вы'}${message.role === 'assistant' ? '<span>ЛОКАЛЬНЫЙ ИИ</span>' : ''}</div><div class="message-content"></div><div class="message-meta"></div></div>`;
     renderContent(article.querySelector('.message-content')!, message);
     const meta = article.querySelector<HTMLDivElement>('.message-meta')!;
     if (message.role === 'assistant' && message.content && message !== activeResponse) {
@@ -206,8 +206,8 @@ function updateUi() {
   const labels = { checking: 'Проверяем WebGPU…', idle: 'Модель не запущена', loading: 'Загрузка модели…', ready: 'Готов к разговору', generating: 'Генерирую ответ…', unsupported: 'WebGPU недоступен' };
   $('engine-status').innerHTML = `<span class="status-dot ${state === 'ready' || busy ? 'green' : ''}"></span>${labels[state]}`;
   $('generation-status').hidden = !busy && state !== 'loading';
-  $('generation-status').textContent = busy ? 'Рядом обдумывает ответ…' : state === 'loading' ? 'Подготавливаем модель…' : '';
-  $('model-card-title').textContent = state === 'ready' || busy ? 'Всё готово. Я рядом.' : 'Модель для общения по-русски';
+  $('generation-status').textContent = busy ? `${BOT_NAME} обдумывает ответ…` : state === 'loading' ? 'Подготавливаем модель…' : '';
+  $('model-card-title').textContent = state === 'ready' || busy ? 'Всё готово. Начнём разговор?' : 'Модель для общения по-русски';
   $('model-card-description').textContent = state === 'ready' || busy ? 'Задайте вопрос — ответ появится прямо здесь.' : cached ? 'Ресурсы в кеше. Осталось запустить модель.' : 'Одна загрузка — и можно общаться.';
   loadButton.querySelector('span')!.textContent = cached ? 'Запустить из кеша' : 'Скачать и запустить';
   $('cache-status').textContent = cached ? 'Ресурсы модели сохранены в браузере' : 'Модель не сохранена полностью. Частично загруженные файлы тоже можно удалить.';
@@ -244,7 +244,7 @@ async function startModel() {
     if (state !== 'loading') return;
     if (!('caches' in globalThis)) throw new Error('Браузер не предоставляет Cache API. Откройте сайт по HTTPS в обычном окне Chrome.');
     void navigator.storage?.persist?.().catch(() => false);
-    worker = new Worker(new URL('./engine.worker.ts', import.meta.url), { type: 'module', name: 'ryadom-inference' });
+    worker = new Worker(new URL('./engine.worker.ts', import.meta.url), { type: 'module', name: 'tetrikanets-inference' });
     const thisWorker = worker;
     worker.onmessage = ({ data }: MessageEvent<WorkerEvent>) => { if (worker === thisWorker) onWorkerEvent(data); };
     worker.onerror = event => { event.preventDefault(); onWorkerEvent({ type: 'error', message: 'Worker модели завершился с ошибкой. Возможно, браузеру не хватает памяти. Запустите модель снова.', fatal: true }); };

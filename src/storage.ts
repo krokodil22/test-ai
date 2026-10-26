@@ -1,4 +1,5 @@
 import type { Conversation } from './types';
+// Keep the stable storage key across branding changes to retain existing chats.
 export const HISTORY_KEY = 'ryadom:chats:v1';
 export const MAX_CHATS = 30;
 export const MAX_MESSAGES = 500;
