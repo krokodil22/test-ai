@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { MLCEngine } from '@mlc-ai/web-llm';
 import { probeGpu, monitorGpu } from '#gpu';
-import { MODEL_ID, CONTEXT_TOKENS, MAX_REPLY_TOKENS, GENERATION_OPTIONS } from './config';
+import { MODEL_ID, MODEL_CHAT_OPTIONS, MAX_REPLY_TOKENS, GENERATION_OPTIONS } from './config';
 import { loadModelInfo, removeLegacyModelCache } from './cache';
 import { buildContext } from './context';
 import { explainError } from './errors';
@@ -66,7 +66,7 @@ async function init(base: string) {
           model: `${base}resolve/main/`,
           model_lib: `${base}model.wasm`,
           required_features: ['shader-f16'],
-          overrides: { context_window_size: CONTEXT_TOKENS },
+          overrides: MODEL_CHAT_OPTIONS,
         }],
       },
       initProgressCallback: report => send({ type: 'progress', progress: report.progress, text: report.text }),

@@ -51,6 +51,17 @@ test('REAL MODEL: first load, chat, stop, cache reload, independent cleanup and 
     await expect(page.locator('#stop')).toBeHidden({ timeout: 180000 });
     await expect(page.locator('.message-assistant')).toContainText(expected);
   }
+  await page.locator('#new-chat').click();
+  await page.locator('#prompt').fill('Придумай короткий поучительный рассказ про свинку, которая не умела плавать');
+  await page.locator('#send').click();
+  await expect(page.locator('#stop')).toBeHidden({ timeout: 180000 });
+  const story = await page.locator('.message-assistant .message-content').innerText();
+  await test.info().attach('russian-story', { body: story, contentType: 'text/plain' });
+  expect(story.length).toBeGreaterThan(180);
+  expect(story).toMatch(/свин|порос/iu);
+  // Regress the reported "вдруг, вдруг, вдруг" loop without fixing a single
+  // golden story. The attached full text still needs human quality review.
+  expect(story).not.toMatch(/(\p{L}{3,})[,\s]+\1[,\s]+\1/iu);
   await page.locator('#prompt').fill('Расскажи подробно об истории Франции.');
   await page.locator('#send').click();
   await expect(page.locator('.message-assistant').last().locator('.message-content')).not.toHaveText('', { timeout: 120000 });

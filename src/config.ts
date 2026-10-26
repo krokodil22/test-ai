@@ -12,9 +12,20 @@ export const BOT_NAME = 'Великий Тетриканец';
 export const CONTEXT_TOKENS = 4096;
 export const MAX_REPLY_TOKENS = 512;
 export const MAX_INPUT_CHARS = 1200;
-export const SYSTEM_PROMPT = `Ты — ${BOT_NAME}, внимательный ИИ-помощник. Отвечай на естественном русском языке, ясно и кратко. Меняй язык только по просьбе пользователя. Соблюдай грамматику. Если не знаешь ответ, скажи об этом. Не выдумывай факты.`;
+export const SYSTEM_PROMPT = `Ты — ${BOT_NAME}, внимательный ИИ-помощник. Отвечай на естественном русском языке, ясно и по существу. Меняй язык только по просьбе пользователя. Не выдавай выдумки за факты. В творческих заданиях создавай вымышленные истории. Если не знаешь ответ на фактический вопрос, скажи об этом.`;
 export const MODEL_ESTIMATE = formatBytes(source.downloadBytes);
-export const GENERATION_OPTIONS = { temperature: 0.35, top_p: 0.85, frequency_penalty: 0, presence_penalty: 0 } as const;
+// Match Qwen's published sampling defaults. WebLLM's OpenAI-style request does
+// not forward repetition_penalty: set it through model ChatOptions instead.
+export const GENERATION_OPTIONS = { temperature: 0.7, top_p: 0.8 } as const;
+export const MODEL_CHAT_OPTIONS = {
+  context_window_size: CONTEXT_TOKENS,
+  repetition_penalty: 1.1,
+  // WebLLM 0.2.79 chooses additive penalties even when both values are zero.
+  // Explicit undefined replaces the manifest's zero defaults and enables the
+  // native repetition penalty; omitting these keys would retain those zeros.
+  frequency_penalty: undefined,
+  presence_penalty: undefined,
+} as const;
 export const CACHE_SCOPES = ['webllm/model', 'webllm/config', 'webllm/wasm', 'ryadom/metadata-v1'] as const;
 
 export function resourceBase(pageUrl: string = location.href): string {
