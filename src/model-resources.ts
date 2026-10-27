@@ -1,7 +1,6 @@
 import type { ModelInfo } from './config';
 import { sha256 } from '@noble/hashes/sha2.js';
 
-const digest = async (data: ArrayBuffer | Uint8Array<ArrayBuffer>) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', data)), byte => byte.toString(16).padStart(2, '0')).join('');
 export class CacheAuditError extends Error {}
 
 // Explicit diagnostic audit: rehash cached bytes instead of trusting the
@@ -14,9 +13,25 @@ export async function auditModelCache(base: string, info: ModelInfo, progress: (
     const cache = await caches.open(file.scope);
     const response = await cache.match(new URL(file.path, base).href);
     if (!response) throw new CacheAuditError(`В кеше отсутствует ${file.path}. Перезапустите модель.`);
-    const data = await response.arrayBuffer();
-    if (data.byteLength !== file.bytes || await digest(data) !== file.sha256) throw new CacheAuditError(`SHA-256 кеша не совпадает: ${file.path}. Удалите скачанную модель и загрузите её снова.`);
-    checkedBytes += data.byteLength; checkedFiles++;
+    // Auditing must not allocate a whole 318 MB embedding shard on top of an
+    // already loaded model. Hash the cached response with bounded streaming.
+    const hash = sha256.create();
+    let size = 0;
+    const invalid = () => new CacheAuditError(`SHA-256 кеша не совпадает: ${file.path}. Удалите скачанную модель и загрузите её снова.`);
+    if (!response.body) throw invalid();
+    const reader = response.body.getReader();
+    try {
+      while (true) {
+        if (stopped()) throw Error('Проверка кеша остановлена.');
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        size += chunk.value.byteLength;
+        if (size > file.bytes) throw invalid();
+        hash.update(chunk.value);
+      }
+      if (size !== file.bytes || Array.from(hash.digest(), byte => byte.toString(16).padStart(2, '0')).join('') !== file.sha256) throw invalid();
+    } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+    checkedBytes += size; checkedFiles++;
     progress(checkedFiles, info.files.length);
   }
   return { valid: true as const, checkedFiles, checkedBytes, completedAt: new Date().toISOString() };

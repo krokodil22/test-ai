@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "kind": "compiled-runtime-metadata-check",
+  "engine": "@mlc-ai/web-llm 0.2.86",
+  "modelId": "Qwen3.5-4B-q4f16_1-MLC",
+  "revision": "44b42469f9e192814bfd90440e3b377d89ba7a13",
+  "weightsUnchanged": true,
+  "compatibleParameters": 579,
+  "standard": {
+    "sha256": "552152bd76fd5432c6b88750a948ac44d038a3c570be6aa0f0e744067a9e2a25",
+    "bytes": 7466230,
+    "prefillChunkSize": 1024,
+    "maxBatchSize": 128,
+    "compiledContextTokens": 262144,
+    "compilerTemporaryBufferBytes": {
+      "alloc_embedding_tensor": 5242880,
+      "argsort_probs": 0,
+      "batch_decode": 690266112,
+      "batch_prefill": 261734400,
+      "batch_verify": 1151713280,
+      "create_rnn_state": 0,
+      "create_tir_paged_kv_cache": 0,
+      "embed": 5242880,
+      "sample_with_top_p": 1536,
+      "softmax_with_temperature": 0
+    }
+  },
+  "economy": {
+    "sha256": "2b87322c5dcfe77e0b281c577cea375949228d1e5927d686ac31c0a280854393",
+    "bytes": 6491148,
+    "prefillChunkSize": 256,
+    "maxBatchSize": 1,
+    "compiledContextTokens": 4096,
+    "compilerTemporaryBufferBytes": {
+      "alloc_embedding_tensor": 1310720,
+      "argsort_probs": 0,
+      "batch_decode": 5392704,
+      "batch_prefill": 36284416,
+      "batch_verify": 289570816,
+      "create_rnn_state": 0,
+      "create_tir_paged_kv_cache": 0,
+      "embed": 1310720,
+      "sample_with_top_p": 8,
+      "softmax_with_temperature": 0
+    }
+  },
+  "checks": [
+    "WASM SHA-256 and byte size",
+    "Native WebLLM WASM instantiation and CPU VM _metadata",
+    "All weight parameter names, dimensions and dtypes",
+    "Expected compiled prefill and batch bounds"
+  ],
+  "limitations": "Compiler estimates are not measured GPU/RAM consumption. Shader execution, answer quality and performance on an 8 GB laptop are not verified here."
+}

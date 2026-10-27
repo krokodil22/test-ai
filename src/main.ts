@@ -5,6 +5,7 @@ import { explainError } from './errors';
 import { BOT_NAME, MODEL_NAME, MODEL_ESTIMATE, MAX_INPUT_CHARS, resourceBase, formatBytes, MODEL_DESCRIPTION, MODEL_GPU_MEMORY, MODEL_RAM, MODEL_ARCHIVE_MODE } from './config';
 import { isModelCached, removeModelCache } from './cache';
 import { modelDelivery } from './model-delivery';
+import { memoryModeControl } from './memory-mode';
 import { markdown } from './markdown';
 import { readHistory, saveHistory, deleteHistory, MAX_CHATS, MAX_MESSAGES, HISTORY_KEY } from './storage';
 import type { History } from './storage';
@@ -67,7 +68,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </main>
   <dialog id="settings" class="settings-dialog" aria-labelledby="settings-title">
     <div class="dialog-header"><div><span class="eyebrow">ВАШЕ УСТРОЙСТВО</span><h2 id="settings-title">Настройки и данные</h2></div><button id="settings-close" class="icon-button" aria-label="Закрыть настройки">${icon('close')}</button></div>
-    <section class="settings-section"><h3>${icon('chip')} Локальная модель</h3><p><strong>${MODEL_DESCRIPTION}</strong><br>Лицензия Apache 2.0 · WebLLM 0.2.86</p><p>Загрузка: <span id="settings-size">${MODEL_ESTIMATE}</span>. ${MODEL_GPU_MEMORY}, желательно 6 ГБ с запасом, и ${MODEL_RAM}. Контекст — 4 096 токенов, ответ — до 512 токенов.</p><p>Модель поддерживает русский язык, но ответы могут быть неточными. После смены модели рекомендуем начать новый чат. Прежняя переписка сохраняется. Старые реплики исключаются из контекста, оставаясь в истории.</p><div id="cache-status" class="cache-status">Проверяем кеш…</div><button id="settings-start" class="secondary-button">Запустить модель</button><button id="comparison-open" class="secondary-button">Сравнить режимы ответа</button><button id="diagnostics-open" class="secondary-button">Диагностика модели и GPU</button><button id="delete-model" class="secondary-button">${icon('trash')} Удалить модель и старые версии</button></section>
+    <section class="settings-section"><h3>${icon('chip')} Локальная модель</h3><p><strong>${MODEL_DESCRIPTION}</strong><br>Лицензия Apache 2.0 · WebLLM 0.2.86</p><p>Загрузка: <span id="settings-size">${MODEL_ESTIMATE}</span>. ${MODEL_GPU_MEMORY}, желательно 6 ГБ с запасом, и ${MODEL_RAM}. Контекст — 4 096 токенов, ответ — до 512 токенов.</p><p>Модель поддерживает русский язык, но ответы могут быть неточными. После смены модели рекомендуем начать новый чат. Прежняя переписка сохраняется. Старые реплики исключаются из контекста, оставаясь в истории.</p><div id="cache-status" class="cache-status">Проверяем кеш…</div><button id="settings-start" class="secondary-button">Запустить модель</button><button id="unload-model" class="secondary-button" disabled>Освободить память</button><button id="comparison-open" class="secondary-button">Сравнить режимы ответа</button><button id="diagnostics-open" class="secondary-button">Диагностика модели и GPU</button><button id="delete-model" class="secondary-button">${icon('trash')} Удалить модель и старые версии</button></section>
     <section class="settings-section"><h3>${icon('chat')} История переписки</h3><p>Чаты сохраняются в этом браузере. Общая история и кеш модели удаляются отдельно. Не используйте общий профиль браузера для личной переписки.</p><button id="delete-history" class="danger-button">${icon('trash')} Удалить всю историю</button></section>
     <section class="settings-section privacy-details"><h3>${icon('lock')} Как устроена приватность</h3><p>Ответы генерируются в Web Worker на вашем GPU. Сервер получает только запросы статических файлов. Внешних API, аналитики и телеметрии нет. Изображения и ссылки из ответов не загружаются.</p><p>Кеш может быть удалён браузером автоматически. Интерфейс сайта требует соединения при открытии; гарантированный офлайн-запуск всей страницы не предусмотрен.</p><p>Ресурсы модели: <code id="resource-location"></code></p></section>
   </dialog>
@@ -79,6 +80,7 @@ const textarea = $<HTMLTextAreaElement>('prompt');
 const sendButton = $<HTMLButtonElement>('send');
 const loadButton = $<HTMLButtonElement>('load-model');
 const delivery = modelDelivery(loadButton, () => updateUi(), $('model-delivery-panel'));
+const memory = memoryModeControl(document.querySelector('#settings .settings-section')!, () => updateUi());
 const settings = $<HTMLDialogElement>('settings');
 const scrollArea = $('scroll-area');
 let history: History = { conversations: [], activeId: null };
@@ -195,6 +197,7 @@ async function copyText(text: string) {
 }
 function updateUi() {
   const busy = state === 'generating';
+  memory.update(state !== 'idle');
   sendButton.disabled = state !== 'ready' || !textarea.value.trim();
   sendButton.hidden = busy;
   $('stop').hidden = !busy;
@@ -210,7 +213,7 @@ function updateUi() {
   $('cancel-load').hidden = state !== 'loading';
   $('cancel-inline').hidden = state !== 'loading';
   $('load-progress').hidden = state !== 'loading';
-  const labels = { checking: 'Проверяем WebGPU…', idle: 'Модель не запущена', loading: 'Загрузка модели…', ready: 'Готов к разговору', generating: 'Генерирую ответ…', unsupported: 'WebGPU недоступен' };
+  const labels = { checking: 'Проверяем WebGPU…', idle: 'Модель не запущена', loading: 'Загрузка модели…', ready: `Готов к разговору${memory.value() === 'economy' ? ' · Экономичный режим' : ''}`, generating: 'Генерирую ответ…', unsupported: 'WebGPU недоступен' };
   $('engine-status').innerHTML = `<span class="status-dot ${state === 'ready' || busy ? 'green' : ''}"></span>${labels[state]}`;
   $('generation-status').hidden = !busy && state !== 'loading';
   $('generation-status').textContent = busy ? `${BOT_NAME} обдумывает ответ…` : state === 'loading' ? 'Подготавливаем модель…' : '';
@@ -223,6 +226,7 @@ function updateUi() {
   $('quick-start').hidden = !current()?.messages.length || state !== 'idle';
   $('quick-start').textContent = cached ? 'Запустить из кеша' : `${MODEL_ARCHIVE_MODE ? 'Открыть' : 'Скачать'} модель · ${MODEL_ESTIMATE}`;
   $('settings-start').hidden = state !== 'idle';
+  $<HTMLButtonElement>('unload-model').disabled = state !== 'ready';
 }
 async function refreshCache() {
   try { cached = await isModelCached(base); }
@@ -258,7 +262,7 @@ async function startModel() {
     worker.onerror = event => { event.preventDefault(); onWorkerEvent({ type: 'error', message: 'Worker модели завершился с ошибкой. Возможно, браузеру не хватает памяти. Запустите модель снова.', fatal: true }); };
     worker.onmessageerror = () => onWorkerEvent({ type: 'error', message: 'Не удалось получить ответ от worker. Запустите модель снова.', fatal: true });
     loadTimer = setTimeout(() => onWorkerEvent({ type: 'error', message: 'Загрузка заняла слишком много времени. Проверьте соединение и попробуйте снова: сохранённые файлы будут использованы повторно.', fatal: true }), 15 * 60 * 1000);
-    sendWorker({ type: 'init', base, archive: delivery.file() });
+    sendWorker({ type: 'init', base, archive: delivery.file(), memoryMode: memory.value() });
   } catch (error) {
     state = 'idle';
     notice(explainError(error), true);
@@ -370,6 +374,12 @@ document.querySelector('.brand')!.addEventListener('click', event => { event.pre
 $('load-model').addEventListener('click', () => void startModel());
 $('quick-start').addEventListener('click', () => void startModel());
 $('settings-start').addEventListener('click', () => { settings.close(); void startModel(); });
+$('unload-model').addEventListener('click', () => {
+  if (state !== 'ready') return;
+  stopWorker(); state = 'idle'; updateUi();
+  $('compatibility').textContent = 'Модель выгружена из памяти · Ресурсы остаются в кеше';
+  notice('Модель выгружена. Можно запустить её снова из кеша или открыть в другой вкладке.');
+});
 function cancelLoad() { stopWorker(); state = 'idle'; updateUi(); void refreshCache(); notice('Загрузка отменена. Частично сохранённые файлы будут использованы повторно.'); }
 $('cancel-load').addEventListener('click', cancelLoad);
 $('cancel-inline').addEventListener('click', cancelLoad);
@@ -403,7 +413,12 @@ $('delete-model').addEventListener('click', async () => {
 });
 $('menu-toggle').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
 $('sidebar-backdrop').addEventListener('click', closeSidebar);
-window.addEventListener('pagehide', persist);
+window.addEventListener('pagehide', () => {
+  stopWorker();
+  if (state === 'generating') finishResponse('stopped');
+  if (['loading', 'ready', 'generating'].includes(state)) state = 'idle';
+  persist(); updateUi();
+});
 window.addEventListener('storage', event => {
   if (event.key !== HISTORY_KEY && event.key !== null) return;
   if (state === 'generating') {

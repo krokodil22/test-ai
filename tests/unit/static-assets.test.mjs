@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { copyPublicAssets } from '../../scripts/static-assets.mjs';
 import source from '../../scripts/model-source.json' with { type: 'json' };
+import lowMemory from '../../scripts/low-memory-runtime.json' with { type: 'json' };
 
 it('publishes only the active model, retains other static files, and preserves local old downloads', async () => {
   const root = await mkdtemp(join(tmpdir(), 'ryadom-assets-'));
@@ -24,8 +25,9 @@ it('publishes only the active model, retains other static files, and preserves l
     expect(await readFile(join(input, 'models/qwen2.5-0.5b/weights.bin'), 'utf8')).toBe('qwen2.5-0.5b');
     await writeFile(join(input, 'models', source.directory, 'model-info.json'), '{}');
     await writeFile(join(input, 'models', source.directory, 'LICENSE'), 'license');
+    await writeFile(join(input, 'models', source.directory, lowMemory.path), 'small extra runtime');
     const pages = join(root, 'pages');
     await copyPublicAssets(input, pages, source.directory, true);
-    expect((await readdir(join(pages, 'models', source.directory))).sort()).toEqual(['LICENSE', 'model-info.json']);
+    expect((await readdir(join(pages, 'models', source.directory))).sort()).toEqual(['LICENSE', lowMemory.path, 'model-info.json'].sort());
   } finally { await rm(root, { recursive: true, force: true }); }
 });

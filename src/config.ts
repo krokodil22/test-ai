@@ -18,7 +18,6 @@ export const MODEL_ARCHIVE_MODE = import.meta.env.VITE_MODEL_DELIVERY === 'archi
 export const GENERATION_OPTIONS = { temperature: 0.7, top_p: 0.8, repetition_penalty: 1.0, frequency_penalty: 0, presence_penalty: 0, extra_body: { enable_thinking: false } } as const;
 export const MODEL_CHAT_OPTIONS = {
   context_window_size: CONTEXT_TOKENS,
-  prefill_chunk_size: 1024,
   max_history_size: 1,
   repetition_penalty: 1.0,
   frequency_penalty: 0,

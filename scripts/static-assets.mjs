@@ -1,5 +1,6 @@
 import { cp, stat } from 'node:fs/promises';
 import { relative, sep } from 'node:path';
+import lowMemory from './low-memory-runtime.json' with { type: 'json' };
 
 // Local developers can retain old downloads. Only the active model is shipped
 // to prevent multiple model versions from exceeding the static host limit.
@@ -11,7 +12,7 @@ export async function copyPublicAssets(publicDirectory, outputDirectory, modelDi
     recursive: true,
     filter(source) {
       const path = relative(publicDirectory, source).split(sep).join('/');
-      if (archive && path.startsWith(`models/${modelDirectory}/`)) return ['model-info.json', 'LICENSE'].includes(path.slice(`models/${modelDirectory}/`.length));
+      if (archive && path.startsWith(`models/${modelDirectory}/`)) return ['model-info.json', 'LICENSE', lowMemory.path].includes(path.slice(`models/${modelDirectory}/`.length));
       return !path.startsWith('models/') || path === `models/${modelDirectory}` || path.startsWith(`models/${modelDirectory}/`);
     },
   });

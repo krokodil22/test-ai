@@ -1,0 +1,7 @@
+The optional Qwen3.5 4B WebGPU WASM runtime is compiled from MLC LLM,
+Apache TVM and Apache TVM FFI under Apache License 2.0.
+Copyright notices: The MLC LLM Contributors; The Apache Software Foundation.
+The Emscripten compiler and Binaryen optimizer are build-time tools.
+This runtime contains no model weight files. The Qwen3.5 model weights are
+licensed separately under Apache License 2.0; see the model directory LICENSE.
+Source provenance and build settings: docs/low-memory.md in the site repository.

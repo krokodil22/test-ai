@@ -24,3 +24,9 @@
 .model-delivery a { color: #366b9c; font-weight: 600; }
 .model-delivery label { display: block; }
 .model-delivery input { display: block; max-width: 100%; margin-top: 8px; }
+
+.memory-mode { margin: 16px 0; max-width: 100%; }
+.memory-mode label { display: grid; gap: 8px; font-size: 14px; font-weight: 600; }
+.memory-mode select { width: 100%; max-width: 100%; padding: 10px 12px; border: 1px solid #c8dfed; border-radius: 10px; color: #2e5872; background: #f4fbff; font: inherit; }
+.memory-mode select:focus-visible { outline: 2px solid #7ab7db; outline-offset: 2px; }
+.memory-mode p { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: #59758a; }

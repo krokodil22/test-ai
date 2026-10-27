@@ -33,6 +33,7 @@ it('overrides upstream context and penalties through the actual WebLLM reload pa
     expect(config.frequency_penalty).toBe(0);
     expect(config.presence_penalty).toBe(0);
     expect(config.context_window_size).toBe(4096);
-    expect(config.prefill_chunk_size).toBe(1024);
+    // Chunk size is compiled into WASM; a chat-config override has no effect.
+    expect(config.prefill_chunk_size).toBeUndefined();
   } finally { await engine.unload(); }
 });

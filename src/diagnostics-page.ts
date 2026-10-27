@@ -1,7 +1,6 @@
 import './style.css';
 import './compare.css';
 import { BOT_NAME, MODEL_ID, MODEL_REVISION, MODEL_ESTIMATE, resourceBase, MODEL_ARCHIVE_MODE } from './config';
-import source from '../scripts/model-source.json';
 import { DIAGNOSTIC_PROFILE as profile, validateReference } from './diagnostics';
 import type { CpuReference, DiagnosticResult } from './diagnostics';
 import { browserEnvironment } from './gpu-info';
@@ -9,6 +8,7 @@ import type { RuntimeGpuInfo } from './gpu-info';
 import type { CacheAudit } from './model-resources';
 import { isModelCached } from './cache';
 import { modelDelivery } from './model-delivery';
+import { memoryModeControl, runtimeFor } from './memory-mode';
 import { probeGpu } from '#gpu';
 import { explainError } from './errors';
 import { icon } from './icons';
@@ -30,6 +30,8 @@ document.querySelector('#diagnostics-app')!.innerHTML = `<main class="compare-sh
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const button = (id: string) => $<HTMLButtonElement>(id);
 const delivery = modelDelivery(button('diagnostic-load'), () => update());
+const memoryContainer = document.createElement('div'); button('diagnostic-load').before(memoryContainer);
+const memory = memoryModeControl(memoryContainer, () => update());
 const notice = (text: string) => { $('diagnostic-notice').textContent = text; $('diagnostic-notice').hidden = !text; };
 for (const item of profile.cases) {
   const section = document.createElement('section');
@@ -50,12 +52,14 @@ let lastError = '';
 let gpu: RuntimeGpuInfo | undefined;
 let audit: CacheAudit | undefined;
 let reference: CpuReference | undefined;
+let runtimeUsed: ReturnType<typeof runtimeFor> | undefined;
 let results: DiagnosticResult[] = [];
 let timer: ReturnType<typeof setTimeout> | undefined;
 let stopping = false;
 const environment = browserEnvironment();
 function renderEnvironment() { $('diagnostic-environment').textContent = JSON.stringify({ browser: environment, gpu: gpu || 'Рабочее устройство ещё не создано' }, null, 2); }
 function update() {
+  memory.update(state !== 'idle');
   button('diagnostic-load').hidden = state === 'ready' || state === 'running';
   button('diagnostic-load').disabled = state !== 'idle';
   button('diagnostic-load').disabled ||= !delivery.available(cached);
@@ -99,6 +103,8 @@ function receive(event: WorkerEvent) {
 }
 button('diagnostic-load').onclick = async () => {
   if (state !== 'idle') return;
+  runtimeUsed = runtimeFor(memory.value());
+  results = []; complete = false; currentCase = undefined; gpu = undefined; audit = undefined;
   state = 'loading'; notice(''); update();
   try {
     await probeGpu();
@@ -109,7 +115,7 @@ button('diagnostic-load').onclick = async () => {
     worker.onerror = event => { event.preventDefault(); receive({ type: 'error', fatal: true, message: 'Ошибка Worker. Возможно, не хватает памяти.' }); };
     worker.onmessageerror = () => receive({ type: 'error', fatal: true, message: 'Не удалось прочитать сообщение Worker.' });
     timer = setTimeout(() => receive({ type: 'error', fatal: true, message: 'Запуск не завершился за 15 минут.' }), 15 * 60 * 1000);
-    worker.postMessage({ type: 'init', base, archive: delivery.file() });
+    worker.postMessage({ type: 'init', base, archive: delivery.file(), memoryMode: memory.value() });
   } catch (error) { receive({ type: 'error', fatal: true, message: explainError(error) }); }
 };
 button('diagnostic-run').onclick = () => {
@@ -126,8 +132,9 @@ button('diagnostic-stop').onclick = () => {
 };
 button('diagnostic-cancel').onclick = () => { terminate(); state = 'idle'; $('diagnostic-status').textContent = 'Запуск отменён'; update(); };
 button('diagnostic-export').onclick = () => {
+  const runtime = runtimeUsed || runtimeFor(memory.value());
   const partial = currentCase ? { caseId: currentCase, text: $(`output-${currentCase}`).textContent, status: 'incomplete' } : undefined;
-  const report = { schema: 1, kind: 'browser-diagnostics', protocol: profile.protocol, createdAt: new Date().toISOString(), testing: __COMPARISON_TEST_ENGINE__, modelId: MODEL_ID, revision: MODEL_REVISION, runtime: { engine: 'WebLLM 0.2.86', wasmSha256: source.runtime.sha256, quantization: 'q4f16_1' }, environment: { browser: environment, gpu }, settings: { ...profile.settings, systemPrompt: profile.systemPrompt, resetContextBeforeEach: true }, cacheAudit: audit || { valid: false, status: 'not-completed' }, complete, stopped, error: lastError || undefined, results, partial, reference: reference || { status: 'unavailable' } };
+  const report = { schema: 1, kind: 'browser-diagnostics', protocol: profile.protocol, createdAt: new Date().toISOString(), testing: __COMPARISON_TEST_ENGINE__, modelId: MODEL_ID, revision: MODEL_REVISION, runtime: { engine: 'WebLLM 0.2.86', wasmSha256: runtime.sha256, memoryMode: runtime.mode, prefillChunkSize: runtime.prefillChunkSize, maxBatchSize: runtime.maxBatchSize, contextTokens: runtime.contextTokens, quantization: 'q4f16_1' }, environment: { browser: environment, gpu }, settings: { ...profile.settings, systemPrompt: profile.systemPrompt, resetContextBeforeEach: true }, cacheAudit: audit || { valid: false, status: 'not-completed' }, complete, stopped, error: lastError || undefined, results, partial, reference: reference || { status: 'unavailable' } };
   const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }));
   const link = document.createElement('a'); link.href = url; link.download = 'tetrikanets-diagnostics.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 };

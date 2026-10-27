@@ -52,3 +52,31 @@ it('audits the real cached bytes without trusting the marker, fetching data or a
   await expect(auditModelCache(base, info, () => {}, () => true)).rejects.toThrow('остановлена');
   expect(fetch).not.toHaveBeenCalled();
 });
+it('audits a streamed shard without materializing it and can cancel before the stream completes', async () => {
+  const { plain, file, info } = fixture();
+  const arrayBuffer = vi.fn(() => { throw Error('A whole shard must never be buffered'); });
+  let cancelled = false;
+  let stopped = false;
+  function response(stopMidway: boolean) {
+    let part = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (part === 0) controller.enqueue(Uint8Array.from(plain.subarray(0, 10)));
+        else if (part === 1) { controller.enqueue(Uint8Array.from(plain.subarray(10))); if (stopMidway) stopped = true; }
+        else controller.close();
+        part++;
+      },
+      cancel() { cancelled = true; },
+    });
+    const response = new Response(body);
+    response.arrayBuffer = arrayBuffer;
+    return response;
+  }
+  let cached = response(false);
+  vi.stubGlobal('caches', { open: async () => ({ match: async () => cached }) });
+  expect(await auditModelCache(base, info, () => {}, () => false)).toMatchObject({ checkedBytes: file.bytes });
+  cached = response(true);
+  await expect(auditModelCache(base, info, () => {}, () => stopped)).rejects.toThrow('остановлена');
+  expect(cancelled).toBe(true);
+  expect(arrayBuffer).not.toHaveBeenCalled();
+});

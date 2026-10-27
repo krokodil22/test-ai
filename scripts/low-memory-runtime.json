@@ -1,0 +1,18 @@
+{
+  "path": "model-low-memory.wasm",
+  "fileName": "Qwen3.5-4B-q4f16_1_cs256-b1-webgpu.wasm",
+  "url": "https://github.com/krokodil22/test-ai/releases/download/runtime-qwen35-4b-cs256-b1-v1/Qwen3.5-4B-q4f16_1_cs256-b1-webgpu.wasm",
+  "bytes": 6491148,
+  "sha256": "2b87322c5dcfe77e0b281c577cea375949228d1e5927d686ac31c0a280854393",
+  "prefillChunkSize": 256,
+  "maxBatchSize": 1,
+  "contextTokens": 4096,
+  "experimental": true,
+  "toolchain": {
+    "mlcWheelSha256": "921512fd7fae06c189c9fb5dbe00a7cb681c3335a8c8b781ae690a1a92ff5573",
+    "tvmWheelSha256": "a1d132fcb7791c212e4d93fead283516a6a7a11056421ffbf0994a51d0217502",
+    "emscripten": "3.1.69",
+    "binaryen": "133",
+    "target": "webgpu:generic, no subgroups"
+  }
+}

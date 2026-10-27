@@ -3,6 +3,9 @@ import { MLCEngine } from '@mlc-ai/web-llm';
 import { probeGpu, monitorGpu } from '#gpu';
 import { MODEL_ID, MODEL_CHAT_OPTIONS, MAX_REPLY_TOKENS, GENERATION_OPTIONS, MODEL_ARCHIVE_MODE } from './config';
 import { archiveResources } from './model-archive';
+import { holdModelLease } from './model-lease';
+import { runtimeFor } from './memory-mode';
+import type { MemoryMode } from './memory-mode';
 import type { ModelInfo } from './config';
 import type { RuntimeGpuInfo } from './gpu-info';
 import { loadModelInfo, removeLegacyModelCache } from './cache';
@@ -79,22 +82,25 @@ async function comparisonStage(request: StageRequest, onText = (text: string) =>
   return { text: text.trim(), finish, seconds: (performance.now() - start) / 1000, generatedTokens, firstAnswerSeconds, ...(thinking ? { thinking: { status: thinking.status(), text: reasoning.trim() } } : {}) };
 }
 
-async function init(base: string, translatorBase?: string, archive?: File) {
+async function init(base: string, translatorBase?: string, archive?: File, memoryMode: MemoryMode = 'standard') {
   if (engine || loading) return;
   loading = true;
   try {
+    await holdModelLease();
     await probeGpu();
     monitorGpu(() => {
       fatal = true;
       send({ type: 'error', id: active, message: explainError(new Error('GPU device lost')), fatal: true });
     }, (info: RuntimeGpuInfo) => send({ type: 'gpu-info', info }));
     const root = new URL(base);
+    const runtime = runtimeFor(memoryMode);
+    const runtimeUrl = new URL(runtime.path, base).href;
     if (root.protocol !== 'https:' && !(root.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(root.hostname))) throw new Error('Ресурсы должны использовать HTTPS.');
     // Even unexpected URLs inside model manifests cannot contact third parties.
     globalThis.fetch = async (input, options) => {
       const url = new URL(input instanceof Request ? input.url : String(input), base);
       if (url.origin !== root.origin || !url.href.startsWith(base) || url.search || url.hash || (options?.method || (input instanceof Request ? input.method : 'GET')) !== 'GET') throw new Error('Запрещён сетевой запрос вне каталога ресурсов модели.');
-      const isRuntime = url.href === `${base}model.wasm`;
+      const isRuntime = url.href === runtimeUrl;
       // WebLLM intentionally bypasses its WASM cache on localhost. Keep our own
       // entry in the same scope so development also reuses every resource.
       if (isRuntime && resourceHashes.has(url.href)) {
@@ -122,6 +128,19 @@ async function init(base: string, translatorBase?: string, archive?: File) {
     const qwenShare = translatorBase ? 0.8 : 1;
     const resourceFetch = archive ? await archiveResources(archive, base, info) : MODEL_ARCHIVE_MODE ? (async () => { throw Error('Выберите скачанный архив модели .tar. Файлы не отправляются на сервер.'); }) as typeof fetch : nativeFetch;
     await prepareModelCache(base, info, resourceFetch, (value, text) => send({ type: 'progress', progress: value * 0.7 * qwenShare, text }));
+    if (memoryMode === 'economy') {
+      resourceHashes.set(runtimeUrl, runtime.sha256);
+      const runtimeFile = { path: runtime.path, bytes: runtime.bytes, sha256: runtime.sha256, scope: 'webllm/wasm' as const };
+      // The small optional runtime is hosted beside model-info.json on Pages.
+      // Keep the weight manifest/archive unchanged so existing downloads work.
+      try {
+        await prepareModelCache(base, { ...info, files: [runtimeFile] }, nativeFetch,
+          () => send({ type: 'progress', progress: 0.7 * qwenShare, text: 'Модель: подготовка экономичного режима…' }));
+      } catch (error) {
+        throw new Error('Не удалось подготовить библиотеку экономичного режима. Уже скачанные веса сохранены. Повторите запуск или выберите обычный режим.', { cause: error });
+      }
+      modelInfo = { ...info, files: [...info.files, runtimeFile] };
+    }
     engine = new MLCEngine({
       logLevel: 'ERROR',
       appConfig: {
@@ -130,7 +149,7 @@ async function init(base: string, translatorBase?: string, archive?: File) {
           model_id: MODEL_ID,
           // WebLLM requires /resolve/<revision>/ even for a self-hosted URL.
           model: `${base}resolve/main/`,
-          model_lib: `${base}model.wasm`,
+          model_lib: runtimeUrl,
           required_features: ['shader-f16'],
           overrides: MODEL_CHAT_OPTIONS,
         }],
@@ -151,7 +170,7 @@ async function init(base: string, translatorBase?: string, archive?: File) {
 }
 
 scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
-  if (data.type === 'init') { await init(data.base, data.translatorBase, data.archive); return; }
+  if (data.type === 'init') { await init(data.base, data.translatorBase, data.archive, data.memoryMode); return; }
   if (data.type === 'stop') {
     if (active === data.id) { stopped = true; void engine?.interruptGenerate(); translator?.stop(); }
     return;

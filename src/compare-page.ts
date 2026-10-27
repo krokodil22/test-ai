@@ -5,6 +5,7 @@ import { COMPARISON_EXAMPLES, COMPARISON_STAGES, THINKING_STAGES, THINKING_MAX_T
 import type { ComparisonMode, ComparisonResult, ComparisonStage, StageResult } from './comparison';
 import { isModelCached } from './cache';
 import { modelDelivery } from './model-delivery';
+import { memoryModeControl, runtimeFor } from './memory-mode';
 import { TRANSLATOR, TRANSLATOR_ESTIMATE, translatorBase, isTranslatorCached } from './translation-config';
 import { probeGpu } from '#gpu';
 import { explainError } from './errors';
@@ -39,6 +40,8 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 const prompt = $<HTMLTextAreaElement>('comparison-prompt');
 const load = $<HTMLButtonElement>('comparison-load');
 const delivery = modelDelivery(load, () => update());
+const memoryContainer = document.createElement('div'); load.before(memoryContainer);
+const memory = memoryModeControl(memoryContainer, () => update());
 const run = $<HTMLButtonElement>('comparison-run');
 const stop = $<HTMLButtonElement>('comparison-stop');
 const exportButton = $<HTMLButtonElement>('comparison-export');
@@ -55,7 +58,7 @@ let activeId: string | undefined;
 let activeStage: ComparisonStage | undefined;
 let loadTimer: ReturnType<typeof setTimeout> | undefined;
 let stopTimer: ReturnType<typeof setTimeout> | undefined;
-const reports: Array<{ createdAt: string; result: ComparisonResult }> = [];
+const reports: Array<{ createdAt: string; result: ComparisonResult; runtime: ReturnType<typeof runtimeFor> }> = [];
 
 for (const example of COMPARISON_EXAMPLES) {
   const button = document.createElement('button');
@@ -67,6 +70,7 @@ prompt.value = COMPARISON_EXAMPLES[isPenalty ? 3 : isThinking ? 1 : 0].prompt;
 
 function notice(text: string) { $('comparison-notice').textContent = text; $('comparison-notice').hidden = !text; }
 function update() {
+  memory.update(state !== 'idle');
   run.disabled = state !== 'ready' || !prompt.value.trim();
   prompt.disabled = state === 'running';
   for (const button of $('comparison-examples').querySelectorAll('button')) button.disabled = state === 'running';
@@ -147,7 +151,7 @@ function receive(event: WorkerEvent) {
       if (activeStage === 'thinking') $('reasoning-status').textContent = 'Генерация остановлена. Рассуждения и ответ могут быть неполными.';
       notice('Проверка остановлена. Неполное сравнение не считается результатом.');
     } else if (event.result) {
-      reports.push({ createdAt: new Date().toISOString(), result: event.result });
+      reports.push({ createdAt: new Date().toISOString(), result: event.result, runtime: runtimeFor(memory.value()) });
       const issues = event.result.stages.map(result => { const issue = stageIssue(result); return issue ? `${STAGE_LABELS[result.stage]}: ${issue}.` : ''; }).filter(Boolean);
       if (issues.length) notice(issues.join(' '));
       const variantSeconds = event.result.mode === 'penalty' ? event.result.noPenaltySeconds : event.result.mode === 'thinking' ? event.result.thinkingSeconds : event.result.bridgeSeconds;
@@ -178,7 +182,7 @@ async function startModel() {
     worker.onerror = event => { event.preventDefault(); receive({ type: 'error', message: 'Worker завершился с ошибкой. Возможно, не хватает памяти. Закройте другие вкладки с моделью и запустите её снова.', fatal: true }); };
     worker.onmessageerror = () => receive({ type: 'error', message: 'Не удалось прочитать ответ worker. Запустите модель снова.', fatal: true });
     loadTimer = setTimeout(() => receive({ type: 'error', message: 'Запуск модели не завершился за 15 минут. Проверьте соединение и доступную память.', fatal: true }), 15 * 60 * 1000);
-    worker.postMessage({ type: 'init', base, archive: delivery.file(), ...(isTranslation ? { translatorBase: translationBase } : {}) });
+    worker.postMessage({ type: 'init', base, archive: delivery.file(), memoryMode: memory.value(), ...(isTranslation ? { translatorBase: translationBase } : {}) });
   } catch (error) { terminate(); state = 'idle'; notice(explainError(error)); update(); }
 }
 $('comparison-form').addEventListener('submit', event => {

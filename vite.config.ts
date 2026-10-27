@@ -22,6 +22,7 @@ export default defineConfig(({ mode, command }) => {
     worker: { format: 'es' },
     resolve: {
       alias: {
+        '#low-memory-runtime': fileURLToPath(new URL(process.env.E2E_MOCK === '1' ? './tests/fixtures/low-memory-runtime.json' : './scripts/low-memory-runtime.json', import.meta.url)),
         '#gpu': fileURLToPath(new URL(process.env.E2E_MOCK === '1' ? './tests/fixtures/gpu.ts' : './src/gpu.ts', import.meta.url)),
         '#translator-backend': fileURLToPath(new URL(process.env.E2E_MOCK === '1' ? './tests/fixtures/translator.ts' : './src/translator.ts', import.meta.url)),
         ...(process.env.E2E_MOCK === '1' ? { '@mlc-ai/web-llm': fileURLToPath(new URL('./tests/fixtures/webllm.ts', import.meta.url)) } : {}),

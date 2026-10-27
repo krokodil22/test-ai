@@ -1,0 +1,11 @@
+{
+  "path": "model-low-memory.wasm",
+  "fileName": "fixture-low-memory.wasm",
+  "url": "https://fixture.invalid/model-low-memory.wasm",
+  "bytes": 23,
+  "sha256": "a3592990e59b3b638a8e777ca2a376ef1a6a6c0fda563e777a34ae2c253988c2",
+  "prefillChunkSize": 256,
+  "maxBatchSize": 1,
+  "contextTokens": 4096,
+  "experimental": true
+}

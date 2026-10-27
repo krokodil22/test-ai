@@ -1,7 +1,7 @@
 import { MODEL_GPU_MEMORY, MODEL_RAM } from './config';
 
 export function explainError(error: unknown): string {
-  if (error instanceof Error && /^(Архив модели|Выберите скачанный архив|Браузер не смог сохранить)/.test(error.message)) return error.message;
+  if (error instanceof Error && /^(Архив модели|Выберите скачанный архив|Браузер не смог сохранить|Модель уже запущена в другой вкладке|Не удалось подготовить библиотеку экономичного режима)/.test(error.message)) return error.message;
   const text = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
   if (/device.?lost|gpu.*(lost|потер)|потер.*gpu/i.test(text)) return 'Соединение с GPU потеряно. Закройте тяжёлые вкладки и запустите модель снова. Сохранённая переписка останется на устройстве.';
   if (/out of memory|outofmemory|allocation|alloc.*(fail|error)|memory access|недостаточно.*памят/i.test(text)) return `Не хватает оперативной или графической памяти. Закройте другие приложения и вкладки, затем запустите модель снова. Нужно ${MODEL_GPU_MEMORY} с запасом и ${MODEL_RAM}.`;

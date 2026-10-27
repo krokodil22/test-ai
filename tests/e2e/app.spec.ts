@@ -3,6 +3,7 @@ import type { Page, BrowserContext, Request } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import source from '../../scripts/model-source.json' with { type: 'json' };
+import lowMemory from '../fixtures/low-memory-runtime.json' with { type: 'json' };
 const modelId = source.modelId;
 const files = [
   { path: 'model.wasm', scope: 'webllm/wasm', body: 'wasm-test-fixture' },
@@ -35,6 +36,82 @@ async function start(page: Page) {
   await page.locator('#load-model').click();
   await expect(page.locator('#engine-status')).toContainText('Готов к разговору');
 }
+test('allows one model across tabs and releases its GPU lease without deleting the cache or history', async ({ page, context }) => {
+  const requests = await resources(context);
+  await start(page);
+  await page.locator('#prompt').fill('Переписка должна остаться');
+  await page.locator('#send').click();
+  await expect(page.locator('#stop')).toBeHidden();
+  const other = await context.newPage();
+  await other.goto('./');
+  await expect(other.locator('#quick-start')).toBeVisible();
+  const before = requests.filter(request => request.url().includes('/models/')).length;
+  await other.locator('#quick-start').click();
+  await expect(other.locator('#notice')).toContainText('другой вкладке');
+  await expect(page.locator('#engine-status')).toContainText('Готов к разговору');
+  expect(requests.filter(request => request.url().includes('/models/')).length).toBe(before);
+  await page.locator('#settings-open').click();
+  await page.locator('#unload-model').click();
+  await expect(page.locator('#cache-status')).toContainText('сохранены');
+  await expect(page.locator('.message-user')).toContainText('Переписка должна остаться');
+  await other.locator('#quick-start').click();
+  await expect(other.locator('#engine-status')).toContainText('Готов к разговору');
+  expect(requests.filter(request => request.url().includes('/models/')).length).toBe(before);
+  await other.close();
+  await page.locator('#settings-close').click();
+  await page.locator('#quick-start').click();
+  await expect(page.locator('#engine-status')).toContainText('Готов к разговору');
+  // Leaving a loaded page also releases the worker and its lock.
+  await page.goto('about:blank');
+  await page.goto('./compare.html?mode=penalty');
+  await expect(page.locator('#comparison-load')).toBeEnabled();
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled();
+});
+test('switches to the economy runtime, preserves and reuses the existing weights, then returns to standard', async ({ page, context }) => {
+  const requests = await resources(context);
+  await context.route('**/' + lowMemory.path, route => route.fulfill({ body: 'fixture-low-memory-wasm', contentType: 'application/wasm' }));
+  await start(page);
+  const before = requests.filter(request => request.url().includes('/models/')).length;
+  await page.locator('#settings-open').click();
+  const modes = page.getByRole('combobox', { name: 'Режим памяти' });
+  await expect(modes).toBeDisabled();
+  await page.locator('#unload-model').click();
+  await expect(modes).toBeEnabled();
+  await modes.selectOption('economy');
+  await page.locator('#settings-start').click();
+  await expect(page.locator('#engine-status')).toContainText('Экономичный режим');
+  expect(requests.filter(request => request.url().includes('/models/')).length).toBe(before + 1);
+  expect(requests.filter(request => request.url().endsWith('/' + lowMemory.path))).toHaveLength(1);
+  await page.reload();
+  await page.locator('#load-model').click();
+  await expect(page.locator('#engine-status')).toContainText('Экономичный режим');
+  expect(requests.filter(request => request.url().includes('/models/')).length).toBe(before + 1);
+  await page.locator('#settings-open').click();
+  await page.locator('#unload-model').click();
+  await modes.selectOption('standard');
+  await page.locator('#settings-start').click();
+  await expect(page.locator('#engine-status')).toContainText('Готов к разговору');
+  await expect(page.locator('#engine-status')).not.toContainText('Экономичный');
+  expect(requests.filter(request => request.url().includes('/models/')).length).toBe(before + 1);
+  await page.locator('#settings-open').click();
+  page.once('dialog', dialog => dialog.accept());
+  await page.locator('#delete-model').click();
+  await expect(page.locator('#cache-status')).toContainText('не сохранена');
+  expect(await page.evaluate(async path => !!await (await caches.open('webllm/wasm')).match(new URL('models/' + path, location.href).href), source.directory + '/' + lowMemory.path)).toBe(false);
+});
+test('rejects a damaged economy runtime without silently falling back or losing cached weights', async ({ page, context }) => {
+  await resources(context);
+  await context.route('**/' + lowMemory.path, route => route.fulfill({ body: 'damaged-runtime' }));
+  await page.addInitScript(() => localStorage.setItem('tetrikanets:memory-mode:v1', 'economy'));
+  await page.goto('./');
+  await expect(page.locator('#load-model')).toBeEnabled();
+  await page.locator('#load-model').click();
+  await expect(page.locator('#notice')).toContainText('библиотеку экономичного режима');
+  await expect(page.locator('#engine-status')).toContainText('не запущена');
+  await page.locator('#settings-open').click();
+  await expect(page.locator('#cache-status')).toContainText('сохранены');
+});
 test('first run, streaming dialog, keyboard, Markdown, copy, local history and network privacy', async ({ page, context }) => {
   const requests = await resources(context);
   await page.goto('./');

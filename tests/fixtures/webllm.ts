@@ -6,10 +6,11 @@ export class MLCEngine {
   private interrupted = false;
   private locked = false;
   constructor(private options: {
-    appConfig: { model_list: Array<{ model: string }> };
+    appConfig: { model_list: Array<{ model: string; model_lib: string }> };
     initProgressCallback: (report: { progress: number; text: string }) => void;
   }) {}
   async reload() {
+    if (!await (await caches.open('webllm/wasm')).match(this.options.appConfig.model_list[0].model_lib)) throw Error('Selected WASM runtime was not prepared');
     const base = this.options.appConfig.model_list[0].model.replace(/resolve\/main\/$/, '');
     const info = await (await (await caches.open('ryadom/metadata-v1')).match(base + 'model-info.json'))!.json();
     for (const [i, file] of (info.files as File[]).entries()) {

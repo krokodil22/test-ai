@@ -13,6 +13,8 @@
     "model:archive": "node scripts/create-model-archive.mjs",
     "preview": "vite preview --host 0.0.0.0",
     "model:download": "node scripts/download-model.mjs",
+    "runtime:download": "node scripts/download-low-memory-runtime.mjs",
+    "runtime:verify": "node scripts/verify-low-memory-runtime.mjs",
     "reference:download": "node scripts/download-reference.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test && playwright test --config playwright.cors.config.ts && playwright test --config playwright.archive.config.ts",
