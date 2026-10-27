@@ -39,7 +39,7 @@ export default defineConfig(({ mode, command }) => {
         await copyPublicAssets(resolve('public'), resolve(options.dir!), source.directory);
       },
     }],
-    build: { target: 'es2022', chunkSizeWarningLimit: 6500, rollupOptions: { input: { main: resolve('index.html'), compare: resolve('compare.html'), translate: resolve('translate.html') } } },
+    build: { target: 'es2022', chunkSizeWarningLimit: 6500, rollupOptions: { input: { main: resolve('index.html'), compare: resolve('compare.html'), translate: resolve('translate.html'), diagnostics: resolve('diagnostics.html') } } },
     test: { include: ['tests/unit/**/*.test.{ts,mjs}'] },
   };
 });

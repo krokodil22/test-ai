@@ -1,4 +1,6 @@
 import source from '../scripts/model-source.json';
+import { describeGpu } from './gpu-info';
+import type { RuntimeGpuInfo } from './gpu-info';
 
 export async function probeGpu(): Promise<string> {
   if (!globalThis.isSecureContext) throw new Error('Нужен HTTPS: WebGPU недоступен на незащищённом сайте. Для разработки подходит localhost.');
@@ -17,7 +19,7 @@ export async function probeGpu(): Promise<string> {
 }
 
 // Observe the actual device allocated by WebLLM, including loss while the engine is idle.
-export function monitorGpu(onLost: () => void): void {
+export function monitorGpu(onLost: () => void, onDevice?: (info: RuntimeGpuInfo) => void): void {
   const original = navigator.gpu.requestAdapter.bind(navigator.gpu);
   navigator.gpu.requestAdapter = async options => {
     const adapter = await original(options);
@@ -28,6 +30,7 @@ export function monitorGpu(onLost: () => void): void {
         // tensor needs 148.4 MiB, even on an adapter supporting 256 MiB.
         // Request the actual model limit through the normal WebGPU API.
         const device = await requestDevice({ ...descriptor, requiredLimits: { ...descriptor?.requiredLimits, maxStorageBufferBindingSize: Math.max(descriptor?.requiredLimits?.maxStorageBufferBindingSize ?? 128 * 1024 * 1024, source.minimumStorageBufferBytes) } });
+        onDevice?.(describeGpu(adapter, device));
         void device.lost.then(info => { if (info.reason !== 'destroyed') onLost(); });
         device.addEventListener('uncapturederror', event => {
           if (event.error instanceof GPUOutOfMemoryError) onLost();

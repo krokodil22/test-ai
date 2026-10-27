@@ -2,13 +2,16 @@
 import { MLCEngine } from '@mlc-ai/web-llm';
 import { probeGpu, monitorGpu } from '#gpu';
 import { MODEL_ID, MODEL_CHAT_OPTIONS, MAX_REPLY_TOKENS, GENERATION_OPTIONS } from './config';
+import type { ModelInfo } from './config';
+import type { RuntimeGpuInfo } from './gpu-info';
 import { loadModelInfo, removeLegacyModelCache } from './cache';
 import { buildContext } from './context';
 import { explainError } from './errors';
 import { compareAnswers, compareThinking, comparePenalty, comparisonCompletionRequest, ComparisonStopped, ComparisonInputError } from './comparison';
 import type { StageRequest } from './comparison';
 import { TranslatorClient } from './translator-client';
-import { prepareModelCache } from './model-resources';
+import { prepareModelCache, auditModelCache, CacheAuditError } from './model-resources';
+import { runDiagnostics } from './diagnostics';
 import { visibleQwenStream, thinkingQwenStream } from './stream-text';
 import type { WorkerEvent, WorkerRequest } from './types';
 
@@ -21,9 +24,11 @@ let stopped = false;
 let loading = false;
 let fatal = false;
 let resourceHashes = new Map<string, string>();
+let modelInfo: ModelInfo | undefined;
+let modelBase = '';
 const nativeFetch = globalThis.fetch.bind(globalThis);
 
-async function comparisonStage(request: StageRequest) {
+async function comparisonStage(request: StageRequest, onText = (text: string) => send({ type: 'comparison-token', id: active!, stage: request.stage, text })) {
   const start = performance.now();
   if (request.stage === 'translate-output') {
     if (!translator) throw new ComparisonInputError('Для обратного перевода нужен локальный OPUS-MT. Откройте обновлённую страницу эксперимента.');
@@ -54,7 +59,7 @@ async function comparisonStage(request: StageRequest) {
     if (parts.answer) {
       if (firstAnswerSeconds === undefined && parts.answer.trim()) firstAnswerSeconds = (performance.now() - start) / 1000;
       text += parts.answer;
-      send({ type: 'comparison-token', id: active!, stage: request.stage, text: parts.answer });
+      onText(parts.answer);
     }
   }
   let finish: 'complete' | 'length' = 'complete';
@@ -81,7 +86,7 @@ async function init(base: string, translatorBase?: string) {
     monitorGpu(() => {
       fatal = true;
       send({ type: 'error', id: active, message: explainError(new Error('GPU device lost')), fatal: true });
-    });
+    }, (info: RuntimeGpuInfo) => send({ type: 'gpu-info', info }));
     const root = new URL(base);
     if (root.protocol !== 'https:' && !(root.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(root.hostname))) throw new Error('Ресурсы должны использовать HTTPS.');
     // Even unexpected URLs inside model manifests cannot contact third parties.
@@ -110,6 +115,7 @@ async function init(base: string, translatorBase?: string) {
     };
     await removeLegacyModelCache();
     const info = await loadModelInfo(base);
+    modelInfo = info; modelBase = base;
     send({ type: 'size', bytes: info.downloadBytes });
     resourceHashes = new Map(info.files.map(file => [new URL(file.path, base).href, file.sha256]));
     const qwenShare = translatorBase ? 0.8 : 1;
@@ -148,13 +154,30 @@ scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
     if (active === data.id) { stopped = true; void engine?.interruptGenerate(); translator?.stop(); }
     return;
   }
-  if (data.type !== 'generate' && data.type !== 'compare') return;
+  if (data.type !== 'generate' && data.type !== 'compare' && data.type !== 'diagnose') return;
   if (active || loading || !engine || fatal) {
     send({ type: 'error', id: data.id, message: 'Модель занята или не запущена.', fatal: false });
     return;
   }
   active = data.id;
   stopped = false;
+  if (data.type === 'diagnose') {
+    try {
+      const audit = await auditModelCache(modelBase, modelInfo!, (checked, total) => send({ type: 'diagnostic-audit', id: data.id, checked, total }), () => stopped || fatal);
+      if (stopped || fatal) throw new ComparisonStopped();
+      send({ type: 'diagnostic-audit', id: data.id, checked: audit.checkedFiles, total: audit.checkedFiles, result: audit });
+      let caseId = '';
+      await runDiagnostics(request => comparisonStage(request, text => send({ type: 'diagnostic-token', id: data.id, caseId, text })), event => {
+        if (event.phase === 'start') { caseId = event.caseId; send({ type: 'diagnostic-start', id: data.id, caseId }); }
+        else send({ type: 'diagnostic-result', id: data.id, result: event.result });
+      }, () => stopped || fatal);
+      send({ type: 'diagnostic-done', id: data.id, stopped: false });
+    } catch (error) {
+      if (stopped || error instanceof ComparisonStopped) { if (!fatal) send({ type: 'diagnostic-done', id: data.id, stopped: true }); }
+      else { fatal = !(error instanceof ComparisonInputError); send({ type: 'error', id: data.id, message: error instanceof ComparisonInputError || error instanceof CacheAuditError ? error.message : explainError(error), fatal }); }
+    } finally { active = undefined; }
+    return;
+  }
   if (data.type === 'compare') {
     try {
       const compare = data.mode === 'penalty' ? comparePenalty : data.mode === 'thinking' ? compareThinking : compareAnswers;

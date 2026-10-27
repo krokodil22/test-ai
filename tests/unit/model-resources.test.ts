@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
-import { prepareModelCache } from '../../src/model-resources';
+import { prepareModelCache, auditModelCache } from '../../src/model-resources';
 import type { ModelInfo } from '../../src/config';
 const sha = (value: Uint8Array) => createHash('sha256').update(value).digest('hex');
 const base = 'https://models.example.test/qwen3/';
@@ -35,4 +35,15 @@ it('verifies tensor bytes even if the compressed manifest hash matches', async (
   file.download = { ...file.download!, bytes: wrong.length, sha256: sha(wrong) };
   await expect(prepareModelCache(base, info, async () => new Response(Uint8Array.from(wrong)), () => {})).rejects.toThrow('SHA256');
   expect(entries.size).toBe(0);
+});
+it('audits the real cached bytes without trusting the marker, fetching data or accepting a damaged entry', async () => {
+  const { plain, file, info, entries } = fixture();
+  const fetch = vi.fn(); vi.stubGlobal('fetch', fetch);
+  entries.set(base + file.path, new Response(Uint8Array.from(plain), { headers: { 'X-Tetrikanets-SHA256': file.sha256 } }));
+  expect(await auditModelCache(base, info, () => {}, () => false)).toMatchObject({ valid: true, checkedFiles: 1, checkedBytes: plain.length });
+  entries.set(base + file.path, new Response('damaged', { headers: { 'X-Tetrikanets-SHA256': file.sha256 } }));
+  await expect(auditModelCache(base, info, () => {}, () => false)).rejects.toThrow('SHA-256');
+  entries.clear(); await expect(auditModelCache(base, info, () => {}, () => false)).rejects.toThrow('отсутствует');
+  await expect(auditModelCache(base, info, () => {}, () => true)).rejects.toThrow('остановлена');
+  expect(fetch).not.toHaveBeenCalled();
 });

@@ -16,8 +16,39 @@ test('identical production files work in the domain root and repository subpath'
     await expect(page.locator('h1')).toContainText('Мешает ли штраф за повторы');
     await expect(page.locator('#model-status')).not.toContainText('Проверяем');
     await expect(page.locator('#comparison-test-engine')).toHaveCount(0);
+    await page.goto(path + 'diagnostics.html');
+    await expect(page.locator('h1')).toContainText('Как работает ваша модель');
+    await expect(page.locator('#diagnostic-status')).not.toContainText('Проверяем');
+    await expect(page.locator('#diagnostic-test-engine')).toHaveCount(0);
   }
   expect(failures).toEqual([]);
+});
+test('production diagnostics exports capabilities and the actual CPU reference without fetching browser model weights', async ({ page }) => {
+  const modelRequests: string[] = [];
+  page.on('request', request => { if (request.url().includes('/models/')) modelRequests.push(request.url()); });
+  await page.goto('/diagnostics.html');
+  await expect(page.locator('#diagnostic-reference-status')).toContainText('Transformers 4.51.3');
+  const download = page.waitForEvent('download');
+  await page.locator('#diagnostic-export').click();
+  const file = await download;
+  const report = JSON.parse(await readFile((await file.path())!, 'utf8'));
+  expect(report.testing).toBe(false); expect(report.complete).toBe(false);
+  expect(report.reference.complete).toBe(true); expect(report.reference.dtype).toBe('float32');
+  expect(report.reference.results).toHaveLength(6); expect(report.environment.browser.userAgent).toBeTruthy();
+  expect(modelRequests).toHaveLength(0);
+});
+test('REAL MODEL: audits cached resources and exports diagnostics against the CPU reference', async ({ page }) => {
+  await page.goto('/diagnostics.html');
+  await expect(page.locator('#diagnostic-status')).not.toContainText('Проверяем');
+  test.skip(await page.locator('#diagnostic-load').isDisabled(), 'A compatible WebGPU adapter with shader-f16 is unavailable.');
+  await page.locator('#diagnostic-load').click();
+  await expect(page.locator('#diagnostic-run')).toBeEnabled({ timeout: 600000 });
+  await page.locator('#diagnostic-run').click();
+  await expect(page.locator('#diagnostic-export')).toBeEnabled({ timeout: 600000 });
+  const download = page.waitForEvent('download');
+  await page.locator('#diagnostic-export').click();
+  const file = await download;
+  await test.info().attach('real-gpu-diagnostics', { path: (await file.path())!, contentType: 'application/json' });
 });
 test('REAL MODEL: exports a direct versus English-bridge experiment for human review', async ({ page }) => {
   test.skip(!existsSync(`dist/models/${source.directory}/model-info.json`), 'Verified model resources are not built.');

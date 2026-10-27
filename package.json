@@ -11,6 +11,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "model:download": "node scripts/download-model.mjs",
+    "reference:download": "node scripts/download-reference.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test && playwright test --config playwright.cors.config.ts",
     "test:gpu": "playwright test --config playwright.gpu.config.ts",

@@ -65,7 +65,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </main>
   <dialog id="settings" class="settings-dialog" aria-labelledby="settings-title">
     <div class="dialog-header"><div><span class="eyebrow">ВАШЕ УСТРОЙСТВО</span><h2 id="settings-title">Настройки и данные</h2></div><button id="settings-close" class="icon-button" aria-label="Закрыть настройки">${icon('close')}</button></div>
-    <section class="settings-section"><h3>${icon('chip')} Локальная модель</h3><p><strong>${MODEL_DESCRIPTION}</strong><br>Лицензия Apache 2.0 · WebLLM 0.2.79</p><p>Загрузка: <span id="settings-size">${MODEL_ESTIMATE}</span>. ${MODEL_GPU_MEMORY}, желательно 3–4 ГБ с запасом, и ${MODEL_RAM}. Контекст — 4 096 токенов, ответ — до 512 токенов.</p><p>Модель поддерживает русский язык, но ответы могут быть неточными. После перехода на Qwen3 рекомендуем начать новый чат. Прежняя переписка сохраняется. Старые реплики исключаются из контекста, оставаясь в истории.</p><div id="cache-status" class="cache-status">Проверяем кеш…</div><button id="settings-start" class="secondary-button">Запустить модель</button><button id="comparison-open" class="secondary-button">Сравнить режимы ответа</button><button id="delete-model" class="secondary-button">${icon('trash')} Удалить модель и старые версии</button></section>
+    <section class="settings-section"><h3>${icon('chip')} Локальная модель</h3><p><strong>${MODEL_DESCRIPTION}</strong><br>Лицензия Apache 2.0 · WebLLM 0.2.79</p><p>Загрузка: <span id="settings-size">${MODEL_ESTIMATE}</span>. ${MODEL_GPU_MEMORY}, желательно 3–4 ГБ с запасом, и ${MODEL_RAM}. Контекст — 4 096 токенов, ответ — до 512 токенов.</p><p>Модель поддерживает русский язык, но ответы могут быть неточными. После перехода на Qwen3 рекомендуем начать новый чат. Прежняя переписка сохраняется. Старые реплики исключаются из контекста, оставаясь в истории.</p><div id="cache-status" class="cache-status">Проверяем кеш…</div><button id="settings-start" class="secondary-button">Запустить модель</button><button id="comparison-open" class="secondary-button">Сравнить режимы ответа</button><button id="diagnostics-open" class="secondary-button">Диагностика модели и GPU</button><button id="delete-model" class="secondary-button">${icon('trash')} Удалить модель и старые версии</button></section>
     <section class="settings-section"><h3>${icon('chat')} История переписки</h3><p>Чаты сохраняются в этом браузере. Общая история и кеш модели удаляются отдельно. Не используйте общий профиль браузера для личной переписки.</p><button id="delete-history" class="danger-button">${icon('trash')} Удалить всю историю</button></section>
     <section class="settings-section privacy-details"><h3>${icon('lock')} Как устроена приватность</h3><p>Ответы генерируются в Web Worker на вашем GPU. Сервер получает только запросы статических файлов. Внешних API, аналитики и телеметрии нет. Изображения и ссылки из ответов не загружаются.</p><p>Кеш может быть удалён браузером автоматически. Интерфейс сайта требует соединения при открытии; гарантированный офлайн-запуск всей страницы не предусмотрен.</p><p>Ресурсы модели: <code id="resource-location"></code></p></section>
   </dialog>
@@ -199,6 +199,7 @@ function updateUi() {
   $<HTMLButtonElement>('delete-model').disabled = busy || state === 'loading' || !base;
   $<HTMLButtonElement>('delete-history').disabled = busy;
   $<HTMLButtonElement>('comparison-open').disabled = busy || state === 'loading';
+  $<HTMLButtonElement>('diagnostics-open').disabled = busy || state === 'loading';
   loadButton.disabled = ['checking', 'unsupported', 'loading', 'ready', 'generating'].includes(state);
   loadButton.hidden = ['loading', 'ready', 'generating'].includes(state);
   $('cancel-load').hidden = state !== 'loading';
@@ -373,6 +374,11 @@ $('comparison-open').addEventListener('click', () => {
   if (state === 'generating' || state === 'loading') return;
   persist(); stopWorker();
   location.assign(new URL('compare.html', new URL(import.meta.env.BASE_URL, location.href)).href);
+});
+$('diagnostics-open').addEventListener('click', () => {
+  if (state === 'generating' || state === 'loading') return;
+  persist(); stopWorker();
+  location.assign(new URL('diagnostics.html', new URL(import.meta.env.BASE_URL, location.href)).href);
 });
 settings.addEventListener('click', event => { if (event.target === settings) { const rect = settings.getBoundingClientRect(); const mouse = event as MouseEvent; if (mouse.clientX < rect.left || mouse.clientX > rect.right || mouse.clientY < rect.top || mouse.clientY > rect.bottom) settings.close(); } });
 $('delete-history').addEventListener('click', () => {

@@ -1,6 +1,26 @@
 import type { ModelInfo } from './config';
 
 const digest = async (data: ArrayBuffer) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', data)), byte => byte.toString(16).padStart(2, '0')).join('');
+export class CacheAuditError extends Error {}
+
+// Explicit diagnostic audit: rehash cached bytes instead of trusting the
+// verified-entry marker used for fast normal startup. Never fetch missing data.
+export async function auditModelCache(base: string, info: ModelInfo, progress: (checked: number, total: number) => void, stopped: () => boolean) {
+  let checkedBytes = 0;
+  let checkedFiles = 0;
+  for (const file of info.files) {
+    if (stopped()) throw Error('Проверка кеша остановлена.');
+    const cache = await caches.open(file.scope);
+    const response = await cache.match(new URL(file.path, base).href);
+    if (!response) throw new CacheAuditError(`В кеше отсутствует ${file.path}. Перезапустите модель.`);
+    const data = await response.arrayBuffer();
+    if (data.byteLength !== file.bytes || await digest(data) !== file.sha256) throw new CacheAuditError(`SHA-256 кеша не совпадает: ${file.path}. Удалите скачанную модель и загрузите её снова.`);
+    checkedBytes += data.byteLength; checkedFiles++;
+    progress(checkedFiles, info.files.length);
+  }
+  return { valid: true as const, checkedFiles, checkedBytes, completedAt: new Date().toISOString() };
+}
+export type CacheAudit = Awaited<ReturnType<typeof auditModelCache>>;
 async function bounded(response: Response, limit: number, progress: (bytes: number) => void) {
   if (!response.body) throw Error('Пустой ответ при загрузке модели.');
   const reader = response.body.getReader();

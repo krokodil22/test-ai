@@ -1,0 +1,13 @@
+{
+  "protocol": "qwen3-diagnostics-v1",
+  "systemPrompt": "You are a helpful assistant.",
+  "settings": { "temperature": 0, "topP": 1, "seed": 42, "enableThinking": false, "frequencyPenalty": 0, "presencePenalty": 0 },
+  "cases": [
+    { "id": "arithmetic-ru", "label": "Арифметика · русский", "prompt": "Сколько будет 2 + 2? Ответь только числом.", "maxTokens": 16 },
+    { "id": "arithmetic-en", "label": "Арифметика · английский", "prompt": "What is 2 + 2? Answer with the number only.", "maxTokens": 16 },
+    { "id": "omelet-ru", "label": "Омлет · русский", "prompt": "Как приготовить омлет из двух яиц? Дай короткий список шагов.", "maxTokens": 192 },
+    { "id": "omelet-en", "label": "Омлет · английский", "prompt": "How do I make an omelet with two eggs? Give a short list of steps.", "maxTokens": 192 },
+    { "id": "seasons-ru", "label": "Времена года · русский", "prompt": "Объясни простыми словами, почему сменяются времена года. Ответь в трёх предложениях.", "maxTokens": 128 },
+    { "id": "seasons-en", "label": "Времена года · английский", "prompt": "Explain in simple terms why seasons change. Answer in three sentences.", "maxTokens": 128 }
+  ]
+}
