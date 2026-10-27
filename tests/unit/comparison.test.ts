@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { compareAnswers, checkTranslationShape, ComparisonInputError, ComparisonStopped } from '../../src/comparison';
+import { compareAnswers, compareThinking, checkTranslationShape, ComparisonInputError, ComparisonStopped, THINKING_MAX_TOKENS } from '../../src/comparison';
 import type { StageRequest, StageRunner, ComparisonUpdate } from '../../src/comparison';
 
 it('isolates four stages, passes English intermediates correctly, and records actual stage timings', async () => {
@@ -86,4 +86,57 @@ it('allows ordinary translation expansion and repeated names without claiming se
   expect(() => checkTranslationShape('Piggy saw the farmer. Piggy thanked the farmer.', 'Свинка увидела фермера. Свинка поблагодарила фермера.')).not.toThrow();
   // Length cannot detect substitutions; keep this limitation explicit.
   expect(() => checkTranslationShape('A pig swims.', 'Пёсик плавает.')).not.toThrow();
+});
+
+it('compares the same Russian prompt and sampling with explicit thinking flags and output budgets', async () => {
+  const requests: StageRequest[] = [];
+  const updates: ComparisonUpdate[] = [];
+  const result = await compareThinking('  Рассказ про бегемота, который всех кусал  ', async request => {
+    requests.push(request);
+    return { text: request.enableThinking ? 'Он перестал кусаться.' : 'Обычный ответ.', seconds: requests.length * 3, finish: 'complete', ...(request.enableThinking ? { thinking: { status: 'complete', text: 'План рассказа.' } as const } : {}) };
+  }, update => updates.push(update), () => false);
+  expect(requests.map(request => request.stage)).toEqual(['direct', 'thinking']);
+  expect(requests.map(request => request.enableThinking)).toEqual([false, true]);
+  expect(requests.map(request => request.maxTokens)).toEqual([512, THINKING_MAX_TOKENS]);
+  expect(requests[0].messages).toEqual(requests[1].messages);
+  expect(requests[0].messages).not.toBe(requests[1].messages);
+  expect(requests[1].messages.at(-1)?.content).toBe('Рассказ про бегемота, который всех кусал');
+  for (const request of requests) {
+    expect(request.seed).toBe(42);
+    expect(request.temperature).toBe(0.7);
+    expect(request.topP).toBe(0.8);
+    expect(request.frequencyPenalty).toBeUndefined();
+    expect(request.presencePenalty).toBeUndefined();
+  }
+  expect(result.mode).toBe('thinking');
+  expect(result.directSeconds).toBe(3);
+  expect(result.thinkingSeconds).toBe(6);
+  expect(updates.map(update => update.phase)).toEqual(['start', 'complete', 'start', 'complete']);
+});
+
+it('validates the larger thinking context budget before either generation starts', async () => {
+  let calls = 0;
+  const run: StageRunner = async () => { calls++; return { text: 'Ответ', seconds: 1, finish: 'complete' }; };
+  await expect(compareThinking('я'.repeat(1200), run, () => {}, () => false)).rejects.toThrow('не помещается в контекст');
+  expect(calls).toBe(0);
+});
+
+it('retains a thinking-only length-limited attempt without presenting the reasoning as an answer', async () => {
+  const result = await compareThinking('Короткий вопрос', async request => request.enableThinking
+    ? { text: '', thinking: { status: 'unfinished', text: 'План ещё не готов.' }, finish: 'length', seconds: 5 }
+    : { text: 'Ответ', finish: 'complete', seconds: 1 }, () => {}, () => false);
+  expect(result.stages[1].text).toBe('');
+  expect(result.stages[1].thinking?.status).toBe('unfinished');
+  expect(result.stages[1].finish).toBe('length');
+});
+
+it('does not mark a cancelled thinking generation as a complete comparison', async () => {
+  let stopped = false;
+  let calls = 0;
+  const run: StageRunner = async request => {
+    calls++; if (request.enableThinking) stopped = true;
+    return { text: 'Текст', finish: 'complete', seconds: 1 };
+  };
+  await expect(compareThinking('Вопрос', run, () => {}, () => stopped)).rejects.toBeInstanceOf(ComparisonStopped);
+  expect(calls).toBe(2);
 });

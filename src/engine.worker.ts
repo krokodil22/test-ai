@@ -5,11 +5,11 @@ import { MODEL_ID, MODEL_CHAT_OPTIONS, MAX_REPLY_TOKENS, GENERATION_OPTIONS } fr
 import { loadModelInfo, removeLegacyModelCache } from './cache';
 import { buildContext } from './context';
 import { explainError } from './errors';
-import { compareAnswers, ComparisonStopped, ComparisonInputError } from './comparison';
+import { compareAnswers, compareThinking, ComparisonStopped, ComparisonInputError } from './comparison';
 import type { StageRequest } from './comparison';
 import { TranslatorClient } from './translator-client';
 import { prepareModelCache } from './model-resources';
-import { visibleQwenStream } from './stream-text';
+import { visibleQwenStream, thinkingQwenStream } from './stream-text';
 import type { WorkerEvent, WorkerRequest } from './types';
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
@@ -39,23 +39,38 @@ async function comparisonStage(request: StageRequest) {
   }
   await engine!.resetChat();
   if (stopped || fatal) throw new ComparisonStopped();
-  const stream = await engine!.chat.completions.create({ messages: request.messages, stream: true, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed, extra_body: GENERATION_OPTIONS.extra_body, ...(request.frequencyPenalty !== undefined ? { frequency_penalty: request.frequencyPenalty, presence_penalty: request.presencePenalty } : {}) });
+  const stream = await engine!.chat.completions.create({ messages: request.messages, stream: true, stream_options: { include_usage: true }, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed, extra_body: { enable_thinking: request.enableThinking }, ...(request.frequencyPenalty !== undefined ? { frequency_penalty: request.frequencyPenalty, presence_penalty: request.presencePenalty } : {}) });
   const visible = visibleQwenStream();
+  const thinking = request.enableThinking ? thinkingQwenStream() : undefined;
   let text = '';
+  let reasoning = '';
+  let generatedTokens: number | undefined;
+  let firstAnswerSeconds: number | undefined;
+  function emit(parts: { answer: string; reasoning: string }) {
+    if (parts.reasoning) {
+      reasoning += parts.reasoning;
+      send({ type: 'comparison-reasoning', id: active!, text: parts.reasoning });
+    }
+    if (parts.answer) {
+      if (firstAnswerSeconds === undefined && parts.answer.trim()) firstAnswerSeconds = (performance.now() - start) / 1000;
+      text += parts.answer;
+      send({ type: 'comparison-token', id: active!, stage: request.stage, text: parts.answer });
+    }
+  }
   let finish: 'complete' | 'length' = 'complete';
   for await (const chunk of stream) {
     if (fatal) break;
     if (stopped) { void engine!.interruptGenerate(); continue; }
     const choice = chunk.choices[0];
     if (choice?.delta.content) {
-      const delta = visible(choice.delta.content);
-      text += delta;
-      if (delta) send({ type: 'comparison-token', id: active!, stage: request.stage, text: delta });
+      emit(thinking ? thinking.push(choice.delta.content) : { answer: visible(choice.delta.content), reasoning: '' });
     }
     if (choice?.finish_reason === 'length') finish = 'length';
+    if (chunk.usage) generatedTokens = chunk.usage.completion_tokens;
   }
   if (stopped || fatal) throw new ComparisonStopped();
-  return { text, finish, seconds: (performance.now() - start) / 1000 };
+  if (thinking) emit(thinking.finish());
+  return { text: text.trim(), finish, seconds: (performance.now() - start) / 1000, generatedTokens, firstAnswerSeconds, ...(thinking ? { thinking: { status: thinking.status(), text: reasoning.trim() } } : {}) };
 }
 
 async function init(base: string, translatorBase?: string) {
@@ -142,7 +157,8 @@ scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
   stopped = false;
   if (data.type === 'compare') {
     try {
-      const result = await compareAnswers(data.prompt, comparisonStage, update => {
+      const compare = data.mode === 'thinking' ? compareThinking : compareAnswers;
+      const result = await compare(data.prompt, comparisonStage, update => {
         if (update.phase === 'start') send({ type: 'comparison-stage', id: data.id, stage: update.stage });
         else send({ type: 'comparison-result', id: data.id, result: update.result });
       }, () => stopped || fatal);

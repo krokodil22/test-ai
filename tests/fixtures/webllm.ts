@@ -25,8 +25,10 @@ export class MLCEngine {
   }
   async resetChat() { if (this.locked) throw new Error('Model stream lock was not released'); this.interrupted = false; }
   async interruptGenerate() { this.interrupted = true; }
-  chat = { completions: { create: async (request: { messages: Array<{ content: string }>; temperature?: number; frequency_penalty?: number; presence_penalty?: number; extra_body?: { enable_thinking?: boolean } }) => {
-    if (request.extra_body?.enable_thinking !== false) throw new Error('Qwen3 must use the same non-thinking mode in every test stage');
+  chat = { completions: { create: async (request: { messages: Array<{ content: string }>; temperature?: number; frequency_penalty?: number; presence_penalty?: number; extra_body?: { enable_thinking?: boolean }; max_tokens?: number; stream_options?: { include_usage?: boolean } }) => {
+    const thinking = request.extra_body?.enable_thinking === true;
+    if (request.extra_body?.enable_thinking === undefined) throw new Error('Qwen3 mode must be explicit');
+    if (thinking && (request.max_tokens !== 2048 || request.messages.length !== 2 || request.temperature !== 0.7)) throw new Error('Thinking experiment settings were lost');
     const rawPrompt = request.messages.at(-1)!.content;
     const system = request.messages[0].content;
     const translation = system.startsWith('Translate the user message');
@@ -47,15 +49,21 @@ export class MLCEngine {
       if (!prompt.startsWith('TEST_ENGLISH_ANSWER')) throw new Error('Final translation received wrong source');
       text = 'Тестовый русский перевод английского ответа.';
     }
-    text = '<think>\n\n</think>\n\n' + text;
+    if (thinking) {
+      text = '<think>Сначала проверю условие рассказа. Бегемот должен перестать кусаться.</think>\n\nТестовый итоговый ответ с рассуждениями.';
+      if (prompt.includes('[thinking-unfinished]')) text = '<think>Рассуждение ещё не закончено. <img src="https://invalid.test/private">';
+      if (prompt.includes('[thinking-empty-answer]')) text = '<think>План составлен.</think>\n\n';
+      if (prompt.includes('[thinking-missing]')) text = 'Ответ без ожидаемого блока рассуждений.';
+    } else text = '<think>\n\n</think>\n\n' + text;
     const engine = this;
     return (async function* () {
       for (let i = 0; i < text.length; i += 5) {
-        await new Promise(resolve => setTimeout(resolve, prompt.includes('[slow]') || prompt.includes('SLOW') ? 50 : 15));
+        await new Promise(resolve => setTimeout(resolve, prompt.includes('[slow]') || prompt.includes('SLOW') || (thinking && prompt.includes('[slow-thinking]')) ? 50 : 15));
         if (engine.interrupted) break;
         yield { choices: [{ delta: { content: text.slice(i, i + 5) } }] };
       }
-      yield { choices: [{ delta: {}, finish_reason: prompt.includes('[length]') ? 'length' : 'stop' }] };
+      yield { choices: [{ delta: {}, finish_reason: prompt.includes('[length]') || (thinking && prompt.includes('[thinking-unfinished]')) ? 'length' : 'stop' }] };
+      if (request.stream_options?.include_usage) yield { choices: [], usage: { completion_tokens: thinking ? 80 : 40 } };
       engine.locked = false;
     })();
   } } };

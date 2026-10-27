@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { existsSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import source from '../../scripts/model-source.json' with { type: 'json' };
 test('identical production files work in the domain root and repository subpath', async ({ page }) => {
   const failures: string[] = [];
@@ -12,7 +13,7 @@ test('identical production files work in the domain root and repository subpath'
     await expect(page.locator('#resource-location')).toHaveText(`http://127.0.0.1:4173${path}models/${source.directory}/`);
     await page.locator('#settings-close').click();
     await page.goto(path + 'compare.html');
-    await expect(page.locator('h1')).toContainText('Помогает ли перевод');
+    await expect(page.locator('h1')).toContainText('Помогают ли рассуждения');
     await expect(page.locator('#model-status')).not.toContainText('Проверяем');
     await expect(page.locator('#comparison-test-engine')).toHaveCount(0);
   }
@@ -20,7 +21,7 @@ test('identical production files work in the domain root and repository subpath'
 });
 test('REAL MODEL: exports a direct versus English-bridge experiment for human review', async ({ page }) => {
   test.skip(!existsSync(`dist/models/${source.directory}/model-info.json`), 'Verified model resources are not built.');
-  await page.goto('/compare.html');
+  await page.goto('/compare.html?mode=translation');
   await expect(page.locator('#model-status')).not.toContainText('Проверяем');
   test.skip(await page.locator('#comparison-load').isDisabled(), 'A compatible WebGPU adapter with shader-f16 is unavailable.');
   await page.locator('#comparison-load').click();
@@ -35,6 +36,32 @@ test('REAL MODEL: exports a direct versus English-bridge experiment for human re
   await test.info().attach('real-model-comparison', { path: (await file.path())!, contentType: 'application/json' });
   // This produces real outputs and timings; there is no automatic claim that
   // either story is better. Read the artifact to assess translation fidelity.
+});
+test('REAL MODEL: exports Russian answers with thinking enabled and disabled for human review', async ({ page }) => {
+  test.skip(!existsSync(`dist/models/${source.directory}/model-info.json`), 'Verified model resources are not built.');
+  const requests: string[] = [];
+  page.on('request', request => requests.push(request.url()));
+  await page.goto('/compare.html');
+  await expect(page.locator('#model-status')).not.toContainText('Проверяем');
+  test.skip(await page.locator('#comparison-load').isDisabled(), 'A compatible WebGPU adapter with shader-f16 is unavailable.');
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled({ timeout: 600000 });
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-stop')).toBeVisible();
+  await expect(page.locator('#comparison-stop')).toBeHidden({ timeout: 600000 });
+  await expect(page.locator('#comparison-export')).toBeEnabled();
+  const download = page.waitForEvent('download');
+  await page.locator('#comparison-export').click();
+  const file = await download;
+  const path = (await file.path())!;
+  await test.info().attach('real-model-thinking-comparison', { path, contentType: 'application/json' });
+  const report = JSON.parse(await readFile(path, 'utf8'));
+  expect(report.testing).toBe(false);
+  expect(report.settings.thinking.extra_body.enable_thinking).toBe(true);
+  expect(report.reports[0].result.stages.map((stage: { stage: string }) => stage.stage)).toEqual(['direct', 'thinking']);
+  expect(requests.filter(url => url.includes('/translations/'))).toHaveLength(0);
+  // This captures actual quality and truncation for human review, never a
+  // mocked quality claim or a requirement that reasoning must improve it.
 });
 test('production page checks real WebGPU before making model requests', async ({ page }) => {
   const modelRequests: string[] = [];

@@ -1,4 +1,4 @@
-import type { ComparisonResult, ComparisonStage, StageResult } from './comparison';
+import type { ComparisonMode, ComparisonResult, ComparisonStage, StageResult } from './comparison';
 
 export interface Message {
   id: string;
@@ -11,7 +11,7 @@ export type PromptMessage = { role: 'system' | 'user' | 'assistant'; content: st
 export type WorkerRequest =
   | { type: 'init'; base: string; translatorBase?: string }
   | { type: 'generate'; id: string; messages: Message[] }
-  | { type: 'compare'; id: string; prompt: string }
+  | { type: 'compare'; id: string; prompt: string; mode: ComparisonMode }
   | { type: 'stop'; id: string };
 export type WorkerEvent =
   | { type: 'progress'; progress: number; text: string }
@@ -22,6 +22,7 @@ export type WorkerEvent =
   | { type: 'done'; id: string; reason: 'complete' | 'stopped' | 'length' }
   | { type: 'comparison-stage'; id: string; stage: ComparisonStage }
   | { type: 'comparison-token'; id: string; stage: ComparisonStage; text: string }
+  | { type: 'comparison-reasoning'; id: string; text: string }
   | { type: 'comparison-result'; id: string; result: StageResult }
   | { type: 'comparison-progress'; id: string; done: number; total: number }
   | { type: 'comparison-done'; id: string; result?: ComparisonResult; stopped: boolean }

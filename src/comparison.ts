@@ -3,19 +3,25 @@ import { tokenUpperBound } from './context';
 import type { PromptMessage } from './types';
 
 export const COMPARISON_STAGES = ['direct', 'translate-input', 'english-answer', 'translate-output'] as const;
+export const THINKING_STAGES = ['direct', 'thinking'] as const;
+export const THINKING_MAX_TOKENS = 2048;
+export const THINKING_PROTOCOL = 'qwen3-ru-thinking-v1';
+export type ComparisonMode = 'thinking' | 'translation';
 export const TRANSLATION_PROTOCOL = 'qwen-ru-en-opus-en-ru-v1';
 // Translation should retain repeated names and terms. In WebLLM 0.2.79 the
 // explicit zero additive penalties bypass the model's repetition penalty.
 export const TRANSLATION_OPTIONS = { temperature: 0, top_p: 1, frequency_penalty: 0, presence_penalty: 0 } as const;
-export type ComparisonStage = typeof COMPARISON_STAGES[number];
+export type ComparisonStage = typeof COMPARISON_STAGES[number] | typeof THINKING_STAGES[number];
 export const STAGE_LABELS: Record<ComparisonStage, string> = {
   direct: 'Обычный ответ на русском',
   'translate-input': 'Перевод запроса RU → EN',
   'english-answer': 'Ответ на английском',
   'translate-output': 'Перевод ответа EN → RU',
+  thinking: 'Русский ответ с рассуждениями',
 };
 export const COMPARISON_EXAMPLES = [
   { label: 'Рассказ про свинку', prompt: 'Придумай короткий поучительный рассказ про свинку, которая не умела плавать' },
+  { label: 'Рассказ про бегемота', prompt: 'Придумай короткий поучительный рассказ про бегемота, который всех кусал' },
   { label: 'Объяснение', prompt: 'Объясни простыми словами, почему сменяются времена года. Ответь в трёх предложениях.' },
   { label: 'Инструкция', prompt: 'Как приготовить омлет из двух яиц? Дай короткий список шагов.' },
 ];
@@ -28,6 +34,7 @@ export interface StageRequest {
   temperature: number;
   topP: number;
   seed: number;
+  enableThinking: boolean;
   frequencyPenalty?: number;
   presencePenalty?: number;
 }
@@ -36,14 +43,19 @@ export interface StageResult {
   text: string;
   seconds: number;
   finish: 'complete' | 'length';
+  thinking?: { status: 'complete' | 'unfinished' | 'missing'; text: string };
+  generatedTokens?: number;
+  firstAnswerSeconds?: number;
 }
-export interface ComparisonResult {
+interface ComparisonBase {
   prompt: string;
   seed: number;
   stages: StageResult[];
   directSeconds: number;
-  bridgeSeconds: number;
 }
+export interface TranslationComparisonResult extends ComparisonBase { mode: 'translation'; bridgeSeconds: number }
+export interface ThinkingComparisonResult extends ComparisonBase { mode: 'thinking'; thinkingSeconds: number }
+export type ComparisonResult = TranslationComparisonResult | ThinkingComparisonResult;
 export class ComparisonStopped extends Error {}
 export class ComparisonInputError extends Error {}
 export type StageRunner = (request: StageRequest) => Promise<Omit<StageResult, 'stage'>>;
@@ -86,7 +98,7 @@ function checkContext(messages: PromptMessage[], maxTokens: number) {
 
 // One-turn experiment: every stage starts with a fresh KV cache. No user chat
 // history is modified, and no English intermediate text is fed back as Russian.
-export async function compareAnswers(prompt: string, run: StageRunner, onUpdate: (update: ComparisonUpdate) => void, isStopped: () => boolean): Promise<ComparisonResult> {
+export async function compareAnswers(prompt: string, run: StageRunner, onUpdate: (update: ComparisonUpdate) => void, isStopped: () => boolean): Promise<TranslationComparisonResult> {
   const input = prompt.trim();
   if (!input || input.length > MAX_INPUT_CHARS) throw new ComparisonInputError(`Введите от 1 до ${MAX_INPUT_CHARS} символов.`);
   const stages: StageResult[] = [];
@@ -99,7 +111,7 @@ export async function compareAnswers(prompt: string, run: StageRunner, onUpdate:
     // tokenizer checks each sentence. Qwen's prompt budget does not apply.
     if (name !== 'translate-output') checkContext(messages, maxTokens);
     onUpdate({ phase: 'start', stage: name });
-    const result = await run({ stage: name, sourceText: text, messages, maxTokens, temperature: translation ? TRANSLATION_OPTIONS.temperature : GENERATION_OPTIONS.temperature, topP: translation ? TRANSLATION_OPTIONS.top_p : GENERATION_OPTIONS.top_p, seed, ...(translation ? { frequencyPenalty: TRANSLATION_OPTIONS.frequency_penalty, presencePenalty: TRANSLATION_OPTIONS.presence_penalty } : {}) });
+    const result = await run({ stage: name, sourceText: text, messages, maxTokens, temperature: translation ? TRANSLATION_OPTIONS.temperature : GENERATION_OPTIONS.temperature, topP: translation ? TRANSLATION_OPTIONS.top_p : GENERATION_OPTIONS.top_p, seed, enableThinking: false, ...(translation ? { frequencyPenalty: TRANSLATION_OPTIONS.frequency_penalty, presencePenalty: TRANSLATION_OPTIONS.presence_penalty } : {}) });
     if (isStopped()) throw new ComparisonStopped();
     if (!result.text.trim()) throw new ComparisonInputError(`Этап «${STAGE_LABELS[name]}» вернул пустой текст.`);
     if (translation && result.finish !== 'length') checkTranslationShape(text, result.text);
@@ -117,5 +129,30 @@ export async function compareAnswers(prompt: string, run: StageRunner, onUpdate:
   if (englishAnswer.finish === 'length') throw new ComparisonInputError('Английский ответ обрезан по лимиту. Попробуйте попросить более короткий ответ.');
   const russianAnswer = await stage('translate-output', TRANSLATE_OUTPUT, englishAnswer.text, true);
   if (russianAnswer.finish === 'length') throw new ComparisonInputError('Русский перевод обрезан по лимиту. Результат неполный.');
-  return { prompt: input, seed, stages, directSeconds: direct.seconds, bridgeSeconds: stages.slice(1).reduce((sum, item) => sum + item.seconds, 0) };
+  return { mode: 'translation', prompt: input, seed, stages, directSeconds: direct.seconds, bridgeSeconds: stages.slice(1).reduce((sum, item) => sum + item.seconds, 0) };
+}
+
+// Same prompt, seed and sampling in both variants. The larger total output
+// budget is explicit: WebLLM cannot budget reasoning and answer separately.
+export async function compareThinking(prompt: string, run: StageRunner, onUpdate: (update: ComparisonUpdate) => void, isStopped: () => boolean): Promise<ThinkingComparisonResult> {
+  const input = prompt.trim();
+  if (!input || input.length > MAX_INPUT_CHARS) throw new ComparisonInputError(`Введите от 1 до ${MAX_INPUT_CHARS} символов.`);
+  const messages: PromptMessage[] = [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: input }];
+  // Validate BOTH variants first, so a long prompt cannot waste a first run.
+  checkContext(messages, THINKING_MAX_TOKENS);
+  const stages: StageResult[] = [];
+  const seed = 42;
+  for (const name of THINKING_STAGES) {
+    if (isStopped()) throw new ComparisonStopped();
+    onUpdate({ phase: 'start', stage: name });
+    const result = await run({ stage: name, sourceText: input, messages: messages.map(message => ({ ...message })), maxTokens: name === 'thinking' ? THINKING_MAX_TOKENS : MAX_REPLY_TOKENS, temperature: GENERATION_OPTIONS.temperature, topP: GENERATION_OPTIONS.top_p, seed, enableThinking: name === 'thinking' });
+    if (isStopped()) throw new ComparisonStopped();
+    // A thinking-only response is an observable failed attempt, not an empty
+    // transport error. Keep it exportable for review and label it in the UI.
+    if (!result.text.trim() && !result.thinking?.text.trim()) throw new ComparisonInputError(`Этап «${STAGE_LABELS[name]}» вернул пустой текст.`);
+    const completed = { ...result, stage: name };
+    stages.push(completed);
+    onUpdate({ phase: 'complete', result: completed });
+  }
+  return { mode: 'thinking', prompt: input, seed, stages, directSeconds: stages[0].seconds, thinkingSeconds: stages[1].seconds };
 }

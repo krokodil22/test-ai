@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { visibleQwenStream } from '../../src/stream-text';
+import { visibleQwenStream, thinkingQwenStream } from '../../src/stream-text';
 import { probeGpu, monitorGpu } from '../../src/gpu';
 import source from '../../scripts/model-source.json';
 afterEach(() => vi.unstubAllGlobals());
@@ -9,6 +9,38 @@ it('removes only the leading empty runtime thinking block across stream chunks',
   expect(chunks.map(visible).join('')).toBe('Первый ответ.');
   const ordinary = visibleQwenStream();
   expect(['Русский текст ', '<think>в примере</think>'].map(ordinary).join('')).toBe('Русский текст <think>в примере</think>');
+});
+
+it('keeps thinking separate from the answer at every delimiter split and one character at a time', () => {
+  const source = ' \n<think>Проверю героя и мораль.</think>\n\nБегемот перестал кусаться. Пример: <think>тег</think>.';
+  const cases = Array.from({ length: source.length + 1 }, (_, i) => [source.slice(0, i), source.slice(i)]);
+  cases.push([...source]);
+  for (const chunks of cases) {
+    const stream = thinkingQwenStream();
+    const parts = chunks.map(chunk => stream.push(chunk));
+    parts.push(stream.finish());
+    expect(parts.map(part => part.reasoning).join('')).toBe('Проверю героя и мораль.');
+    expect(parts.map(part => part.answer).join('')).toBe('\n\nБегемот перестал кусаться. Пример: <think>тег</think>.');
+    expect(stream.status()).toBe('complete');
+  }
+});
+
+it('reports unfinished reasoning without leaking it or a partial closing delimiter into the answer', () => {
+  const stream = thinkingQwenStream();
+  const parts = ['<thi', 'nk>Незаконченный план.', '</thi'].map(chunk => stream.push(chunk));
+  parts.push(stream.finish());
+  expect(parts.map(part => part.answer).join('')).toBe('');
+  expect(parts.map(part => part.reasoning).join('')).toBe('Незаконченный план.</thi');
+  expect(stream.status()).toBe('unfinished');
+});
+
+it('preserves a plain answer and reports that the requested thinking block was missing', () => {
+  const stream = thinkingQwenStream();
+  const parts = ['Обычный ', 'ответ <think>внутри примера</think>.'].map(chunk => stream.push(chunk));
+  parts.push(stream.finish());
+  expect(parts.map(part => part.answer).join('')).toBe('Обычный ответ <think>внутри примера</think>.');
+  expect(parts.every(part => !part.reasoning)).toBe(true);
+  expect(stream.status()).toBe('missing');
 });
 it('rejects a 128 MiB adapter before downloading the larger Qwen3 embedding tensor', async () => {
   const requestDevice = vi.fn();
