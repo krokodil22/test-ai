@@ -35,11 +35,15 @@ async function hashesGzip(path, plainBytes) {
   const sha256 = createHash('sha256');
   const git = createHash('sha1').update(`blob ${plainBytes}\0`);
   let bytes = 0;
-  for await (const chunk of createReadStream(path).pipe(createGunzip())) {
-    bytes += chunk.length;
-    if (bytes > plainBytes) throw new Error('Expanded model resource is larger than expected');
-    sha256.update(chunk); git.update(chunk);
-  }
+  // pipeline forwards errors from every stream, including ENOENT on the
+  // source. A bare .pipe() leaves that source error unhandled on a fresh run.
+  await pipeline(createReadStream(path), createGunzip(), async chunks => {
+    for await (const chunk of chunks) {
+      bytes += chunk.length;
+      if (bytes > plainBytes) throw new Error('Expanded model resource is larger than expected');
+      sha256.update(chunk); git.update(chunk);
+    }
+  });
   return { bytes, sha256: sha256.digest('hex'), git: git.digest('hex') };
 }
 async function request(url) {
