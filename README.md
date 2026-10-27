@@ -13,8 +13,8 @@
 npm ci --ignore-scripts
 npm run model:download
 npm run model:download -- --verify
-npm run runtime:download
-npm run runtime:download -- --verify
+npm run runtime:prepare
+npm run runtime:prepare -- --verify
 npm run translator:download
 npm run translator:download -- --verify
 npm run dev
@@ -26,7 +26,9 @@ npm run dev
 Крупные файлы находятся в игнорируемых каталогах `public/models/` и
 `public/translations/`; не добавляйте их в Git. Повторный запуск загрузчика
 сохраняет проверенные файлы. Ревизии, размеры и хеши закреплены в
-`scripts/model-source.json` и `scripts/translation-source.json`.
+`scripts/model-source.json`, `scripts/translation-source.json` и
+`scripts/low-memory-runtime.json`. Сжатая библиотека экономичного режима
+без весов включена в `vendor/` (0,9 МБ); её подготовка работает без сети и автоматически выполняется перед сборкой.
 
 ```sh
 npm run build
@@ -88,7 +90,7 @@ Hugging Face или CDN. Серверы исходных ресурсов исп
 Добавлены одна копия модели на origin через Web Locks, выгрузка без удаления
 кеша/истории и потоковая SHA-проверка кеша без целого крупного тензора в RAM.
 Дополнительный WASM также публикуется на вашем хостинге, по адресу ресурсов
-модели. Подготовка: `npm run runtime:download`; проверка: `npm run runtime:verify`
+модели. Подготовка: `npm run runtime:prepare`; проверка: `npm run runtime:verify`
 после скачивания основной модели. Лицензия библиотеки — Apache 2.0.
 
 ## Качество и предварительная проверка

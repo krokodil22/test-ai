@@ -59,19 +59,21 @@ WebLLM 0.2.86 читает размер обработки из `_metadata` WASM
 
 ```sh
 npm run model:download
-npm run runtime:download
-npm run runtime:download -- --verify
+npm run runtime:prepare
+npm run runtime:prepare -- --verify
 npm run runtime:verify
 npm run translator:download
 npm run build
 ```
 
-Загрузчик дополнительного WASM закрепляет URL, размер и SHA-256 в
-`scripts/low-memory-runtime.json`, использует временный `.part` и не принимает
-повреждённый файл. Готовый WASM хранится в игнорируемом `public/models/qwen35-4b/`,
-а не в Git. На собственный хостинг копируется всё содержимое `dist/`.
+Сжатый исполняемый код без весов включён в `vendor/` и занимает 897 041 байт.
+Это Apache-2.0 библиотека выполнения, а не параметры модели.
+`scripts/low-memory-runtime.json` закрепляет SHA-256 сжатого и распакованного
+кода. Подготовка работает без сети, использует временный `.part` и не принимает
+повреждённый файл. Распакованный WASM находится в игнорируемом
+`public/models/qwen35-4b/`; веса модели не добавляются в Git. На собственный хостинг копируется всё содержимое `dist/`.
 После публикации браузер берёт файл с настроенного `VITE_MODEL_BASE_URL`,
-без обращений к GitHub Releases, CDN или API. Для отдельного хранилища действуют
+без обращений к внешним хранилищам, CDN или API. Для отдельного хранилища действуют
 те же HTTPS/CORS правила, что и для остальных ресурсов модели.
 
 На GitHub Pages небольшой WASM публикуется рядом с `model-info.json`;
@@ -106,7 +108,7 @@ python -m mlc_llm compile public/models/qwen35-4b/resolve/main/mlc-chat-config.j
 `tvm/3rdparty/tvm-ffi` указывает на установленный `tvm_ffi`. Скомпилированы
 `wasm_runtime.bc`, `tvmjs_support.bc`, `webgpu_runtime.bc` и `mlc_wasm_runtime.bc`.
 Пользователю сайта и при обычной сборке Node/Vite эти инструменты не нужны:
-достаточно `npm run runtime:download` с проверкой закреплённого хеша.
+достаточно `npm run runtime:prepare`, который проверяет и распаковывает код из `vendor/`.
 
 ## Проверка и пределы результата
 

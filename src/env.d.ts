@@ -9,6 +9,6 @@ declare module '#gpu' {
   export { probeGpu, monitorGpu } from './gpu';
 }
 declare module '#low-memory-runtime' {
-  const runtime: { path: string; fileName: string; url: string; bytes: number; sha256: string; prefillChunkSize: number; maxBatchSize: number; contextTokens: number; experimental: boolean };
+  const runtime: { path: string; fileName: string; url?: string; bytes: number; sha256: string; prefillChunkSize: number; maxBatchSize: number; contextTokens: number; experimental: boolean };
   export default runtime;
 }

@@ -13,7 +13,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm test
-      - run: npm run runtime:download
+      - run: npm run runtime:prepare
       - run: npm run translator:download
       - run: npm run build
       - run: npx playwright install --with-deps chromium
