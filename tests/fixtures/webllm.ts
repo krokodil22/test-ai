@@ -32,6 +32,8 @@ export class MLCEngine {
     const rawPrompt = request.messages.at(-1)!.content;
     const system = request.messages[0].content;
     const translation = system.startsWith('Translate the user message');
+    const unpenalized = !translation && request.frequency_penalty === 0 && request.presence_penalty === 0;
+    if (unpenalized && (thinking || request.max_tokens !== 512 || request.temperature !== 0.7)) throw new Error('Penalty comparison settings were lost');
     const prompt = translation ? rawPrompt.match(/<source_text>\n([\s\S]*)\n<\/source_text>/)?.[1] || '' : rawPrompt;
     const slow = prompt.includes('[slow-opus]') || prompt.includes('SLOW_OPUS') ? ' SLOW_OPUS' : prompt.includes('[slow]') || prompt.includes('SLOW') ? ' SLOW' : '';
     if (translation && (request.messages.length !== 4 || request.temperature !== 0 || request.frequency_penalty !== 0 || request.presence_penalty !== 0)) throw new Error('Translation settings or task framing were lost');
@@ -49,6 +51,7 @@ export class MLCEngine {
       if (!prompt.startsWith('TEST_ENGLISH_ANSWER')) throw new Error('Final translation received wrong source');
       text = 'Тестовый русский перевод английского ответа.';
     }
+    if (unpenalized) text = prompt.includes('[penalty-empty]') ? '' : 'Тестовый русский ответ без штрафа за повторы.';
     if (thinking) {
       text = '<think>Сначала проверю условие рассказа. Бегемот должен перестать кусаться.</think>\n\nТестовый итоговый ответ с рассуждениями.';
       if (prompt.includes('[thinking-unfinished]')) text = '<think>Рассуждение ещё не закончено. <img src="https://invalid.test/private">';
@@ -58,7 +61,7 @@ export class MLCEngine {
     const engine = this;
     return (async function* () {
       for (let i = 0; i < text.length; i += 5) {
-        await new Promise(resolve => setTimeout(resolve, prompt.includes('[slow]') || prompt.includes('SLOW') || (thinking && prompt.includes('[slow-thinking]')) ? 50 : 15));
+        await new Promise(resolve => setTimeout(resolve, prompt.includes('[slow]') || prompt.includes('SLOW') || (thinking && prompt.includes('[slow-thinking]')) || (unpenalized && prompt.includes('[slow-penalty]')) ? 50 : 15));
         if (engine.interrupted) break;
         yield { choices: [{ delta: { content: text.slice(i, i + 5) } }] };
       }

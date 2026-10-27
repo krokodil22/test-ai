@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { compareAnswers, compareThinking, checkTranslationShape, ComparisonInputError, ComparisonStopped, THINKING_MAX_TOKENS } from '../../src/comparison';
+import { compareAnswers, compareThinking, comparePenalty, comparisonCompletionRequest, checkTranslationShape, ComparisonInputError, ComparisonStopped, THINKING_MAX_TOKENS } from '../../src/comparison';
 import type { StageRequest, StageRunner, ComparisonUpdate } from '../../src/comparison';
 
 it('isolates four stages, passes English intermediates correctly, and records actual stage timings', async () => {
@@ -139,4 +139,35 @@ it('does not mark a cancelled thinking generation as a complete comparison', asy
   };
   await expect(compareThinking('Вопрос', run, () => {}, () => stopped)).rejects.toBeInstanceOf(ComparisonStopped);
   expect(calls).toBe(2);
+});
+
+it('changes only the penalty for two isolated Russian answers with identical budgets and seeds', async () => {
+  const requests: StageRequest[] = [];
+  const result = await comparePenalty('  Омлет из двух яиц  ', async request => {
+    requests.push(request);
+    return { text: 'Ответ', finish: 'complete', seconds: requests.length };
+  }, () => {}, () => false);
+  expect(requests.map(request => request.stage)).toEqual(['direct', 'no-penalty']);
+  expect(requests.map(request => request.enableThinking)).toEqual([false, false]);
+  expect(requests.map(request => request.maxTokens)).toEqual([512, 512]);
+  expect(requests.map(request => [request.seed, request.temperature, request.topP])).toEqual([[42, 0.7, 0.8], [42, 0.7, 0.8]]);
+  expect(requests[0].messages).toEqual(requests[1].messages);
+  expect(requests[0].messages).not.toBe(requests[1].messages);
+  const baseline = comparisonCompletionRequest(requests[0]);
+  const unpenalized = comparisonCompletionRequest(requests[1]);
+  expect(baseline).not.toHaveProperty('frequency_penalty');
+  expect(baseline).not.toHaveProperty('presence_penalty');
+  expect(unpenalized).toEqual({ ...baseline, frequency_penalty: 0, presence_penalty: 0 });
+  expect(result.mode).toBe('penalty');
+  expect(result.stages.map(stage => stage.effectiveRepetitionPenalty)).toEqual([1.1, 1]);
+  expect(result.directSeconds).toBe(1); expect(result.noPenaltySeconds).toBe(2);
+});
+
+it('does not run the no-penalty variant after stopping the baseline', async () => {
+  let stopped = false; let calls = 0;
+  await expect(comparePenalty('Вопрос', async () => {
+    calls++; stopped = true;
+    return { text: 'Частичный ответ', finish: 'complete', seconds: 1 };
+  }, () => {}, () => stopped)).rejects.toBeInstanceOf(ComparisonStopped);
+  expect(calls).toBe(1);
 });

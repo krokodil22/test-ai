@@ -5,7 +5,7 @@ import { MODEL_ID, MODEL_CHAT_OPTIONS, MAX_REPLY_TOKENS, GENERATION_OPTIONS } fr
 import { loadModelInfo, removeLegacyModelCache } from './cache';
 import { buildContext } from './context';
 import { explainError } from './errors';
-import { compareAnswers, compareThinking, ComparisonStopped, ComparisonInputError } from './comparison';
+import { compareAnswers, compareThinking, comparePenalty, comparisonCompletionRequest, ComparisonStopped, ComparisonInputError } from './comparison';
 import type { StageRequest } from './comparison';
 import { TranslatorClient } from './translator-client';
 import { prepareModelCache } from './model-resources';
@@ -39,7 +39,7 @@ async function comparisonStage(request: StageRequest) {
   }
   await engine!.resetChat();
   if (stopped || fatal) throw new ComparisonStopped();
-  const stream = await engine!.chat.completions.create({ messages: request.messages, stream: true, stream_options: { include_usage: true }, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed, extra_body: { enable_thinking: request.enableThinking }, ...(request.frequencyPenalty !== undefined ? { frequency_penalty: request.frequencyPenalty, presence_penalty: request.presencePenalty } : {}) });
+  const stream = await engine!.chat.completions.create(comparisonCompletionRequest(request));
   const visible = visibleQwenStream();
   const thinking = request.enableThinking ? thinkingQwenStream() : undefined;
   let text = '';
@@ -157,7 +157,7 @@ scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
   stopped = false;
   if (data.type === 'compare') {
     try {
-      const compare = data.mode === 'thinking' ? compareThinking : compareAnswers;
+      const compare = data.mode === 'penalty' ? comparePenalty : data.mode === 'thinking' ? compareThinking : compareAnswers;
       const result = await compare(data.prompt, comparisonStage, update => {
         if (update.phase === 'start') send({ type: 'comparison-stage', id: data.id, stage: update.stage });
         else send({ type: 'comparison-result', id: data.id, result: update.result });

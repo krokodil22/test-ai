@@ -13,7 +13,7 @@ test('identical production files work in the domain root and repository subpath'
     await expect(page.locator('#resource-location')).toHaveText(`http://127.0.0.1:4173${path}models/${source.directory}/`);
     await page.locator('#settings-close').click();
     await page.goto(path + 'compare.html');
-    await expect(page.locator('h1')).toContainText('Помогают ли рассуждения');
+    await expect(page.locator('h1')).toContainText('Мешает ли штраф за повторы');
     await expect(page.locator('#model-status')).not.toContainText('Проверяем');
     await expect(page.locator('#comparison-test-engine')).toHaveCount(0);
   }
@@ -41,7 +41,7 @@ test('REAL MODEL: exports Russian answers with thinking enabled and disabled for
   test.skip(!existsSync(`dist/models/${source.directory}/model-info.json`), 'Verified model resources are not built.');
   const requests: string[] = [];
   page.on('request', request => requests.push(request.url()));
-  await page.goto('/compare.html');
+  await page.goto('/compare.html?mode=thinking');
   await expect(page.locator('#model-status')).not.toContainText('Проверяем');
   test.skip(await page.locator('#comparison-load').isDisabled(), 'A compatible WebGPU adapter with shader-f16 is unavailable.');
   await page.locator('#comparison-load').click();
@@ -62,6 +62,32 @@ test('REAL MODEL: exports Russian answers with thinking enabled and disabled for
   expect(requests.filter(url => url.includes('/translations/'))).toHaveLength(0);
   // This captures actual quality and truncation for human review, never a
   // mocked quality claim or a requirement that reasoning must improve it.
+});
+test('REAL MODEL: exports Russian answers with and without a repetition penalty', async ({ page }) => {
+  test.skip(!existsSync(`dist/models/${source.directory}/model-info.json`), 'Verified model resources are not built.');
+  const requests: string[] = [];
+  page.on('request', request => requests.push(request.url()));
+  await page.goto('/compare.html');
+  await expect(page.locator('#model-status')).not.toContainText('Проверяем');
+  test.skip(await page.locator('#comparison-load').isDisabled(), 'A compatible WebGPU adapter with shader-f16 is unavailable.');
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled({ timeout: 600000 });
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-stop')).toBeVisible();
+  await expect(page.locator('#comparison-stop')).toBeHidden({ timeout: 600000 });
+  await expect(page.locator('#comparison-export')).toBeEnabled();
+  const download = page.waitForEvent('download');
+  await page.locator('#comparison-export').click();
+  const file = await download;
+  const path = (await file.path())!;
+  await test.info().attach('real-model-penalty-comparison', { path, contentType: 'application/json' });
+  const report = JSON.parse(await readFile(path, 'utf8'));
+  expect(report.testing).toBe(false);
+  expect(report.mode).toBe('penalty');
+  expect(report.reports[0].result.stages.map((stage: { effectiveRepetitionPenalty: number }) => stage.effectiveRepetitionPenalty)).toEqual([1.1, 1]);
+  expect(requests.filter(url => url.includes('/translations/'))).toHaveLength(0);
+  // Inspect the attached answers for language, meaning and repetition. No
+  // automatic quality claim is made, including when an answer hits its limit.
 });
 test('production page checks real WebGPU before making model requests', async ({ page }) => {
   const modelRequests: string[] = [];

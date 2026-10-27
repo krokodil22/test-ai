@@ -134,7 +134,7 @@ test('opens from chat settings in the same tab, reuses its cache and fits a narr
   await page.locator('#settings-open').click();
   await page.locator('#comparison-open').click();
   await expect(page).toHaveURL(/\/test-ai\/compare\.html$/);
-  await expect(page.locator('h1')).toContainText('Помогают ли рассуждения');
+  await expect(page.locator('h1')).toContainText('Мешает ли штраф за повторы');
   await expect(page.locator('#comparison-load')).toContainText('из кеша');
   await page.locator('#comparison-load').click();
   await expect(page.locator('#comparison-run')).toBeEnabled();
@@ -147,7 +147,7 @@ test('opens from chat settings in the same tab, reuses its cache and fits a narr
 test('compares thinking modes in Russian without fetching a translator and exports separated reasoning and settings', async ({ page, context }) => {
   const requests: Array<{ url: string; method: string; body: string | null }> = [];
   context.on('request', request => requests.push({ url: request.url(), method: request.method(), body: request.postData() }));
-  await page.goto('compare.html');
+  await page.goto('compare.html?mode=thinking');
   await expect(page.locator('#comparison-load')).toBeEnabled();
   expect(requests.filter(request => request.url.includes('/models/'))).toHaveLength(0);
   await page.evaluate(() => localStorage.setItem('ryadom:chats:v1', '{"existing":"history"}'));
@@ -204,7 +204,7 @@ test('compares thinking modes in Russian without fetching a translator and expor
 });
 
 test('stops during reasoning and can compare again without a stuck engine lock', async ({ page }) => {
-  await page.goto('compare.html');
+  await page.goto('compare.html?mode=thinking');
   await expect(page.locator('#comparison-load')).toBeEnabled();
   await page.locator('#comparison-load').click();
   await expect(page.locator('#comparison-run')).toBeEnabled();
@@ -228,7 +228,7 @@ for (const [marker, warning] of [
 ]) test(`labels ${marker} honestly and retains it in exported results`, async ({ page }) => {
   const leaked: string[] = [];
   page.on('request', request => { if (request.url().includes('invalid.test')) leaked.push(request.url()); });
-  await page.goto('compare.html');
+  await page.goto('compare.html?mode=thinking');
   await expect(page.locator('#comparison-load')).toBeEnabled();
   await page.locator('#comparison-load').click();
   await expect(page.locator('#comparison-run')).toBeEnabled();
@@ -249,4 +249,111 @@ for (const [marker, warning] of [
   expect(stage.thinking.status).toBe(marker === 'thinking-unfinished' ? 'unfinished' : marker === 'thinking-missing' ? 'missing' : 'complete');
   expect(leaked).toHaveLength(0);
   await expect(page.locator('#result-reasoning img')).toHaveCount(0);
+});
+
+test('compares repetition penalties with identical settings, exports both variants, preserves history and reuses the cache', async ({ page, context }) => {
+  const requests: Array<{ url: string; method: string; body: string | null }> = [];
+  context.on('request', request => requests.push({ url: request.url(), method: request.method(), body: request.postData() }));
+  await page.goto('compare.html');
+  await expect(page.locator('#comparison-load')).toBeEnabled();
+  await expect(page.locator('h1')).toContainText('Мешает ли штраф');
+  await expect(page.locator('#comparison-prompt')).toHaveValue('Как приготовить омлет из двух яиц? Дай короткий список шагов.');
+  expect(requests.filter(request => request.url.includes('/models/'))).toHaveLength(0);
+  await page.evaluate(() => localStorage.setItem('ryadom:chats:v1', '{"existing":"history"}'));
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled();
+  await page.locator('#comparison-prompt').fill('Личный вопрос СЕКРЕТ-721');
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-prompt')).toBeDisabled();
+  await expect(page.locator('#comparison-export')).toBeEnabled();
+  await expect(page.locator('#result-direct')).toContainText('Здравствуйте');
+  await expect(page.locator('#result-no-penalty')).toHaveText('Тестовый русский ответ без штрафа за повторы.');
+  await expect(page.locator('#step-no-penalty')).toHaveAttribute('data-state', 'complete');
+  await expect(page.locator('#result-no-penalty')).not.toContainText('<think>');
+  const download = page.waitForEvent('download');
+  await page.locator('#comparison-export').click();
+  const file = await download;
+  const report = JSON.parse(await readFile((await file.path())!, 'utf8'));
+  expect(report.mode).toBe('penalty'); expect(report.testing).toBe(true);
+  const { baseline, withoutPenalty } = report.settings.penalty;
+  expect(baseline.effectiveRepetitionPenalty).toBe(1.1);
+  expect(withoutPenalty.effectiveRepetitionPenalty).toBe(1);
+  for (const variant of [baseline, withoutPenalty]) {
+    expect(variant.extra_body.enable_thinking).toBe(false);
+    expect(variant.maxTokens).toBe(512);
+    expect(variant.temperature).toBe(0.7); expect(variant.top_p).toBe(0.8);
+  }
+  expect(withoutPenalty.frequency_penalty).toBe(0); expect(withoutPenalty.presence_penalty).toBe(0);
+  expect(report.settings.penalty.seed).toBe(42);
+  expect(report.settings.thinking).toBeUndefined(); expect(report.settings.translation).toBeUndefined();
+  expect(report.reports[0].result.stages.map((stage: { effectiveRepetitionPenalty: number }) => stage.effectiveRepetitionPenalty)).toEqual([1.1, 1]);
+  expect(await page.evaluate(() => localStorage.getItem('ryadom:chats:v1'))).toBe('{"existing":"history"}');
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-export')).toBeEnabled();
+  await expect(page.locator('#result-no-penalty')).toHaveText('Тестовый русский ответ без штрафа за повторы.');
+  await page.screenshot({ path: 'test-results/penalty-comparison-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: 'test-results/penalty-comparison-mobile.png', fullPage: true });
+  const beforeReload = requests.filter(request => request.url.includes('/models/')).length;
+  await page.reload();
+  await expect(page.locator('#comparison-load')).toContainText('из кеша');
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled();
+  expect(requests.filter(request => request.url.includes('/models/'))).toHaveLength(beforeReload);
+  expect(requests.filter(request => /\/translations\/|ort-wasm|translator\.worker/.test(request.url))).toHaveLength(0);
+  for (const request of requests) {
+    expect(new URL(request.url).origin).toBe('http://127.0.0.1:5174');
+    expect(request.method).toBe('GET'); expect(request.body).toBeNull();
+    expect(request.url).not.toContain('СЕКРЕТ');
+  }
+});
+
+test('stops the unpenalized variant and can start another complete comparison', async ({ page }) => {
+  await page.goto('compare.html');
+  await expect(page.locator('#comparison-load')).toBeEnabled();
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled();
+  await page.locator('#comparison-prompt').fill('Вопрос [slow-penalty]');
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#step-no-penalty')).toHaveAttribute('data-state', 'running');
+  await page.locator('#comparison-stop').click();
+  await expect(page.locator('#comparison-stop')).toBeHidden();
+  await expect(page.locator('#comparison-export')).toBeDisabled();
+  await expect(page.locator('#comparison-notice')).toContainText('остановлена');
+  await page.locator('#comparison-prompt').fill('Повторный вопрос');
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-export')).toBeEnabled();
+});
+
+test('labels length-limited unpenalized output and keeps its finish reason in JSON', async ({ page }) => {
+  await page.goto('compare.html');
+  await expect(page.locator('#comparison-load')).toBeEnabled();
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled();
+  await page.locator('#comparison-prompt').fill('Вопрос [length]');
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-export')).toBeEnabled();
+  await expect(page.locator('#step-no-penalty')).toHaveAttribute('data-state', 'warning');
+  await expect(page.locator('#comparison-notice')).toContainText('достигнут лимит токенов');
+  const download = page.waitForEvent('download');
+  await page.locator('#comparison-export').click();
+  const file = await download;
+  const report = JSON.parse(await readFile((await file.path())!, 'utf8'));
+  expect(report.reports[0].result.stages[1].finish).toBe('length');
+});
+
+test('reports an empty unpenalized response and allows retry', async ({ page }) => {
+  await page.goto('compare.html');
+  await expect(page.locator('#comparison-load')).toBeEnabled();
+  await page.locator('#comparison-load').click();
+  await expect(page.locator('#comparison-run')).toBeEnabled();
+  await page.locator('#comparison-prompt').fill('Вопрос [penalty-empty]');
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-notice')).toContainText('пустой текст');
+  await expect(page.locator('#comparison-export')).toBeDisabled();
+  await expect(page.locator('#comparison-run')).toBeEnabled();
+  await page.locator('#comparison-prompt').fill('Повторный вопрос');
+  await page.locator('#comparison-run').click();
+  await expect(page.locator('#comparison-export')).toBeEnabled();
 });
