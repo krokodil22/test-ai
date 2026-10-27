@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import source from '../../scripts/model-source.json' with { type: 'json' };
 
 test.beforeEach(async ({ context }) => {
   const files = [
@@ -9,7 +10,7 @@ test.beforeEach(async ({ context }) => {
     { path: 'resolve/main/ndarray-cache.json', scope: 'webllm/model', body: '{}' },
     { path: 'resolve/main/tokenizer.json', scope: 'webllm/model', body: '{}' },
   ];
-  const info = { schema: 1, modelId: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC', revision: '9bd564b064631febf14deadcac492efb761d60c3', downloadBytes: 879804433, files: files.map(({ path, scope, body }) => ({ path, scope, bytes: body.length, sha256: createHash('sha256').update(body).digest('hex') })) };
+  const info = { schema: 1, modelId: source.modelId, revision: source.revision, downloadBytes: source.downloadBytes, files: files.map(({ path, scope, body }) => ({ path, scope, bytes: body.length, sha256: createHash('sha256').update(body).digest('hex') })) };
   await context.route('**/models/**', async route => {
     const path = route.request().url();
     const body = path.endsWith('/model-info.json') ? JSON.stringify(info) : files.find(file => path.endsWith('/' + file.path))?.body;
@@ -43,6 +44,10 @@ test('compares through the real worker protocol, exports labeled test results, p
   const file = await downloadPromise;
   const report = JSON.parse(await readFile((await file.path())!, 'utf8'));
   expect(report.testing).toBe(true);
+  expect(report.modelId).toBe(source.modelId);
+  expect(report.settings.answer.extra_body.enable_thinking).toBe(false);
+  expect(report.settings.translation.input.extra_body.enable_thinking).toBe(false);
+  for (const id of ['result-direct', 'result-input', 'result-english']) await expect(page.locator('#' + id)).not.toContainText('<think>');
   expect(report.settings.translation.protocol).toBe('qwen-ru-en-opus-en-ru-v1');
   expect(report.settings.translation.output.modelId).toBe('Xenova/opus-mt-en-ru');
   expect(report.settings.translation.input.temperature).toBe(0);

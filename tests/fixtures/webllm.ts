@@ -25,7 +25,8 @@ export class MLCEngine {
   }
   async resetChat() { if (this.locked) throw new Error('Model stream lock was not released'); this.interrupted = false; }
   async interruptGenerate() { this.interrupted = true; }
-  chat = { completions: { create: async (request: { messages: Array<{ content: string }>; temperature?: number; frequency_penalty?: number; presence_penalty?: number }) => {
+  chat = { completions: { create: async (request: { messages: Array<{ content: string }>; temperature?: number; frequency_penalty?: number; presence_penalty?: number; extra_body?: { enable_thinking?: boolean } }) => {
+    if (request.extra_body?.enable_thinking !== false) throw new Error('Qwen3 must use the same non-thinking mode in every test stage');
     const rawPrompt = request.messages.at(-1)!.content;
     const system = request.messages[0].content;
     const translation = system.startsWith('Translate the user message');
@@ -46,6 +47,7 @@ export class MLCEngine {
       if (!prompt.startsWith('TEST_ENGLISH_ANSWER')) throw new Error('Final translation received wrong source');
       text = 'Тестовый русский перевод английского ответа.';
     }
+    text = '<think>\n\n</think>\n\n' + text;
     const engine = this;
     return (async function* () {
       for (let i = 0; i < text.length; i += 5) {

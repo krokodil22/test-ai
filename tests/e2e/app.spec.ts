@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 import type { Page, BrowserContext, Request } from '@playwright/test';
 import { createHash } from 'node:crypto';
-const modelId = 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC';
+import { gzipSync } from 'node:zlib';
+import source from '../../scripts/model-source.json' with { type: 'json' };
+const modelId = source.modelId;
 const files = [
   { path: 'model.wasm', scope: 'webllm/wasm', body: 'wasm-test-fixture' },
   { path: 'resolve/main/mlc-chat-config.json', scope: 'webllm/config', body: '{}' },
@@ -13,16 +15,16 @@ async function resources(context: BrowserContext, options: { fail?: boolean; cor
   const resourceFiles = files.map(file => ({ ...file }));
   if (options.external) resourceFiles[2].body = JSON.stringify({ externalURL: 'https://unconfigured.example/leak' });
   const info = {
-    schema: 1, modelId, revision: '9bd564b064631febf14deadcac492efb761d60c3', downloadBytes: 879804433,
-    files: resourceFiles.map(({ path, scope, body }) => ({ path, scope, bytes: Buffer.byteLength(body), sha256: createHash('sha256').update(body).digest('hex') })),
+    schema: 1, modelId, revision: source.revision, downloadBytes: source.downloadBytes,
+    files: resourceFiles.map(({ path, scope, body }) => ({ path, scope, bytes: Buffer.byteLength(body), sha256: createHash('sha256').update(body).digest('hex'), ...(path.endsWith('.bin') ? { download: { encoding: 'gzip', path: path + '.gz', bytes: gzipSync(body).length, sha256: createHash('sha256').update(gzipSync(body)).digest('hex') } } : {}) })),
   };
   const requests: Request[] = [];
   context.on('request', request => requests.push(request));
   await context.route('**/models/**', async route => {
     if (options.fail) { await route.fulfill({ status: 503, body: 'Unavailable' }); return; }
     const url = route.request().url();
-    const file = resourceFiles.find(file => url.endsWith('/' + file.path));
-    const body = url.endsWith('/model-info.json') ? JSON.stringify(info) : options.corrupt && file?.path === 'model.wasm' ? 'broken' : file?.body;
+    const file = resourceFiles.find(file => url.endsWith('/' + file.path + (file.path.endsWith('.bin') ? '.gz' : '')));
+    const body = url.endsWith('/model-info.json') ? JSON.stringify(info) : options.corrupt && file?.path === 'model.wasm' ? 'broken' : file?.path.endsWith('.bin') ? gzipSync(file.body) : file?.body;
     await route.fulfill({ status: body === undefined ? 404 : 200, contentType: url.endsWith('.json') ? 'application/json' : 'application/octet-stream', body: body || '' });
   });
   return requests;
@@ -50,6 +52,7 @@ test('first run, streaming dialog, keyboard, Markdown, copy, local history and n
   await expect(page.locator('#stop')).toBeVisible();
   await expect(page.locator('#new-chat')).toBeDisabled();
   await expect(page.locator('.message-assistant .message-content')).toContainText('Здравствуйте');
+  await expect(page.locator('.message-assistant .message-content')).not.toContainText('<think>');
   await expect(page.locator('#stop')).toBeHidden();
   await expect(page.locator('.message-assistant strong')).toContainText('Здравствуйте');
   await expect(page.locator('pre code')).toContainText('console.log');
@@ -178,7 +181,7 @@ test('history deletion propagates to other tabs and is not restored by an old ta
   expect(await page.evaluate(() => localStorage.getItem('ryadom:chats:v1'))).not.toContain('Личная переписка');
 });
 
-for (const location of ['legacy-directory', 'same-url', 'stale-revision'] as const) {
+for (const location of ['legacy-directory', 'legacy-1.5-directory', 'same-url', 'stale-revision'] as const) {
   test(`upgrades ${location} cache without mixing model weights or deleting history`, async ({ page, context }) => {
     const requests = await resources(context);
     await page.addInitScript(() => {
@@ -186,28 +189,30 @@ for (const location of ['legacy-directory', 'same-url', 'stale-revision'] as con
     });
     await page.goto('./');
     await expect(page.locator('#load-model')).toBeEnabled();
-    await page.evaluate(async ({ location, modelId }) => {
-      const base = new URL('models/qwen2.5-1.5b/', document.baseURI).href;
-      const oldBase = location === 'legacy-directory' ? base.replace('qwen2.5-1.5b', 'qwen2.5-0.5b') : base;
+    await page.evaluate(async ({ location, modelId, directory }) => {
+      const base = new URL(`models/${directory}/`, document.baseURI).href;
+      const oldBase = location === 'legacy-directory' ? base.replace(directory, 'qwen2.5-0.5b') : location === 'legacy-1.5-directory' ? base.replace(directory, 'qwen2.5-1.5b') : base;
       const metadata = await caches.open('ryadom/metadata-v1');
-      await metadata.put(oldBase + 'model-info.json', new Response(JSON.stringify({ schema: 1, modelId: location === 'stale-revision' ? modelId : 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', revision: 'old', downloadBytes: 10, files: [] })));
+      await metadata.put(oldBase + 'model-info.json', new Response(JSON.stringify({ schema: 1, modelId: location === 'stale-revision' ? modelId : location === 'legacy-1.5-directory' ? 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC' : 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', revision: 'old', downloadBytes: 10, files: [] })));
       await (await caches.open('webllm/wasm')).put(oldBase + 'model.wasm', new Response('OLD incompatible WASM'));
       await (await caches.open('webllm/model')).put(oldBase + 'resolve/main/old-weights.bin', new Response('OLD weights'));
       await (await caches.open('webllm/model')).put(new URL('/another-app/keep.bin', document.baseURI).href, new Response('unrelated'));
-    }, { location, modelId });
+      await (await caches.open('tetrikanets/opus-en-ru/retained')).put(new URL('/translations/keep.bin', document.baseURI).href, new Response('keep translator'));
+    }, { location, modelId, directory: source.directory });
     await page.reload();
     await expect(page.locator('#quick-start')).toBeVisible();
     await page.locator('#quick-start').click();
     await expect(page.locator('#engine-status')).toContainText('Готов к разговору');
     await expect(page.locator('.message-user')).toContainText('Сохранённый вопрос');
     expect(requests.filter(request => request.url().includes('/models/'))).toHaveLength(6);
-    const cacheState = await page.evaluate(async () => {
+    const cacheState = await page.evaluate(async (directory) => {
       const keys = (await (await caches.open('webllm/model')).keys()).map(request => request.url);
-      const metadata = await (await (await caches.open('ryadom/metadata-v1')).match(new URL('models/qwen2.5-1.5b/model-info.json', document.baseURI).href))!.json();
-      return { keys, modelId: metadata.modelId };
-    });
+      const metadata = await (await (await caches.open('ryadom/metadata-v1')).match(new URL(`models/${directory}/model-info.json`, document.baseURI).href))!.json();
+      return { keys, modelId: metadata.modelId, translatorRetained: !!await (await caches.open('tetrikanets/opus-en-ru/retained')).match(new URL('/translations/keep.bin', document.baseURI).href) };
+    }, source.directory);
     expect(cacheState.modelId).toBe(modelId);
-    expect(cacheState.keys.some(key => key.includes('old-weights') || key.includes('qwen2.5-0.5b'))).toBe(false);
+    expect(cacheState.translatorRetained).toBe(true);
+    expect(cacheState.keys.some(key => key.includes('old-weights') || key.includes('qwen2.5-0.5b') || key.includes('qwen2.5-1.5b'))).toBe(false);
     expect(cacheState.keys.some(key => key.includes('/another-app/keep.bin'))).toBe(true);
   });
 }

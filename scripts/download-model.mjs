@@ -6,6 +6,7 @@ import { pipeline } from 'node:stream/promises';
 import { Transform } from 'node:stream';
 import { resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createGzip, createGunzip } from 'node:zlib';
 import { EnvHttpProxyAgent, setGlobalDispatcher } from 'undici';
 
 // Honor managed proxies, including their CA configuration; TLS verification stays enabled.
@@ -30,6 +31,17 @@ async function hashes(path) {
   for await (const chunk of createReadStream(path)) { sha256.update(chunk); git.update(chunk); }
   return { bytes: size, sha256: sha256.digest('hex'), git: git.digest('hex') };
 }
+async function hashesGzip(path, plainBytes) {
+  const sha256 = createHash('sha256');
+  const git = createHash('sha1').update(`blob ${plainBytes}\0`);
+  let bytes = 0;
+  for await (const chunk of createReadStream(path).pipe(createGunzip())) {
+    bytes += chunk.length;
+    if (bytes > plainBytes) throw new Error('Expanded model resource is larger than expected');
+    sha256.update(chunk); git.update(chunk);
+  }
+  return { bytes, sha256: sha256.digest('hex'), git: git.digest('hex') };
+}
 async function request(url) {
   const response = await fetch(url, { signal: AbortSignal.timeout(180000), redirect: 'follow' });
   if (!response.ok) throw new Error(`HTTP ${response.status} fetching ${new URL(url).hostname}. Check network access and CORS/hosting configuration.`);
@@ -45,6 +57,14 @@ async function download(url, name, expected = {}, scope = 'webllm/model') {
       return { path: name, bytes: existing.bytes, sha256: existing.sha256, scope };
     }
   } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (source.packaging === 'gzip-shards' && name.endsWith('.bin') && expected.bytes) {
+    try {
+      const existing = await hashesGzip(path + '.gz', expected.bytes);
+      if (!valid(existing)) throw new Error(`Integrity mismatch: ${name}.gz. Remove the damaged archive and retry.`);
+      console.log(`Verified existing archive ${name}.gz`);
+      return { path: name, bytes: existing.bytes, sha256: existing.sha256, scope };
+    } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
   await mkdir(dirname(path), { recursive: true });
   const temporary = path + '.part';
   try {
@@ -67,9 +87,13 @@ async function download(url, name, expected = {}, scope = 'webllm/model') {
 async function main() {
   if (argv.includes('--verify')) {
     const info = JSON.parse(await readFile(pathFor('model-info.json'), 'utf8'));
-    if (info.modelId !== source.modelId || !info.files?.length) throw new Error('Invalid model manifest');
+    if (info.modelId !== source.modelId || info.revision !== source.revision || !info.files?.length) throw new Error('Invalid model manifest');
     for (const file of info.files) {
-      const actual = await hashes(pathFor(file.path));
+      if (file.download) {
+        const packed = await hashes(pathFor(file.download.path));
+        if (packed.bytes !== file.download.bytes || packed.sha256 !== file.download.sha256) throw new Error(`Integrity mismatch: ${file.download.path}`);
+      }
+      const actual = file.download ? await hashesGzip(pathFor(file.download.path), file.bytes) : await hashes(pathFor(file.path));
       if (actual.bytes !== file.bytes || actual.sha256 !== file.sha256) throw new Error(`Integrity mismatch: ${file.path}`);
     }
     console.log(`All ${info.files.length} runtime files verified. ${MB(info.downloadBytes)}. Revision: ${info.revision}`);
@@ -102,14 +126,32 @@ async function main() {
   for (const name of ['README.md', 'LICENSE']) {
     if (metadata.siblings.some(file => file.rfilename === name)) await downloadFile(name);
   }
-  await writeFile(pathFor('LICENSE'), await readFile(new URL('../licenses/Qwen2.5-APACHE-2.0.txt', import.meta.url)));
+  await writeFile(pathFor('LICENSE'), await readFile(new URL(`../licenses/${source.license.file || 'Qwen2.5-APACHE-2.0.txt'}`, import.meta.url)));
+  if (source.packaging === 'gzip-shards') {
+    for (const file of files.filter(file => file.path.endsWith('.bin'))) {
+      const plain = pathFor(file.path);
+      try {
+        await stat(plain);
+        const packed = plain + '.gz';
+        await pipeline(createReadStream(plain), createGzip({ level: 9 }), createWriteStream(packed + '.part'));
+        await rename(packed + '.part', packed);
+      } catch (error) { if (error.code !== 'ENOENT') throw error; }
+      const packed = await hashes(plain + '.gz');
+      file.download = { encoding: 'gzip', path: file.path + '.gz', bytes: packed.bytes, sha256: packed.sha256 };
+      console.log(`Packed ${file.path}: ${MB(file.bytes)} → ${MB(packed.bytes)}`);
+    }
+  }
   const info = {
     schema: 1, modelId: source.modelId, revision,
     webllm: source.runtime.webllm, license: 'Apache-2.0',
-    downloadBytes: files.reduce((total, file) => total + file.bytes, 0), files,
+    downloadBytes: files.reduce((total, file) => total + (file.download?.bytes || file.bytes), 0),
+    unpackedBytes: files.reduce((total, file) => total + file.bytes, 0), files,
   };
   await writeFile(pathFor('model-info.json.part'), JSON.stringify(info, null, 2) + '\n');
   await rename(pathFor('model-info.json.part'), pathFor('model-info.json'));
+  // The verified archives are the published files. Retain old model folders;
+  // remove only redundant plaintext shards from this newly prepared bundle.
+  for (const file of files.filter(file => file.download)) await rm(pathFor(file.path), { force: true });
   console.log(`\nReady: ${destination}\nBrowser download: ${MB(info.downloadBytes)}. ${files.length} files.\nUpload this COMPLETE directory to your static model host, or run npm run build.\nNo model files should be committed to Git.`);
 }
 main().catch(error => {

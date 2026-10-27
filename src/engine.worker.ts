@@ -8,6 +8,8 @@ import { explainError } from './errors';
 import { compareAnswers, ComparisonStopped, ComparisonInputError } from './comparison';
 import type { StageRequest } from './comparison';
 import { TranslatorClient } from './translator-client';
+import { prepareModelCache } from './model-resources';
+import { visibleQwenStream } from './stream-text';
 import type { WorkerEvent, WorkerRequest } from './types';
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
@@ -37,7 +39,8 @@ async function comparisonStage(request: StageRequest) {
   }
   await engine!.resetChat();
   if (stopped || fatal) throw new ComparisonStopped();
-  const stream = await engine!.chat.completions.create({ messages: request.messages, stream: true, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed, ...(request.frequencyPenalty !== undefined ? { frequency_penalty: request.frequencyPenalty, presence_penalty: request.presencePenalty } : {}) });
+  const stream = await engine!.chat.completions.create({ messages: request.messages, stream: true, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed, extra_body: GENERATION_OPTIONS.extra_body, ...(request.frequencyPenalty !== undefined ? { frequency_penalty: request.frequencyPenalty, presence_penalty: request.presencePenalty } : {}) });
+  const visible = visibleQwenStream();
   let text = '';
   let finish: 'complete' | 'length' = 'complete';
   for await (const chunk of stream) {
@@ -45,8 +48,9 @@ async function comparisonStage(request: StageRequest) {
     if (stopped) { void engine!.interruptGenerate(); continue; }
     const choice = chunk.choices[0];
     if (choice?.delta.content) {
-      text += choice.delta.content;
-      send({ type: 'comparison-token', id: active!, stage: request.stage, text: choice.delta.content });
+      const delta = visible(choice.delta.content);
+      text += delta;
+      if (delta) send({ type: 'comparison-token', id: active!, stage: request.stage, text: delta });
     }
     if (choice?.finish_reason === 'length') finish = 'length';
   }
@@ -93,6 +97,8 @@ async function init(base: string, translatorBase?: string) {
     const info = await loadModelInfo(base);
     send({ type: 'size', bytes: info.downloadBytes });
     resourceHashes = new Map(info.files.map(file => [new URL(file.path, base).href, file.sha256]));
+    const qwenShare = translatorBase ? 0.8 : 1;
+    await prepareModelCache(base, info, nativeFetch, (value, text) => send({ type: 'progress', progress: value * 0.7 * qwenShare, text }));
     engine = new MLCEngine({
       logLevel: 'ERROR',
       appConfig: {
@@ -106,7 +112,7 @@ async function init(base: string, translatorBase?: string) {
           overrides: MODEL_CHAT_OPTIONS,
         }],
       },
-      initProgressCallback: report => send({ type: 'progress', progress: report.progress * (translatorBase ? 0.8 : 1), text: report.text }),
+      initProgressCallback: report => send({ type: 'progress', progress: (0.7 + report.progress * 0.3) * qwenShare, text: report.text }),
     });
     await engine.reload(MODEL_ID);
     if (translatorBase && !fatal) {
@@ -162,6 +168,7 @@ scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
       max_tokens: MAX_REPLY_TOKENS,
       ...GENERATION_OPTIONS,
     });
+    const visible = visibleQwenStream();
     let reason: 'complete' | 'length' = 'complete';
     for await (const chunk of stream) {
       if (fatal) break;
@@ -170,7 +177,7 @@ scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
       // leave the next generation waiting forever.
       if (stopped) { void engine.interruptGenerate(); continue; }
       const choice = chunk.choices[0];
-      if (choice?.delta.content) send({ type: 'token', id: active, text: choice.delta.content });
+      if (choice?.delta.content) { const delta = visible(choice.delta.content); if (delta) send({ type: 'token', id: active, text: delta }); }
       if (choice?.finish_reason === 'length') reason = 'length';
     }
     if (!fatal) send({ type: 'done', id: active, reason: stopped ? 'stopped' : reason });

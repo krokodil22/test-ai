@@ -1,26 +1,31 @@
 {
-  "modelId": "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
-  "repository": "mlc-ai/Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
-  "revision": "9bd564b064631febf14deadcac492efb761d60c3",
+  "modelId": "Qwen3-1.7B-q4f16_1-MLC",
+  "repository": "mlc-ai/Qwen3-1.7B-q4f16_1-MLC",
+  "revision": "80b3abcec6c3b3f5355dc0cc99cc4fb578f192bc",
   "runtime": {
     "webllm": "0.2.79",
-    "url": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/00fe7a40e57e5e8eb9fef87526a4bf28ad5846c0/web-llm-models/v0_2_48/Qwen2-1.5B-Instruct-q4f16_1-ctx4k_cs1k-webgpu.wasm",
-    "bytes": 4098672,
-    "sha256": "14ef8ff95b20cc099df70d365babd18dc8023936eeacc2f459bac21e0a4f9dfa"
+    "url": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/00fe7a40e57e5e8eb9fef87526a4bf28ad5846c0/web-llm-models/v0_2_48/Qwen3-1.7B-q4f16_1-ctx4k_cs1k-webgpu.wasm",
+    "bytes": 4740005,
+    "sha256": "6407437acec628497086916f43ba7d796a73c0b2fa4777060e9899e6d8ffb0fb"
   },
   "license": {
     "name": "Apache-2.0",
-    "model_card": "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct",
-    "revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
-    "gitBlob": "6634c8cc3133b3848ec74b9f275acaaa1ea618ab"
+    "model_card": "https://huggingface.co/Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "gitBlob": "6634c8cc3133b3848ec74b9f275acaaa1ea618ab",
+    "file": "Qwen3-APACHE-2.0.txt"
   },
-  "displayName": "Qwen2.5 · 1.5B",
-  "description": "Qwen2.5 1.5B Instruct · q4f16_1",
-  "directory": "qwen2.5-1.5b",
-  "downloadBytes": 879804433,
-  "vramRequiredMB": 1629.75,
+  "displayName": "Qwen3 · 1.7B",
+  "description": "Qwen3 1.7B · q4f16_1 · без режима размышлений",
+  "directory": "qwen3-1.7b",
+  "downloadBytes": 858449127,
+  "vramRequiredMB": 2036.66,
   "ramRecommendedGB": "3–4",
   "legacyModelIds": [
-    "Qwen2.5-0.5B-Instruct-q4f16_1-MLC"
-  ]
+    "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+    "Qwen2.5-1.5B-Instruct-q4f16_1-MLC"
+  ],
+  "unpackedBytes": 984300605,
+  "packaging": "gzip-shards",
+  "minimumStorageBufferBytes": 155582464
 }

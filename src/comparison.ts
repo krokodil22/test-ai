@@ -95,7 +95,9 @@ export async function compareAnswers(prompt: string, run: StageRunner, onUpdate:
     if (isStopped()) throw new ComparisonStopped();
     const maxTokens = name === 'translate-output' ? MAX_REPLY_TOKENS * 2 : MAX_REPLY_TOKENS;
     const messages: PromptMessage[] = translation ? translationMessages(name, system, text) : [{ role: 'system', content: system }, { role: 'user', content: text }];
-    checkContext(messages, maxTokens);
+    // The final stage runs OPUS-MT sentence by sentence on CPU; its own
+    // tokenizer checks each sentence. Qwen's prompt budget does not apply.
+    if (name !== 'translate-output') checkContext(messages, maxTokens);
     onUpdate({ phase: 'start', stage: name });
     const result = await run({ stage: name, sourceText: text, messages, maxTokens, temperature: translation ? TRANSLATION_OPTIONS.temperature : GENERATION_OPTIONS.temperature, topP: translation ? TRANSLATION_OPTIONS.top_p : GENERATION_OPTIONS.top_p, seed, ...(translation ? { frequencyPenalty: TRANSLATION_OPTIONS.frequency_penalty, presencePenalty: TRANSLATION_OPTIONS.presence_penalty } : {}) });
     if (isStopped()) throw new ComparisonStopped();

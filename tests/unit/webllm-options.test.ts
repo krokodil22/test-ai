@@ -28,10 +28,11 @@ it('overrides upstream zero penalties through the actual WebLLM reload path', as
     await expect(engine.reload(MODEL_ID)).rejects.toBe(stop);
     // A pinned-dependency regression test intentionally inspects the config
     // stored by WebLLM itself, rather than reimplementing its merge algorithm.
-    const config = (engine as unknown as { loadedModelIdToChatConfig: Map<string, ChatOptions> }).loadedModelIdToChatConfig.get(MODEL_ID)!;
+    const config = (engine as unknown as { loadedModelIdToChatConfig: Map<string, ChatOptions & { prefill_chunk_size: number }> }).loadedModelIdToChatConfig.get(MODEL_ID)!;
     expect(config.repetition_penalty).toBeGreaterThan(1);
     expect(config.frequency_penalty).toBeUndefined();
     expect(config.presence_penalty).toBeUndefined();
     expect(config.context_window_size).toBe(4096);
+    expect(config.prefill_chunk_size).toBe(1024);
   } finally { await engine.unload(); }
 });

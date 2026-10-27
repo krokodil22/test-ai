@@ -1,12 +1,17 @@
+import source from '../scripts/model-source.json';
+
 export async function probeGpu(): Promise<string> {
   if (!globalThis.isSecureContext) throw new Error('Нужен HTTPS: WebGPU недоступен на незащищённом сайте. Для разработки подходит localhost.');
+  if (source.packaging === 'gzip-shards' && !globalThis.DecompressionStream) throw new Error('Браузер не поддерживает распаковку ресурсов модели. Обновите настольный Chrome.');
   if (!navigator.gpu) throw new Error('В этом браузере недоступен WebGPU. Откройте сайт в актуальном Chrome на компьютере и включите аппаратное ускорение.');
   const adapter = await navigator.gpu.requestAdapter({ powerPreference: 'high-performance' });
   if (!adapter) throw new Error('Графический адаптер WebGPU недоступен. Проверьте драйвер и аппаратное ускорение в Chrome.');
   if (!adapter.features.has('shader-f16')) throw new Error('Ваш GPU не поддерживает shader-f16, необходимый этой модели. Попробуйте актуальный Chrome на другом компьютере.');
-  if (adapter.limits.maxStorageBufferBindingSize < 128 * 1024 * 1024) throw new Error('Ограничения GPU слишком малы для этой модели. Нужен буфер WebGPU размером от 128 МиБ.');
+  const requiredBuffer = source.minimumStorageBufferBytes;
+  if (adapter.limits.maxStorageBufferBindingSize < requiredBuffer) throw new Error(`Ограничения GPU слишком малы для Qwen3 1.7B. Нужен буфер WebGPU от ${(requiredBuffer / 1024 / 1024).toFixed(1)} МиБ (обычно адаптер с лимитом 256 МиБ или выше).`);
+  if (adapter.limits.maxBufferSize < 256 * 1024 * 1024 || adapter.limits.maxComputeWorkgroupStorageSize < 32768 || adapter.limits.maxStorageBuffersPerShaderStage < 10) throw new Error('Ограничения WebGPU недостаточны для WebLLM: нужны maxBufferSize от 256 МиБ, рабочая память группы от 32 КиБ и 10 storage-буферов на стадию. Обновите браузер и драйвер GPU.');
   // Check device creation before any model download. Memory availability is not exposed by WebGPU.
-  const device = await adapter.requestDevice({ requiredFeatures: ['shader-f16'] });
+  const device = await adapter.requestDevice({ requiredFeatures: ['shader-f16'], requiredLimits: { maxStorageBufferBindingSize: requiredBuffer, maxBufferSize: adapter.limits.maxBufferSize >= 1024 * 1024 * 1024 ? 1024 * 1024 * 1024 : 256 * 1024 * 1024, maxComputeWorkgroupStorageSize: 32768, maxStorageBuffersPerShaderStage: 10 } });
   device.destroy();
   return adapter.info?.description || adapter.info?.vendor || 'WebGPU';
 }
@@ -19,7 +24,10 @@ export function monitorGpu(onLost: () => void): void {
     if (adapter) {
       const requestDevice = adapter.requestDevice.bind(adapter);
       adapter.requestDevice = async descriptor => {
-        const device = await requestDevice(descriptor);
+        // WebLLM 0.2.79 falls back from 1 GiB to 128 MiB. Qwen3's embedding
+        // tensor needs 148.4 MiB, even on an adapter supporting 256 MiB.
+        // Request the actual model limit through the normal WebGPU API.
+        const device = await requestDevice({ ...descriptor, requiredLimits: { ...descriptor?.requiredLimits, maxStorageBufferBindingSize: Math.max(descriptor?.requiredLimits?.maxStorageBufferBindingSize ?? 128 * 1024 * 1024, source.minimumStorageBufferBytes) } });
         void device.lost.then(info => { if (info.reason !== 'destroyed') onLost(); });
         device.addEventListener('uncapturederror', event => {
           if (event.error instanceof GPUOutOfMemoryError) onLost();

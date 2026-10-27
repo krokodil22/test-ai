@@ -52,11 +52,23 @@ it('rejects an empty translation and never calls the answer stage', async () => 
   expect(calls).toBe(2);
 });
 
-it('checks the translation context before calling the model', async () => {
+it('checks the Qwen context before generating an English answer', async () => {
   let calls = 0;
-  const run: StageRunner = async () => { calls++; return { text: calls === 3 ? 'x'.repeat(4000) : 'Text', finish: 'complete', seconds: 1 }; };
+  const run: StageRunner = async () => { calls++; return { text: calls === 2 ? 'x'.repeat(4000) : 'Text', finish: 'complete', seconds: 1 }; };
   await expect(compareAnswers('Вопрос', run, () => {}, () => false)).rejects.toThrow('не помещается в контекст');
-  expect(calls).toBe(3);
+  expect(calls).toBe(2);
+});
+
+it('passes a complete English answer to the CPU translator without a Qwen prompt budget', async () => {
+  const english = 'A pig returned safely to dry land. '.repeat(70);
+  const requests: StageRequest[] = [];
+  const run: StageRunner = async request => {
+    requests.push(request);
+    return { text: ['Прямой ответ', 'Write a story.', english, 'Свинка вернулась на сушу. '.repeat(70)][requests.length - 1], finish: 'complete', seconds: 1 };
+  };
+  await compareAnswers('Придумай рассказ', run, () => {}, () => false);
+  expect(requests).toHaveLength(4);
+  expect(requests[3].sourceText).toBe(english);
 });
 
 it('stops when a short instruction is answered with a story instead of being translated', async () => {

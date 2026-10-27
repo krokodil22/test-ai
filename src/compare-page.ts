@@ -82,7 +82,7 @@ function completeStage(result: StageResult) {
 function receive(event: WorkerEvent) {
   if (event.type === 'progress') {
     $<HTMLProgressElement>('comparison-progress').value = Math.min(1, Math.max(0, event.progress));
-    $('model-status').textContent = event.text.startsWith('Переводчик') || event.text.includes('CPU') ? event.text : `Загрузка и подготовка GPU: ${Math.round(event.progress * 100)}%`;
+    $('model-status').textContent = event.text.startsWith('Модель:') || event.text.startsWith('Переводчик') || event.text.includes('CPU') ? event.text : `Загрузка и подготовка GPU: ${Math.round(event.progress * 100)}%`;
     return;
   }
   if (event.type === 'size') { $('cache-description').textContent = `Комплект модели: ${(event.bytes / 1e6).toFixed(1)} МБ. OPUS-MT: ${TRANSLATOR_ESTIMATE} дополнительно; общий кеш с отдельной страницей перевода.`; return; }
@@ -171,7 +171,7 @@ $('back-chat').addEventListener('click', terminate);
 $('translator-open').addEventListener('click', terminate);
 window.addEventListener('pagehide', terminate);
 exportButton.addEventListener('click', () => {
-  const data = { schema: 1, modelId: MODEL_ID, revision: MODEL_REVISION, engine: __COMPARISON_TEST_ENGINE__ ? 'Test double (not inference)' : 'WebLLM 0.2.79', testing: __COMPARISON_TEST_ENGINE__, settings: { answer: { ...GENERATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS }, translation: { protocol: TRANSLATION_PROTOCOL, input: { engine: 'Qwen / WebLLM', ...TRANSLATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS, effectiveRepetitionPenalty: 1 }, output: { modelId: TRANSLATOR.modelId, revision: TRANSLATOR.revision, transformers: TRANSLATOR.transformers, device: 'wasm / CPU', sentenceBySentence: true, maxSourceTokensPerSentence: 400, maxNewTokensPerSentence: 384, do_sample: false } }, repetitionPenalty: MODEL_CHAT_OPTIONS.repetition_penalty }, reports };
+  const data = { schema: 1, modelId: MODEL_ID, revision: MODEL_REVISION, engine: __COMPARISON_TEST_ENGINE__ ? 'Test double (not inference)' : 'WebLLM 0.2.79', testing: __COMPARISON_TEST_ENGINE__, settings: { answer: { ...GENERATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS }, translation: { protocol: TRANSLATION_PROTOCOL, input: { engine: 'Qwen3 / WebLLM', extra_body: GENERATION_OPTIONS.extra_body, ...TRANSLATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS, effectiveRepetitionPenalty: 1 }, output: { modelId: TRANSLATOR.modelId, revision: TRANSLATOR.revision, transformers: TRANSLATOR.transformers, device: 'wasm / CPU', sentenceBySentence: true, maxSourceTokensPerSentence: 400, maxNewTokensPerSentence: 384, do_sample: false } }, repetitionPenalty: MODEL_CHAT_OPTIONS.repetition_penalty }, reports };
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
   const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'tetrikanets-comparison.json'; anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);

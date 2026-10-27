@@ -14,11 +14,12 @@ export const MAX_REPLY_TOKENS = 512;
 export const MAX_INPUT_CHARS = 1200;
 export const SYSTEM_PROMPT = `Ты — ${BOT_NAME}, внимательный ИИ-помощник. Отвечай на естественном русском языке, ясно и по существу. Меняй язык только по просьбе пользователя. Не выдавай выдумки за факты. В творческих заданиях создавай вымышленные истории. Если не знаешь ответ на фактический вопрос, скажи об этом.`;
 export const MODEL_ESTIMATE = formatBytes(source.downloadBytes);
-// Match Qwen's published sampling defaults. WebLLM's OpenAI-style request does
-// not forward repetition_penalty: set it through model ChatOptions instead.
-export const GENERATION_OPTIONS = { temperature: 0.7, top_p: 0.8 } as const;
+// Qwen3's non-thinking temperature/top-p. The project's repetition guard is
+// set through ChatOptions; WebLLM does not forward repetition_penalty here.
+export const GENERATION_OPTIONS = { temperature: 0.7, top_p: 0.8, extra_body: { enable_thinking: false } } as const;
 export const MODEL_CHAT_OPTIONS = {
   context_window_size: CONTEXT_TOKENS,
+  prefill_chunk_size: 1024,
   repetition_penalty: 1.1,
   // WebLLM 0.2.79 chooses additive penalties even when both values are zero.
   // Explicit undefined replaces the manifest's zero defaults and enables the
@@ -44,7 +45,8 @@ export interface ModelInfo {
   modelId: string;
   revision: string;
   downloadBytes: number;
-  files: Array<{ path: string; bytes: number; sha256: string; scope: typeof CACHE_SCOPES[number] }>;
+  unpackedBytes?: number;
+  files: Array<{ path: string; bytes: number; sha256: string; scope: typeof CACHE_SCOPES[number]; download?: { encoding: 'gzip'; path: string; bytes: number; sha256: string } }>;
 }
 
 export function validateModelInfo(value: unknown): ModelInfo {
@@ -56,6 +58,7 @@ export function validateModelInfo(value: unknown): ModelInfo {
     if (!/^[a-zA-Z0-9_./-]+$/.test(file.path) || file.path.includes('..') || file.path.startsWith('/') || !/^[a-f0-9]{64}$/.test(file.sha256) || !Number.isFinite(file.bytes) || file.bytes <= 0 || !CACHE_SCOPES.includes(file.scope)) {
       throw new Error('Некорректная запись в манифесте ресурсов модели.');
     }
+    if (file.download && (file.download.encoding !== 'gzip' || file.download.path !== file.path + '.gz' || !Number.isSafeInteger(file.download.bytes) || file.download.bytes <= 0 || !/^[a-f0-9]{64}$/.test(file.download.sha256))) throw new Error('Некорректный архив модели в манифесте ресурсов.');
   }
   for (const path of ['model.wasm', 'resolve/main/mlc-chat-config.json', 'resolve/main/ndarray-cache.json', 'resolve/main/tokenizer.json']) {
     if (!info.files.some(file => file.path === path)) throw new Error(`В манифесте нет ${path}.`);

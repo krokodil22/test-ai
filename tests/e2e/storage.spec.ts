@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
-for (const cors of [true, false]) {
-  test(`real second-origin storage, CORS ${cors ? 'enabled' : 'missing'}`, async ({ page, context }) => {
-    const base = 'http://127.0.0.1:5176/models/qwen2.5-1.5b/';
+import source from '../../scripts/model-source.json' with { type: 'json' };
+for (const [cors, gzipEncoding] of [[true, false], [true, true], [false, false]]) {
+  test(`real second-origin storage, CORS ${cors ? 'enabled' : 'missing'}, gzip encoding ${gzipEncoding}`, async ({ page, context }) => {
+    const base = `http://127.0.0.1:5176/models/${source.directory}/`;
     // Test-server control is outside the application's browser/network context.
-    await page.request.post('http://127.0.0.1:5176/control', { data: { allowCors: cors } });
+    await page.request.post('http://127.0.0.1:5176/control', { data: { allowCors: cors, gzipEncoding } });
     const requests: Array<{ url: string; method: string; body: string | null }> = [];
     context.on('request', request => requests.push({ url: request.url(), method: request.method(), body: request.postData() }));
     await page.goto('./');
@@ -16,7 +17,7 @@ for (const cors of [true, false]) {
       await page.locator('#send').click();
       await expect(page.locator('.message-assistant')).toContainText('Здравствуйте');
       await expect(page.locator('#stop')).toBeHidden();
-      expect(requests.filter(request => request.url.startsWith(base))).toHaveLength(5);
+      expect(requests.filter(request => request.url.startsWith(base))).toHaveLength(6);
     } else {
       await expect(page.locator('#notice')).toContainText('CORS');
       await expect(page.locator('#engine-status')).toContainText('не запущена');

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { existsSync } from 'node:fs';
+import source from '../../scripts/model-source.json' with { type: 'json' };
 test('identical production files work in the domain root and repository subpath', async ({ page }) => {
   const failures: string[] = [];
   page.on('pageerror', error => failures.push(error.message));
@@ -8,7 +9,7 @@ test('identical production files work in the domain root and repository subpath'
     await expect(page.locator('h1')).toContainText('вашей мысли');
     await expect(page.locator('#compatibility')).not.toContainText('Проверяем');
     await page.locator('#settings-open').click();
-    await expect(page.locator('#resource-location')).toHaveText(`http://127.0.0.1:4173${path}models/qwen2.5-1.5b/`);
+    await expect(page.locator('#resource-location')).toHaveText(`http://127.0.0.1:4173${path}models/${source.directory}/`);
     await page.locator('#settings-close').click();
     await page.goto(path + 'compare.html');
     await expect(page.locator('h1')).toContainText('Помогает ли перевод');
@@ -18,7 +19,7 @@ test('identical production files work in the domain root and repository subpath'
   expect(failures).toEqual([]);
 });
 test('REAL MODEL: exports a direct versus English-bridge experiment for human review', async ({ page }) => {
-  test.skip(!existsSync('dist/models/qwen2.5-1.5b/model-info.json'), 'Verified model resources are not built.');
+  test.skip(!existsSync(`dist/models/${source.directory}/model-info.json`), 'Verified model resources are not built.');
   await page.goto('/compare.html');
   await expect(page.locator('#model-status')).not.toContainText('Проверяем');
   test.skip(await page.locator('#comparison-load').isDisabled(), 'A compatible WebGPU adapter with shader-f16 is unavailable.');
@@ -50,7 +51,7 @@ test('production page checks real WebGPU before making model requests', async ({
   await page.screenshot({ path: 'test-results/production-webgpu-check.png', fullPage: true });
 });
 test('REAL MODEL: first load, chat, stop, cache reload, independent cleanup and network audit', async ({ page }) => {
-  test.skip(!existsSync('dist/models/qwen2.5-1.5b/model-info.json'), 'Full verified model resources are not built. Run npm run model:download and npm run build before this test.');
+  test.skip(!existsSync(`dist/models/${source.directory}/model-info.json`), 'Full verified model resources are not built. Run npm run model:download and npm run build before this test.');
   await page.goto('/');
   await expect(page.locator('#compatibility')).not.toContainText('Проверяем');
   test.skip(await page.locator('#load-model').isDisabled(), 'A compatible WebGPU adapter with shader-f16 is unavailable in this browser.');
