@@ -7,7 +7,7 @@ test.beforeEach(async ({ context }) => {
   const files = [
     { path: 'model.wasm', scope: 'webllm/wasm', body: 'fixture-wasm' },
     { path: 'resolve/main/mlc-chat-config.json', scope: 'webllm/config', body: '{}' },
-    { path: 'resolve/main/ndarray-cache.json', scope: 'webllm/model', body: '{}' },
+    { path: `resolve/main/${source.cacheManifest}`, scope: 'webllm/model', body: '{}' },
     { path: 'resolve/main/tokenizer.json', scope: 'webllm/model', body: '{}' },
   ];
   const info = { schema: 1, modelId: source.modelId, revision: source.revision, downloadBytes: source.downloadBytes, files: files.map(({ path, scope, body }) => ({ path, scope, bytes: body.length, sha256: createHash('sha256').update(body).digest('hex') })) };

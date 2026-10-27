@@ -12,7 +12,7 @@ function fixture() {
   const file: ModelInfo['files'][number] = { path: 'resolve/main/params_shard_0.bin', bytes: plain.length, sha256: sha(plain), scope: 'webllm/model', download: { path: 'resolve/main/params_shard_0.bin.gz', encoding: 'gzip', bytes: packed.length, sha256: sha(packed) } };
   const info: ModelInfo = { schema: 1, modelId: 'fixture', revision: 'fixture', downloadBytes: packed.length, files: [file] };
   const entries = new Map<string, Response>();
-  vi.stubGlobal('caches', { open: async () => ({ match: async (key: string) => entries.get(key)?.clone(), put: async (key: string, response: Response) => entries.set(key, response.clone()), delete: async (key: string) => entries.delete(key) }) });
+  vi.stubGlobal('caches', { open: async () => ({ match: async (key: string) => entries.get(key)?.clone(), put: async (key: string, response: Response) => entries.set(key, new Response(await response.arrayBuffer(), { headers: response.headers })), delete: async (key: string) => entries.delete(key) }) });
   return { plain, packed, file, info, entries };
 }
 it.each([false, true])('expands a static gzip resource into WebLLM cache URLs and reuses it (browser decoded=%s)', async decoded => {
@@ -28,6 +28,11 @@ it('rejects a changed archive before caching its contents', async () => {
   const { packed, info, entries } = fixture(); packed[5] ^= 1;
   await expect(prepareModelCache(base, info, async () => new Response(Uint8Array.from(packed)), () => {})).rejects.toThrow('SHA256');
   expect(entries.size).toBe(0);
+});
+it('explains a browser cache write failure after successful integrity checks', async () => {
+  const { packed, info } = fixture();
+  vi.stubGlobal('caches', { open: async () => ({ match: async () => undefined, put: async () => { throw new DOMException('Unexpected internal error', 'UnknownError'); } }) });
+  await expect(prepareModelCache(base, info, async () => new Response(Uint8Array.from(packed)), () => {})).rejects.toThrow('Браузер не смог сохранить');
 });
 it('verifies tensor bytes even if the compressed manifest hash matches', async () => {
   const { file, info, entries } = fixture();

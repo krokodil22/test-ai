@@ -33,9 +33,9 @@ it('accepts only the matching complete CPU reference, never labels a mismatched 
   expect(() => validateReference({ ...referenceFixture, results: referenceFixture.results.map((result, i) => i ? result : { ...result, prompt: 'Other prompt' }) })).toThrow('запросов');
 });
 it('ships an actual complete CPU result matching the exact current questions and protocol', async () => {
-  const data = JSON.parse(await readFile(new URL('../../public/diagnostics/qwen3-reference.json', import.meta.url), 'utf8'));
+  const data = JSON.parse(await readFile(new URL('../../public/diagnostics/model-reference.json', import.meta.url), 'utf8'));
   const reference = validateReference(data);
-  expect(reference.engine).toBe('Transformers 4.51.3');
+  expect(reference.engine).toBe('Transformers 5.3.0');
   expect(reference.results.every(result => Number.isFinite(result.seconds) && result.seconds > 0)).toBe(true);
   expect(reference.results.filter(result => result.caseId.startsWith('arithmetic')).map(result => result.text)).toEqual(['4', '4']);
 });

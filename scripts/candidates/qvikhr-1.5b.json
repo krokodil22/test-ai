@@ -1,0 +1,12 @@
+{
+  "repository": "Vikhrmodels/QVikhr-2.5-1.5B-Instruct-SMPO",
+  "revision": "aa6c5862593166ff96f93b45bd21eba1d4429724",
+  "files": [
+    "config.json",
+    "generation_config.json",
+    "model.safetensors",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json"
+  ]
+}

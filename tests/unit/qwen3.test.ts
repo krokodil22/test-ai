@@ -61,7 +61,7 @@ it('requests the model buffer limit and f16 before accepting the adapter', async
   const destroy = vi.fn();
   const requestDevice = vi.fn(async () => ({ destroy }));
   vi.stubGlobal('isSecureContext', true);
-  vi.stubGlobal('navigator', { gpu: { requestAdapter: async () => ({ features: new Set(['shader-f16']), limits: { maxStorageBufferBindingSize: 256 * 1024 * 1024, maxBufferSize: 1024 * 1024 * 1024, maxComputeWorkgroupStorageSize: 32768, maxStorageBuffersPerShaderStage: 10 }, requestDevice }) } });
+  vi.stubGlobal('navigator', { gpu: { requestAdapter: async () => ({ features: new Set(['shader-f16']), limits: { maxStorageBufferBindingSize: 512 * 1024 * 1024, maxBufferSize: 1024 * 1024 * 1024, maxComputeWorkgroupStorageSize: 32768, maxStorageBuffersPerShaderStage: 10 }, requestDevice }) } });
   await probeGpu();
   expect(requestDevice).toHaveBeenCalledWith({ requiredFeatures: ['shader-f16'], requiredLimits: { maxStorageBufferBindingSize: source.minimumStorageBufferBytes, maxBufferSize: 1024 * 1024 * 1024, maxComputeWorkgroupStorageSize: 32768, maxStorageBuffersPerShaderStage: 10 } });
   expect(destroy).toHaveBeenCalledOnce();
@@ -72,5 +72,5 @@ it('raises the runtime fallback device limit to fit Qwen3 while retaining its ot
   monitorGpu(() => {});
   const adapter = await navigator.gpu.requestAdapter();
   await adapter!.requestDevice({ requiredFeatures: ['shader-f16'], requiredLimits: { maxStorageBufferBindingSize: 128 * 1024 * 1024, maxStorageBuffersPerShaderStage: 10 } });
-  expect(requestDevice).toHaveBeenCalledWith({ requiredFeatures: ['shader-f16'], requiredLimits: { maxStorageBufferBindingSize: source.minimumStorageBufferBytes, maxStorageBuffersPerShaderStage: 10 } });
+  expect(requestDevice).toHaveBeenCalledWith({ requiredFeatures: ['shader-f16'], requiredLimits: { maxStorageBufferBindingSize: source.minimumStorageBufferBytes, maxStorageBuffersPerShaderStage: 10, maxBufferSize: source.minimumStorageBufferBytes } });
 });

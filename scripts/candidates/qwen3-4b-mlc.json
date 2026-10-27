@@ -1,0 +1,15 @@
+{
+  "modelId": "Qwen3-4B-Instruct-2507-q4f16_1-MLC",
+  "repository": "emb1ter/Qwen3-4B-Instruct-2507-q4f16_1-MLC",
+  "revision": "8063fb4ba27a09e1777d05b01aff3009ea6a95e5",
+  "directory": "qwen3-4b-instruct-2507",
+  "cacheManifest": "tensor-cache.json",
+  "packaging": "gzip-shards",
+  "runtime": {
+    "url": "https://huggingface.co/emb1ter/Qwen3-4B-Instruct-2507-q4f16_1-MLC/resolve/8063fb4ba27a09e1777d05b01aff3009ea6a95e5/Qwen3-4B-Instruct-2507-q4f16_1-webgpu.wasm",
+    "bytes": 6167511,
+    "sha256": "0f46b3a5994aee2d27edc3a16cedfa8da957061bdabf00b3cc896d543785e37d",
+    "webllm": "0.2.86"
+  },
+  "license": { "name": "Apache-2.0", "file": "Qwen3-APACHE-2.0.txt" }
+}

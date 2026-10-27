@@ -1,6 +1,7 @@
 import type { ModelInfo } from './config';
+import { sha256 } from '@noble/hashes/sha2.js';
 
-const digest = async (data: ArrayBuffer) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', data)), byte => byte.toString(16).padStart(2, '0')).join('');
+const digest = async (data: ArrayBuffer | Uint8Array<ArrayBuffer>) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', data)), byte => byte.toString(16).padStart(2, '0')).join('');
 export class CacheAuditError extends Error {}
 
 // Explicit diagnostic audit: rehash cached bytes instead of trusting the
@@ -21,22 +22,23 @@ export async function auditModelCache(base: string, info: ModelInfo, progress: (
   return { valid: true as const, checkedFiles, checkedBytes, completedAt: new Date().toISOString() };
 }
 export type CacheAudit = Awaited<ReturnType<typeof auditModelCache>>;
-async function bounded(response: Response, limit: number, progress: (bytes: number) => void) {
+async function peekBody(response: Response) {
   if (!response.body) throw Error('Пустой ответ при загрузке модели.');
   const reader = response.body.getReader();
-  const parts: Uint8Array[] = [];
-  let size = 0;
+  const prefix: Uint8Array<ArrayBuffer>[] = [];
+  let bytes = 0;
   try {
-    for (;;) {
-      const { done, value } = await reader.read(); if (done) break;
-      size += value.byteLength;
-      if (size > limit) throw Error('Размер ресурса модели превышает манифест.');
-      parts.push(value); progress(size);
-    }
+    while (bytes < 3) { const item = await reader.read(); if (item.done) break; prefix.push(item.value); bytes += item.value.length; }
   } catch (error) { await reader.cancel().catch(() => {}); throw error; }
-  const buffer = new Uint8Array(size);
-  let offset = 0; for (const part of parts) { buffer.set(part, offset); offset += part.byteLength; }
-  return buffer.buffer;
+  const magic = new Uint8Array(3);
+  let copied = 0;
+  for (const chunk of prefix) { const part = chunk.subarray(0, 3 - copied); magic.set(part, copied); copied += part.length; if (copied === 3) break; }
+  const body = new ReadableStream<Uint8Array<ArrayBuffer>>({
+    start(controller) { for (const chunk of prefix) controller.enqueue(chunk); },
+    async pull(controller) { try { const item = await reader.read(); if (item.done) controller.close(); else controller.enqueue(item.value); } catch (error) { controller.error(error); } },
+    cancel(reason) { return reader.cancel(reason); },
+  });
+  return { body, gzip: magic[0] === 0x1f && magic[1] === 0x8b && magic[2] === 8 };
 }
 
 // WebLLM reads its standard, uncompressed cache URLs. Populate those entries
@@ -56,15 +58,35 @@ export async function prepareModelCache(base: string, info: ModelInfo, fetchReso
     if (!address.startsWith(base) || new URL(address).origin !== new URL(base).origin) throw Error('Запрещён адрес ресурса модели.');
     const response = cached || await fetchResource(address, { method: 'GET', mode: 'cors', cache: 'no-store', credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error' });
     if (!response.ok) throw Error(`HTTP ${response.status}: ресурс модели недоступен.`);
-    const payload = await bounded(response, Math.max(file.bytes, weight), bytes => progress(Math.min(1, (done + Math.min(1, bytes / Math.max(file.bytes, weight)) * weight) / total), `Модель: загрузка и проверка файла ${index + 1} из ${info.files.length}…`));
-    const magic = new Uint8Array(payload, 0, Math.min(3, payload.byteLength));
-    const isGzip = !!file.download && !cached && magic[0] === 0x1f && magic[1] === 0x8b && magic[2] === 8;
-    if (isGzip && (payload.byteLength !== file.download!.bytes || await digest(payload) !== file.download!.sha256)) throw Error('Ошибка SHA256 архива модели.');
-    // A browser may already decode Content-Encoding:gzip. Always verify the
-    // original tensor bytes, regardless of the host's encoding policy.
-    const data = isGzip ? await bounded(new Response(new Blob([payload]).stream().pipeThrough(new DecompressionStream('gzip'))), file.bytes, () => {}) : payload;
-    if (data.byteLength !== file.bytes || await digest(data) !== file.sha256) { await cache.delete(url); throw Error('Ошибка SHA256: ресурс модели повреждён.'); }
-    await cache.put(url, new Response(data, { headers: { 'Content-Type': file.path.endsWith('.wasm') ? 'application/wasm' : file.path.endsWith('.json') ? 'application/json' : 'application/octet-stream', 'X-Tetrikanets-SHA256': file.sha256 } }));
+    const peeked = await peekBody(response);
+    const isGzip = !!file.download && !cached && peeked.gzip;
+    let integrityError: Error | undefined;
+    function verifier(bytes: number, expected: string, packed: boolean) {
+      const hash = sha256.create(); let size = 0;
+      const invalid = () => { integrityError = Error(packed ? 'Ошибка SHA256 архива модели.' : 'Ошибка SHA256: ресурс модели повреждён.'); return integrityError; };
+      return new TransformStream<Uint8Array<ArrayBuffer>, Uint8Array<ArrayBuffer>>({
+        transform(chunk, controller) {
+          size += chunk.byteLength;
+          if (size > bytes) throw invalid();
+          hash.update(chunk); controller.enqueue(chunk);
+          if (packed || !isGzip) progress(Math.min(1, (done + size / bytes * weight) / total), `Модель: загрузка и проверка файла ${index + 1} из ${info.files.length}…`);
+        },
+        flush() { if (size !== bytes || Array.from(hash.digest(), byte => byte.toString(16).padStart(2, '0')).join('') !== expected) throw invalid(); },
+      });
+    }
+    // Verify packed bytes before completing gzip, then verify decoded bytes
+    // before Cache commits. No weight shard is buffered whole in JavaScript.
+    // Hosts that already decode Content-Encoding:gzip use the plain branch.
+    const plain = isGzip ? peeked.body.pipeThrough(verifier(file.download!.bytes, file.download!.sha256, true)).pipeThrough(new DecompressionStream('gzip')) : peeked.body;
+    const verified = plain.pipeThrough(verifier(file.bytes, file.sha256, false));
+    try {
+      // Cache commits only after the stream and both integrity checks finish.
+      await cache.put(url, new Response(verified, { headers: { 'Content-Type': file.path.endsWith('.wasm') ? 'application/wasm' : file.path.endsWith('.json') ? 'application/json' : 'application/octet-stream', 'X-Tetrikanets-SHA256': file.sha256 } }));
+    } catch (error) {
+      if (integrityError) { await cache.delete(url); throw integrityError; }
+      if (error instanceof Error && /quota/i.test(error.name)) throw error;
+      throw new Error('Браузер не смог сохранить файлы модели в кеше. Освободите место и откройте сайт в обычном окне Chrome. Уже сохранённые файлы будут использованы при повторном запуске.', { cause: error });
+    }
     done += weight;
     progress(done / total, `Модель: проверено файлов ${index + 1} из ${info.files.length}`);
   }

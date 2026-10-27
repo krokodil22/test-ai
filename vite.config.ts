@@ -36,7 +36,7 @@ export default defineConfig(({ mode, command }) => {
       name: 'copy-active-model',
       apply: 'build',
       async writeBundle(options) {
-        await copyPublicAssets(resolve('public'), resolve(options.dir!), source.directory);
+        await copyPublicAssets(resolve('public'), resolve(options.dir!), source.directory, env.VITE_MODEL_DELIVERY === 'archive');
       },
     }],
     build: { target: 'es2022', chunkSizeWarningLimit: 6500, rollupOptions: { input: { main: resolve('index.html'), compare: resolve('compare.html'), translate: resolve('translate.html'), diagnostics: resolve('diagnostics.html') } } },

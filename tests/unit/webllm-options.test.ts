@@ -5,7 +5,7 @@ import { MODEL_CHAT_OPTIONS, MODEL_ID } from '../../src/config';
 
 afterEach(() => vi.unstubAllGlobals());
 
-it('overrides upstream zero penalties through the actual WebLLM reload path', async () => {
+it('overrides upstream context and penalties through the actual WebLLM reload path', async () => {
   // No GPU or weights are needed to reproduce the regression: WebLLM first
   // merges the remote chat config and only then fetches its WASM library.
   const stop = new Error('Stop before WASM/GPU initialization');
@@ -29,9 +29,9 @@ it('overrides upstream zero penalties through the actual WebLLM reload path', as
     // A pinned-dependency regression test intentionally inspects the config
     // stored by WebLLM itself, rather than reimplementing its merge algorithm.
     const config = (engine as unknown as { loadedModelIdToChatConfig: Map<string, ChatOptions & { prefill_chunk_size: number }> }).loadedModelIdToChatConfig.get(MODEL_ID)!;
-    expect(config.repetition_penalty).toBeGreaterThan(1);
-    expect(config.frequency_penalty).toBeUndefined();
-    expect(config.presence_penalty).toBeUndefined();
+    expect(config.repetition_penalty).toBe(1);
+    expect(config.frequency_penalty).toBe(0);
+    expect(config.presence_penalty).toBe(0);
     expect(config.context_window_size).toBe(4096);
     expect(config.prefill_chunk_size).toBe(1024);
   } finally { await engine.unload(); }

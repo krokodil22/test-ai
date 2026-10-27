@@ -12,20 +12,17 @@ export const BOT_NAME = 'Великий Тетриканец';
 export const CONTEXT_TOKENS = 4096;
 export const MAX_REPLY_TOKENS = 512;
 export const MAX_INPUT_CHARS = 1200;
-export const SYSTEM_PROMPT = `Ты — ${BOT_NAME}, внимательный ИИ-помощник. Отвечай на естественном русском языке, ясно и по существу. Меняй язык только по просьбе пользователя. Не выдавай выдумки за факты. В творческих заданиях создавай вымышленные истории. Если не знаешь ответ на фактический вопрос, скажи об этом.`;
+export const SYSTEM_PROMPT = `Ты — ${BOT_NAME}, внимательный ИИ-помощник. Отвечай на естественном русском языке, ясно и по существу. Меняй язык только по просьбе пользователя. Не выдавай выдумки за факты. В творческих заданиях создавай вымышленные истории. Если не знаешь ответ на фактический вопрос, скажи об этом. Обычно отвечай кратко. Короткий рассказ должен занимать 100–150 слов: сохрани героев и условия запроса, заверши сюжет и сформулируй понятную мораль.`;
 export const MODEL_ESTIMATE = formatBytes(source.downloadBytes);
-// Qwen3's non-thinking temperature/top-p. The project's repetition guard is
-// set through ChatOptions; WebLLM does not forward repetition_penalty here.
-export const GENERATION_OPTIONS = { temperature: 0.7, top_p: 0.8, extra_body: { enable_thinking: false } } as const;
+export const MODEL_ARCHIVE_MODE = import.meta.env.VITE_MODEL_DELIVERY === 'archive';
+export const GENERATION_OPTIONS = { temperature: 0.7, top_p: 0.8, repetition_penalty: 1.0, frequency_penalty: 0, presence_penalty: 0, extra_body: { enable_thinking: false } } as const;
 export const MODEL_CHAT_OPTIONS = {
   context_window_size: CONTEXT_TOKENS,
   prefill_chunk_size: 1024,
-  repetition_penalty: 1.1,
-  // WebLLM 0.2.79 chooses additive penalties even when both values are zero.
-  // Explicit undefined replaces the manifest's zero defaults and enables the
-  // native repetition penalty; omitting these keys would retain those zeros.
-  frequency_penalty: undefined,
-  presence_penalty: undefined,
+  max_history_size: 1,
+  repetition_penalty: 1.0,
+  frequency_penalty: 0,
+  presence_penalty: 0,
 } as const;
 export const CACHE_SCOPES = ['webllm/model', 'webllm/config', 'webllm/wasm', 'ryadom/metadata-v1'] as const;
 
@@ -60,7 +57,7 @@ export function validateModelInfo(value: unknown): ModelInfo {
     }
     if (file.download && (file.download.encoding !== 'gzip' || file.download.path !== file.path + '.gz' || !Number.isSafeInteger(file.download.bytes) || file.download.bytes <= 0 || !/^[a-f0-9]{64}$/.test(file.download.sha256))) throw new Error('Некорректный архив модели в манифесте ресурсов.');
   }
-  for (const path of ['model.wasm', 'resolve/main/mlc-chat-config.json', 'resolve/main/ndarray-cache.json', 'resolve/main/tokenizer.json']) {
+  for (const path of ['model.wasm', 'resolve/main/mlc-chat-config.json', `resolve/main/${source.cacheManifest}`, 'resolve/main/tokenizer.json']) {
     if (!info.files.some(file => file.path === path)) throw new Error(`В манифесте нет ${path}.`);
   }
   return info;

@@ -1,0 +1,25 @@
+{
+  "archiveBytes": 1908146688,
+  "files": 70,
+  "audit": {
+    "valid": true,
+    "checkedFiles": 70,
+    "checkedBytes": 2177930071,
+    "completedAt": "2026-10-27T12:28:34.049Z"
+  },
+  "seconds": 85.26630000001192,
+  "storage": {
+    "quota": 12915401728,
+    "usage": 2177983488,
+    "usageDetails": {
+      "caches": 2177983488
+    }
+  },
+  "modelRequests": [],
+  "schema": 1,
+  "kind": "browser-archive-import",
+  "model": "Phi-4-mini-instruct-q4f16_1-MLC",
+  "browser": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+  "cacheBeforeBytes": 19883520,
+  "note": "The first four small resources survived earlier failed attempts; the large remaining weights were imported after the streaming fix. Full SHA-256 audit and a second cache-only preparation completed. This is a cache/import test, not GPU inference."
+}

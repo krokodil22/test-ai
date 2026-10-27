@@ -1,0 +1,5 @@
+{
+  "repository": "onnx-community/gemma-3-1b-it-ONNX",
+  "revision": "a58439f40017d3b99c7d378ff525e54e0ba08ebf",
+  "files": ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "special_tokens_map.json", "onnx/model_int8.onnx"]
+}

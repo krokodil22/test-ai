@@ -1,7 +1,8 @@
 /// <reference lib="webworker" />
 import { MLCEngine } from '@mlc-ai/web-llm';
 import { probeGpu, monitorGpu } from '#gpu';
-import { MODEL_ID, MODEL_CHAT_OPTIONS, MAX_REPLY_TOKENS, GENERATION_OPTIONS } from './config';
+import { MODEL_ID, MODEL_CHAT_OPTIONS, MAX_REPLY_TOKENS, GENERATION_OPTIONS, MODEL_ARCHIVE_MODE } from './config';
+import { archiveResources } from './model-archive';
 import type { ModelInfo } from './config';
 import type { RuntimeGpuInfo } from './gpu-info';
 import { loadModelInfo, removeLegacyModelCache } from './cache';
@@ -78,7 +79,7 @@ async function comparisonStage(request: StageRequest, onText = (text: string) =>
   return { text: text.trim(), finish, seconds: (performance.now() - start) / 1000, generatedTokens, firstAnswerSeconds, ...(thinking ? { thinking: { status: thinking.status(), text: reasoning.trim() } } : {}) };
 }
 
-async function init(base: string, translatorBase?: string) {
+async function init(base: string, translatorBase?: string, archive?: File) {
   if (engine || loading) return;
   loading = true;
   try {
@@ -119,11 +120,12 @@ async function init(base: string, translatorBase?: string) {
     send({ type: 'size', bytes: info.downloadBytes });
     resourceHashes = new Map(info.files.map(file => [new URL(file.path, base).href, file.sha256]));
     const qwenShare = translatorBase ? 0.8 : 1;
-    await prepareModelCache(base, info, nativeFetch, (value, text) => send({ type: 'progress', progress: value * 0.7 * qwenShare, text }));
+    const resourceFetch = archive ? await archiveResources(archive, base, info) : MODEL_ARCHIVE_MODE ? (async () => { throw Error('Выберите скачанный архив модели .tar. Файлы не отправляются на сервер.'); }) as typeof fetch : nativeFetch;
+    await prepareModelCache(base, info, resourceFetch, (value, text) => send({ type: 'progress', progress: value * 0.7 * qwenShare, text }));
     engine = new MLCEngine({
       logLevel: 'ERROR',
       appConfig: {
-        useIndexedDBCache: false,
+        cacheBackend: 'cache',
         model_list: [{
           model_id: MODEL_ID,
           // WebLLM requires /resolve/<revision>/ even for a self-hosted URL.
@@ -149,7 +151,7 @@ async function init(base: string, translatorBase?: string) {
 }
 
 scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
-  if (data.type === 'init') { await init(data.base, data.translatorBase); return; }
+  if (data.type === 'init') { await init(data.base, data.translatorBase, data.archive); return; }
   if (data.type === 'stop') {
     if (active === data.id) { stopped = true; void engine?.interruptGenerate(); translator?.stop(); }
     return;
@@ -211,9 +213,7 @@ scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
     let reason: 'complete' | 'length' = 'complete';
     for await (const chunk of stream) {
       if (fatal) break;
-      // Drain the interrupted iterator: WebLLM 0.2.79 releases its model lock
-      // only when the stream completes. Calling iterator.return() here would
-      // leave the next generation waiting forever.
+      // Drain the interrupted iterator before accepting another generation.
       if (stopped) { void engine.interruptGenerate(); continue; }
       const choice = chunk.choices[0];
       if (choice?.delta.content) { const delta = visible(choice.delta.content); if (delta) send({ type: 'token', id: active, text: delta }); }

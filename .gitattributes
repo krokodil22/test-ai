@@ -1,0 +1,3 @@
+# Preserve vendored license bytes, including upstream CRLF line endings.
+licenses/*.txt -text whitespace=cr-at-eol
+public/licenses/*.txt -text whitespace=cr-at-eol

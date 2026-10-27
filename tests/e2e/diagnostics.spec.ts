@@ -5,10 +5,10 @@ import source from '../../scripts/model-source.json' with { type: 'json' };
 import profile from '../../src/diagnostic-cases.json' with { type: 'json' };
 import { referenceFixture } from '../fixtures/reference';
 test.beforeEach(async ({ context }) => {
-  const files = [{ path: 'model.wasm', scope: 'webllm/wasm' }, { path: 'resolve/main/mlc-chat-config.json', scope: 'webllm/config' }, { path: 'resolve/main/ndarray-cache.json', scope: 'webllm/model' }, { path: 'resolve/main/tokenizer.json', scope: 'webllm/model' }].map(file => ({ ...file, bytes: 2, sha256: createHash('sha256').update('{}').digest('hex') }));
+  const files = [{ path: 'model.wasm', scope: 'webllm/wasm' }, { path: 'resolve/main/mlc-chat-config.json', scope: 'webllm/config' }, { path: `resolve/main/${source.cacheManifest}`, scope: 'webllm/model' }, { path: 'resolve/main/tokenizer.json', scope: 'webllm/model' }].map(file => ({ ...file, bytes: 2, sha256: createHash('sha256').update('{}').digest('hex') }));
   const info = { schema: 1, modelId: source.modelId, revision: source.revision, downloadBytes: source.downloadBytes, files };
   await context.route('**/models/**', route => route.fulfill({ body: route.request().url().endsWith('model-info.json') ? JSON.stringify(info) : '{}', contentType: 'application/json' }));
-  await context.route('**/diagnostics/qwen3-reference.json', route => route.fulfill({ body: JSON.stringify(referenceFixture), contentType: 'application/json' }));
+  await context.route('**/diagnostics/model-reference.json', route => route.fulfill({ body: JSON.stringify(referenceFixture), contentType: 'application/json' }));
 });
 async function load(page: import('@playwright/test').Page) {
   await page.goto('diagnostics.html');
@@ -81,7 +81,7 @@ test('rejects poisoned cached bytes despite their correct verification marker an
   await load(page);
   await page.evaluate(async () => {
     const cache = await caches.open('webllm/model');
-    for (const key of await cache.keys()) if (key.url.endsWith('ndarray-cache.json')) {
+    for (const key of await cache.keys()) if (key.url.endsWith('tensor-cache.json')) {
       const response = await cache.match(key);
       await cache.put(key, new Response('corrupted', { headers: response!.headers }));
     }
@@ -103,7 +103,7 @@ test('exports browser capability errors without downloading weights and still sh
   expect(report.complete).toBe(false); expect(report.error).toContain('WebGPU'); expect(modelRequests).toHaveLength(0);
 });
 test('keeps diagnostics usable with a missing or mismatched reference', async ({ page, context }) => {
-  await context.route('**/diagnostics/qwen3-reference.json', route => route.fulfill({ body: JSON.stringify({ ...referenceFixture, protocol: 'wrong' }), contentType: 'application/json' }));
+  await context.route('**/diagnostics/model-reference.json', route => route.fulfill({ body: JSON.stringify({ ...referenceFixture, protocol: 'wrong' }), contentType: 'application/json' }));
   await load(page);
   await expect(page.locator('#diagnostic-reference-status')).toContainText('несовместим');
   await page.locator('#diagnostic-run').click(); await expect(page.locator('#diagnostic-export')).toBeEnabled();

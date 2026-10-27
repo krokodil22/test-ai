@@ -1,0 +1,67 @@
+{
+  "kind": "candidate-screen",
+  "model": "onnx-community/gemma-3-1b-it-ONNX",
+  "revision": "a58439f40017d3b99c7d378ff525e54e0ba08ebf",
+  "engine": "Transformers.js 3.8.1 / ONNX Runtime CPU",
+  "dtype": "int8",
+  "systemAdaptation": "Gemma does not support system role; neutral system text is prepended to the user message.",
+  "settings": {
+    "temperature": 0,
+    "topP": 1,
+    "seed": 42,
+    "enableThinking": false,
+    "frequencyPenalty": 0,
+    "presencePenalty": 0
+  },
+  "results": [
+    {
+      "caseId": "arithmetic-ru",
+      "prompt": "Сколько будет 2 + 2? Ответь только числом.",
+      "text": "7",
+      "finish": "complete",
+      "generatedTokens": 3,
+      "seconds": 1.125120304
+    },
+    {
+      "caseId": "arithmetic-en",
+      "prompt": "What is 2 + 2? Answer with the number only.",
+      "text": "3",
+      "finish": "complete",
+      "generatedTokens": 3,
+      "seconds": 0.7404666230000002
+    },
+    {
+      "caseId": "omelet-ru",
+      "prompt": "Как приготовить омлет из двух яиц? Дай короткий список шагов.",
+      "text": "Как помощник, я могу помочь тебе! Вот краткий рецепт омлета из двух яиц:\n\n**Ингредиенты:**\n\n*   2 больших яйца\n*   1 столовая ложка молока или сливок (по желанию, для более нежной текстуры)\n*   1 столовая ложка сливочного масла или растительного масла\n*   Соль и перец по вкусу\n*   (Опционально) Начинка: сыр, овощи, мясо, зелень\n\n**Шаги:**\n\n1.  **Подготовка:** Взбейте яйца в миске с молоком/сливками (если используете) и щепоткой соли и перца.  Не переусердствуйте, просто хорошо перемешайте.\n2.  **Нагрев сковороды:** Разогрейте сковороду на среднем огне.  Луч",
+      "finish": "length",
+      "generatedTokens": 192,
+      "seconds": 29.450995836999997
+    },
+    {
+      "caseId": "omelet-en",
+      "prompt": "How do I make an omelet with two eggs? Give a short list of steps.",
+      "text": "Okay, let's make a delicious omelet! Here’s a breakdown of the steps, keeping it simple:\n\n**Ingredients You'll Need:**\n\n*   2 Large Eggs\n*   1 Tablespoon Butter (or cooking oil)\n*   Salt & Pepper to taste\n*   Optional: Cheese, chopped vegetables (spinach, mushrooms, peppers), herbs (chives)\n\n**Instructions:**\n\n1.  **Prep the Eggs:** Crack the eggs into a bowl. Add a pinch of salt and pepper.\n2.  **Whisk:** Whisk the eggs vigorously until the yolks and whites are fully combined and slightly frothy.\n3.  **Heat the Pan:** Melt the butter in a non-stick skillet over medium-low heat.  This is *crucial* – too high, and the omelet will be tough.\n4.  **Pour in Eggs:** Pour the whisked eggs into",
+      "finish": "length",
+      "generatedTokens": 192,
+      "seconds": 28.428820041000005
+    },
+    {
+      "caseId": "seasons-ru",
+      "prompt": "Объясни простыми словами, почему сменяются времена года. Ответь в трёх предложениях.",
+      "text": "Всё просто, сменяются времена года, потому что Земля вращается вокруг своей оси. Это движение занимает около 365 дней, что приводит к тому, что в разные времена года мы видим разные части нашей планеты.",
+      "finish": "complete",
+      "generatedTokens": 49,
+      "seconds": 6.821470596999999
+    },
+    {
+      "caseId": "seasons-en",
+      "prompt": "Explain in simple terms why seasons change. Answer in three sentences.",
+      "text": "Okay, here’s a simple explanation of why seasons change, in three sentences:\n\nThe Earth’s tilt on its axis is the main reason. As the Earth orbits the sun, different parts of the planet receive more direct sunlight at different times of the year. This difference in sunlight causes the seasons – warmer temperatures in summer and colder temperatures in winter.",
+      "finish": "complete",
+      "generatedTokens": 73,
+      "seconds": 10.320516579999996
+    }
+  ],
+  "complete": true
+}

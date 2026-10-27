@@ -1,0 +1,5 @@
+{
+  "repository": "RefalMachine/RuadaptQwen2.5-1.5B-instruct",
+  "revision": "6f181bc1ef2364cf5c99bd15769a896af9f31e0c",
+  "files": ["config.json", "generation_config.json", "tokenizer.json", "tokenizer_config.json", "model.safetensors"]
+}

@@ -1,4 +1,5 @@
 import profile from './diagnostic-cases.json';
+import referenceSource from '../scripts/reference-source.json';
 import { ComparisonInputError, ComparisonStopped } from './comparison';
 import type { StageRunner, StageResult } from './comparison';
 export const DIAGNOSTIC_PROFILE = profile;
@@ -23,7 +24,7 @@ export interface CpuReference {
 }
 export function validateReference(value: unknown): CpuReference {
   const reference = value as CpuReference;
-  if (reference?.schema !== 1 || reference.kind !== 'cpu-reference' || reference.protocol !== profile.protocol || reference.complete !== true || reference.model !== 'Qwen/Qwen3-1.7B' || reference.revision !== '70d244cc86ccca08cf5af4e1e306ecf908b1ad5e' || reference.dtype !== 'float32' || reference.quantization !== 'none' || typeof reference.engine !== 'string' || reference.systemPrompt !== profile.systemPrompt || !Array.isArray(reference.results) || reference.results.length !== profile.cases.length) throw Error('Файл CPU-сравнения несовместим с этой диагностикой.');
+  if (reference?.schema !== 1 || reference.kind !== 'cpu-reference' || reference.protocol !== profile.protocol || reference.complete !== true || reference.model !== referenceSource.repository || reference.revision !== referenceSource.revision || reference.dtype !== referenceSource.dtype || reference.engine !== referenceSource.engine || reference.quantization !== 'none' || reference.systemPrompt !== profile.systemPrompt || !Array.isArray(reference.results) || reference.results.length !== profile.cases.length) throw Error('Файл CPU-сравнения несовместим с этой диагностикой.');
   for (const [key, setting] of Object.entries(profile.settings)) if (reference.settings?.[key as keyof typeof profile.settings] !== setting) throw Error('Настройки CPU-сравнения отличаются.');
   for (const item of profile.cases) {
     const result = reference.results.find(result => result.caseId === item.id);

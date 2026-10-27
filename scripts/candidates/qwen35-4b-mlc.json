@@ -1,0 +1,18 @@
+{
+  "modelId": "Qwen3.5-4B-q4f16_1-MLC",
+  "repository": "mlc-ai/Qwen3.5-4B-q4f16_1-MLC",
+  "revision": "44b42469f9e192814bfd90440e3b377d89ba7a13",
+  "runtime": {
+    "webllm": "0.2.86",
+    "url": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/00fe7a40e57e5e8eb9fef87526a4bf28ad5846c0/web-llm-models/v0_2_86/base/Qwen3.5-4B-q4f16_1_cs1k-webgpu.wasm",
+    "bytes": 7466230,
+    "sha256": "552152bd76fd5432c6b88750a948ac44d038a3c570be6aa0f0e744067a9e2a25"
+  },
+  "license": {
+    "name": "Apache-2.0",
+    "file": "Qwen3.5-APACHE-2.0.txt"
+  },
+  "directory": "qwen35-4b",
+  "cacheManifest": "tensor-cache.json",
+  "packaging": "gzip-shards"
+}

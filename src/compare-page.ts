@@ -4,6 +4,7 @@ import { BOT_NAME, MODEL_NAME, MODEL_ID, MODEL_REVISION, MODEL_ESTIMATE, MAX_INP
 import { COMPARISON_EXAMPLES, COMPARISON_STAGES, THINKING_STAGES, THINKING_MAX_TOKENS, THINKING_PROTOCOL, PENALTY_STAGES, PENALTY_PROTOCOL, STAGE_LABELS, TRANSLATION_PROTOCOL, TRANSLATION_OPTIONS } from './comparison';
 import type { ComparisonMode, ComparisonResult, ComparisonStage, StageResult } from './comparison';
 import { isModelCached } from './cache';
+import { modelDelivery } from './model-delivery';
 import { TRANSLATOR, TRANSLATOR_ESTIMATE, translatorBase, isTranslatorCached } from './translation-config';
 import { probeGpu } from '#gpu';
 import { explainError } from './errors';
@@ -37,6 +38,7 @@ document.querySelector('#comparison-app')!.innerHTML = `
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const prompt = $<HTMLTextAreaElement>('comparison-prompt');
 const load = $<HTMLButtonElement>('comparison-load');
+const delivery = modelDelivery(load, () => update());
 const run = $<HTMLButtonElement>('comparison-run');
 const stop = $<HTMLButtonElement>('comparison-stop');
 const exportButton = $<HTMLButtonElement>('comparison-export');
@@ -70,6 +72,8 @@ function update() {
   for (const button of $('comparison-examples').querySelectorAll('button')) button.disabled = state === 'running';
   load.hidden = state === 'ready' || state === 'running';
   load.disabled = state !== 'idle';
+  load.disabled ||= !delivery.available(cached);
+  delivery.update(cached, state === 'loading', state !== 'checking' && state !== 'unsupported');
   load.textContent = !isTranslation ? (cached ? 'Запустить из кеша' : `Скачать Qwen ${MODEL_ESTIMATE} и запустить`) : cached && translationCached ? 'Запустить из кеша' : cached ? `Запустить Qwen из кеша + скачать переводчик ${TRANSLATOR_ESTIMATE}` : `Скачать Qwen ${MODEL_ESTIMATE}${translationCached ? '' : ` + переводчик ${TRANSLATOR_ESTIMATE}`} и запустить`;
   $('comparison-cancel-load').hidden = state !== 'loading';
   $('comparison-progress').hidden = state !== 'loading';
@@ -174,7 +178,7 @@ async function startModel() {
     worker.onerror = event => { event.preventDefault(); receive({ type: 'error', message: 'Worker завершился с ошибкой. Возможно, не хватает памяти. Закройте другие вкладки с моделью и запустите её снова.', fatal: true }); };
     worker.onmessageerror = () => receive({ type: 'error', message: 'Не удалось прочитать ответ worker. Запустите модель снова.', fatal: true });
     loadTimer = setTimeout(() => receive({ type: 'error', message: 'Запуск модели не завершился за 15 минут. Проверьте соединение и доступную память.', fatal: true }), 15 * 60 * 1000);
-    worker.postMessage({ type: 'init', base, ...(isTranslation ? { translatorBase: translationBase } : {}) });
+    worker.postMessage({ type: 'init', base, archive: delivery.file(), ...(isTranslation ? { translatorBase: translationBase } : {}) });
   } catch (error) { terminate(); state = 'idle'; notice(explainError(error)); update(); }
 }
 $('comparison-form').addEventListener('submit', event => {
@@ -206,7 +210,7 @@ document.getElementById('translator-open')?.addEventListener('click', terminate)
 for (const link of document.querySelectorAll('.compare-modes a')) link.addEventListener('click', terminate);
 window.addEventListener('pagehide', terminate);
 exportButton.addEventListener('click', () => {
-  const data = { schema: 1, mode, modelId: MODEL_ID, revision: MODEL_REVISION, engine: __COMPARISON_TEST_ENGINE__ ? 'Test double (not inference)' : 'WebLLM 0.2.79', testing: __COMPARISON_TEST_ENGINE__, settings: { answer: { ...GENERATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS }, ...(isPenalty ? { penalty: { protocol: PENALTY_PROTOCOL, seed: 42, samePrompt: true, resetContextBeforeEach: true, systemPrompt: SYSTEM_PROMPT, baseline: { ...GENERATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS, effectiveRepetitionPenalty: MODEL_CHAT_OPTIONS.repetition_penalty, application: 'model-repetition' }, withoutPenalty: { ...GENERATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS, effectiveRepetitionPenalty: 1, frequency_penalty: 0, presence_penalty: 0, application: 'zero-additive' } } } : isThinking ? { thinking: { protocol: THINKING_PROTOCOL, ...GENERATION_OPTIONS, extra_body: { enable_thinking: true }, maxTokens: THINKING_MAX_TOKENS, budgetIncludesReasoningAndAnswer: true, seed: 42, samePrompt: true, resetContextBeforeEach: true, systemPrompt: SYSTEM_PROMPT } } : { translation: { protocol: TRANSLATION_PROTOCOL, input: { engine: 'Qwen3 / WebLLM', extra_body: GENERATION_OPTIONS.extra_body, ...TRANSLATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS, effectiveRepetitionPenalty: 1 }, output: { modelId: TRANSLATOR.modelId, revision: TRANSLATOR.revision, transformers: TRANSLATOR.transformers, device: 'wasm / CPU', sentenceBySentence: true, maxSourceTokensPerSentence: 400, maxNewTokensPerSentence: 384, do_sample: false } } }), repetitionPenalty: MODEL_CHAT_OPTIONS.repetition_penalty }, reports };
+  const data = { schema: 1, mode, modelId: MODEL_ID, revision: MODEL_REVISION, engine: __COMPARISON_TEST_ENGINE__ ? 'Test double (not inference)' : 'WebLLM 0.2.86', testing: __COMPARISON_TEST_ENGINE__, settings: { answer: { ...GENERATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS }, ...(isPenalty ? { penalty: { protocol: PENALTY_PROTOCOL, seed: 42, samePrompt: true, resetContextBeforeEach: true, systemPrompt: SYSTEM_PROMPT, baseline: { ...GENERATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS, repetition_penalty: 1.1, effectiveRepetitionPenalty: 1.1, application: 'request-repetition' }, withoutPenalty: { ...GENERATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS, effectiveRepetitionPenalty: 1, frequency_penalty: 0, presence_penalty: 0, application: 'request-repetition' } } } : isThinking ? { thinking: { protocol: THINKING_PROTOCOL, ...GENERATION_OPTIONS, extra_body: { enable_thinking: true }, maxTokens: THINKING_MAX_TOKENS, budgetIncludesReasoningAndAnswer: true, seed: 42, samePrompt: true, resetContextBeforeEach: true, systemPrompt: SYSTEM_PROMPT } } : { translation: { protocol: TRANSLATION_PROTOCOL, input: { engine: 'Qwen3.5 / WebLLM', extra_body: GENERATION_OPTIONS.extra_body, ...TRANSLATION_OPTIONS, maxTokens: MAX_REPLY_TOKENS, effectiveRepetitionPenalty: 1 }, output: { modelId: TRANSLATOR.modelId, revision: TRANSLATOR.revision, transformers: TRANSLATOR.transformers, device: 'wasm / CPU', sentenceBySentence: true, maxSourceTokensPerSentence: 400, maxNewTokensPerSentence: 384, do_sample: false } } }), repetitionPenalty: MODEL_CHAT_OPTIONS.repetition_penalty }, reports };
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
   const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'tetrikanets-comparison.json'; anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);

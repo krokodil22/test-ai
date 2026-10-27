@@ -2,8 +2,9 @@ import './style.css';
 import { icon, spark } from './icons';
 import { probeGpu } from '#gpu';
 import { explainError } from './errors';
-import { BOT_NAME, MODEL_NAME, MODEL_ESTIMATE, MAX_INPUT_CHARS, resourceBase, formatBytes, MODEL_DESCRIPTION, MODEL_GPU_MEMORY, MODEL_RAM } from './config';
+import { BOT_NAME, MODEL_NAME, MODEL_ESTIMATE, MAX_INPUT_CHARS, resourceBase, formatBytes, MODEL_DESCRIPTION, MODEL_GPU_MEMORY, MODEL_RAM, MODEL_ARCHIVE_MODE } from './config';
 import { isModelCached, removeModelCache } from './cache';
+import { modelDelivery } from './model-delivery';
 import { markdown } from './markdown';
 import { readHistory, saveHistory, deleteHistory, MAX_CHATS, MAX_MESSAGES, HISTORY_KEY } from './storage';
 import type { History } from './storage';
@@ -28,6 +29,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <div class="topbar-left"><button id="menu-toggle" class="icon-button mobile-menu" aria-label="Открыть историю">${icon('menu')}</button><span class="topbar-title">${BOT_NAME}</span><span class="header-separator"></span><span class="model-label">${MODEL_NAME}</span></div>
       <button id="quick-start" class="secondary-button quick-start" hidden>Запустить модель</button><div class="private-badge">${icon('lock')} <span>Только на вашем устройстве</span></div>
     </header>
+    <div id="model-delivery-panel"></div>
     <div id="scroll-area" class="scroll-area">
       <section id="welcome" class="welcome">
         <div class="welcome-emblem">${spark()}<span class="emblem-orbit"></span></div>
@@ -65,7 +67,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </main>
   <dialog id="settings" class="settings-dialog" aria-labelledby="settings-title">
     <div class="dialog-header"><div><span class="eyebrow">ВАШЕ УСТРОЙСТВО</span><h2 id="settings-title">Настройки и данные</h2></div><button id="settings-close" class="icon-button" aria-label="Закрыть настройки">${icon('close')}</button></div>
-    <section class="settings-section"><h3>${icon('chip')} Локальная модель</h3><p><strong>${MODEL_DESCRIPTION}</strong><br>Лицензия Apache 2.0 · WebLLM 0.2.79</p><p>Загрузка: <span id="settings-size">${MODEL_ESTIMATE}</span>. ${MODEL_GPU_MEMORY}, желательно 3–4 ГБ с запасом, и ${MODEL_RAM}. Контекст — 4 096 токенов, ответ — до 512 токенов.</p><p>Модель поддерживает русский язык, но ответы могут быть неточными. После перехода на Qwen3 рекомендуем начать новый чат. Прежняя переписка сохраняется. Старые реплики исключаются из контекста, оставаясь в истории.</p><div id="cache-status" class="cache-status">Проверяем кеш…</div><button id="settings-start" class="secondary-button">Запустить модель</button><button id="comparison-open" class="secondary-button">Сравнить режимы ответа</button><button id="diagnostics-open" class="secondary-button">Диагностика модели и GPU</button><button id="delete-model" class="secondary-button">${icon('trash')} Удалить модель и старые версии</button></section>
+    <section class="settings-section"><h3>${icon('chip')} Локальная модель</h3><p><strong>${MODEL_DESCRIPTION}</strong><br>Лицензия Apache 2.0 · WebLLM 0.2.86</p><p>Загрузка: <span id="settings-size">${MODEL_ESTIMATE}</span>. ${MODEL_GPU_MEMORY}, желательно 6 ГБ с запасом, и ${MODEL_RAM}. Контекст — 4 096 токенов, ответ — до 512 токенов.</p><p>Модель поддерживает русский язык, но ответы могут быть неточными. После смены модели рекомендуем начать новый чат. Прежняя переписка сохраняется. Старые реплики исключаются из контекста, оставаясь в истории.</p><div id="cache-status" class="cache-status">Проверяем кеш…</div><button id="settings-start" class="secondary-button">Запустить модель</button><button id="comparison-open" class="secondary-button">Сравнить режимы ответа</button><button id="diagnostics-open" class="secondary-button">Диагностика модели и GPU</button><button id="delete-model" class="secondary-button">${icon('trash')} Удалить модель и старые версии</button></section>
     <section class="settings-section"><h3>${icon('chat')} История переписки</h3><p>Чаты сохраняются в этом браузере. Общая история и кеш модели удаляются отдельно. Не используйте общий профиль браузера для личной переписки.</p><button id="delete-history" class="danger-button">${icon('trash')} Удалить всю историю</button></section>
     <section class="settings-section privacy-details"><h3>${icon('lock')} Как устроена приватность</h3><p>Ответы генерируются в Web Worker на вашем GPU. Сервер получает только запросы статических файлов. Внешних API, аналитики и телеметрии нет. Изображения и ссылки из ответов не загружаются.</p><p>Кеш может быть удалён браузером автоматически. Интерфейс сайта требует соединения при открытии; гарантированный офлайн-запуск всей страницы не предусмотрен.</p><p>Ресурсы модели: <code id="resource-location"></code></p></section>
   </dialog>
@@ -76,6 +78,7 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 const textarea = $<HTMLTextAreaElement>('prompt');
 const sendButton = $<HTMLButtonElement>('send');
 const loadButton = $<HTMLButtonElement>('load-model');
+const delivery = modelDelivery(loadButton, () => updateUi(), $('model-delivery-panel'));
 const settings = $<HTMLDialogElement>('settings');
 const scrollArea = $('scroll-area');
 let history: History = { conversations: [], activeId: null };
@@ -201,6 +204,8 @@ function updateUi() {
   $<HTMLButtonElement>('comparison-open').disabled = busy || state === 'loading';
   $<HTMLButtonElement>('diagnostics-open').disabled = busy || state === 'loading';
   loadButton.disabled = ['checking', 'unsupported', 'loading', 'ready', 'generating'].includes(state);
+  loadButton.disabled ||= !delivery.available(cached);
+  delivery.update(cached, state === 'loading', state !== 'checking' && state !== 'unsupported');
   loadButton.hidden = ['loading', 'ready', 'generating'].includes(state);
   $('cancel-load').hidden = state !== 'loading';
   $('cancel-inline').hidden = state !== 'loading';
@@ -211,12 +216,12 @@ function updateUi() {
   $('generation-status').textContent = busy ? `${BOT_NAME} обдумывает ответ…` : state === 'loading' ? 'Подготавливаем модель…' : '';
   $('model-card-title').textContent = state === 'ready' || busy ? 'Всё готово. Начнём разговор?' : 'Модель для общения по-русски';
   $('model-card-description').textContent = state === 'ready' || busy ? 'Задайте вопрос — ответ появится прямо здесь.' : cached ? 'Ресурсы в кеше. Осталось запустить модель.' : 'Одна загрузка — и можно общаться.';
-  loadButton.querySelector('span')!.textContent = cached ? 'Запустить из кеша' : 'Скачать и запустить';
+  loadButton.querySelector('span')!.textContent = cached ? 'Запустить из кеша' : MODEL_ARCHIVE_MODE ? 'Открыть и запустить' : 'Скачать и запустить';
   $('cache-status').textContent = cached ? 'Ресурсы модели сохранены в браузере' : 'Модель не сохранена полностью. Частично загруженные файлы тоже можно удалить.';
   $('model-card-tag').textContent = state === 'ready' || busy ? 'ГОТОВО' : 'ЛОКАЛЬНО';
   $('character-count').textContent = textarea.value.length > 800 ? `${textarea.value.length} / ${MAX_INPUT_CHARS}` : '';
   $('quick-start').hidden = !current()?.messages.length || state !== 'idle';
-  $('quick-start').textContent = cached ? 'Запустить из кеша' : `Скачать модель · ${MODEL_ESTIMATE}`;
+  $('quick-start').textContent = cached ? 'Запустить из кеша' : `${MODEL_ARCHIVE_MODE ? 'Открыть' : 'Скачать'} модель · ${MODEL_ESTIMATE}`;
   $('settings-start').hidden = state !== 'idle';
 }
 async function refreshCache() {
@@ -235,6 +240,7 @@ function stopWorker() {
 function sendWorker(data: WorkerRequest) { worker?.postMessage(data); }
 async function startModel() {
   if (!['idle', 'unsupported'].includes(state)) return;
+  if (!delivery.available(cached)) { notice('Скачайте архив модели и выберите файл .tar на этой странице.', true); return; }
   $('notice').hidden = true;
   state = 'loading';
   $<HTMLProgressElement>('progress').value = 0;
@@ -252,7 +258,7 @@ async function startModel() {
     worker.onerror = event => { event.preventDefault(); onWorkerEvent({ type: 'error', message: 'Worker модели завершился с ошибкой. Возможно, браузеру не хватает памяти. Запустите модель снова.', fatal: true }); };
     worker.onmessageerror = () => onWorkerEvent({ type: 'error', message: 'Не удалось получить ответ от worker. Запустите модель снова.', fatal: true });
     loadTimer = setTimeout(() => onWorkerEvent({ type: 'error', message: 'Загрузка заняла слишком много времени. Проверьте соединение и попробуйте снова: сохранённые файлы будут использованы повторно.', fatal: true }), 15 * 60 * 1000);
-    sendWorker({ type: 'init', base });
+    sendWorker({ type: 'init', base, archive: delivery.file() });
   } catch (error) {
     state = 'idle';
     notice(explainError(error), true);

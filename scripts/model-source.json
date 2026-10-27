@@ -1,31 +1,52 @@
 {
-  "modelId": "Qwen3-1.7B-q4f16_1-MLC",
-  "repository": "mlc-ai/Qwen3-1.7B-q4f16_1-MLC",
-  "revision": "80b3abcec6c3b3f5355dc0cc99cc4fb578f192bc",
+  "modelId": "Qwen3.5-4B-q4f16_1-MLC",
+  "repository": "mlc-ai/Qwen3.5-4B-q4f16_1-MLC",
+  "revision": "44b42469f9e192814bfd90440e3b377d89ba7a13",
   "runtime": {
-    "webllm": "0.2.79",
-    "url": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/00fe7a40e57e5e8eb9fef87526a4bf28ad5846c0/web-llm-models/v0_2_48/Qwen3-1.7B-q4f16_1-ctx4k_cs1k-webgpu.wasm",
-    "bytes": 4740005,
-    "sha256": "6407437acec628497086916f43ba7d796a73c0b2fa4777060e9899e6d8ffb0fb"
+    "webllm": "0.2.86",
+    "url": "https://raw.githubusercontent.com/mlc-ai/binary-mlc-llm-libs/00fe7a40e57e5e8eb9fef87526a4bf28ad5846c0/web-llm-models/v0_2_86/base/Qwen3.5-4B-q4f16_1_cs1k-webgpu.wasm",
+    "bytes": 7466230,
+    "sha256": "552152bd76fd5432c6b88750a948ac44d038a3c570be6aa0f0e744067a9e2a25"
   },
   "license": {
     "name": "Apache-2.0",
-    "model_card": "https://huggingface.co/Qwen/Qwen3-1.7B",
-    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
-    "gitBlob": "6634c8cc3133b3848ec74b9f275acaaa1ea618ab",
-    "file": "Qwen3-APACHE-2.0.txt"
+    "file": "Qwen3.5-APACHE-2.0.txt",
+    "model_card": "https://huggingface.co/Qwen/Qwen3.5-4B",
+    "revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a"
   },
-  "displayName": "Qwen3 · 1.7B",
-  "description": "Qwen3 1.7B · q4f16_1 · без режима размышлений",
-  "directory": "qwen3-1.7b",
-  "downloadBytes": 858449127,
-  "vramRequiredMB": 2036.66,
-  "ramRecommendedGB": "3–4",
+  "directory": "qwen35-4b",
+  "cacheManifest": "tensor-cache.json",
+  "packaging": "gzip-shards",
+  "displayName": "Qwen3.5 · 4B",
+  "description": "Qwen3.5 4B · q4f16_1 · текстовый чат без рассуждений",
+  "downloadBytes": 2087067782,
+  "unpackedBytes": 2387631807,
+  "vramRequiredMB": 3867.82,
+  "ramRecommendedGB": "6–8",
+  "minimumStorageBufferBytes": 317849600,
   "legacyModelIds": [
     "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
-    "Qwen2.5-1.5B-Instruct-q4f16_1-MLC"
+    "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+    "Qwen3-1.7B-q4f16_1-MLC"
   ],
-  "unpackedBytes": 984300605,
-  "packaging": "gzip-shards",
-  "minimumStorageBufferBytes": 155582464
+  "pagesDelivery": "archive",
+  "maxDownloadBytes": 2100000000,
+  "chatConfigOverrides": {
+    "conv_template": {
+      "stop_token_ids": [
+        248044,
+        248046
+      ]
+    },
+    "pad_token_id": 248044,
+    "bos_token_id": null,
+    "eos_token_id": [
+      248044,
+      248046
+    ]
+  },
+  "tokenizerIntegrity": {
+    "bytes": 12807982,
+    "sha256": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42"
+  }
 }

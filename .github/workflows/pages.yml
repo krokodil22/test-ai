@@ -1,8 +1,18 @@
 name: Publish GitHub Pages
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'scripts/**'
+      - 'package*.json'
+      - 'vite.config.ts'
+      - '*.html'
+      - '.github/workflows/pages.yml'
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -24,10 +34,19 @@ jobs:
       - run: npm run model:download -- --verify
       - run: npm run translator:download
       - run: npm run translator:download -- --verify
-      - name: Build for the repository path
-        run: npm run build
+      - name: Read model delivery mode
+        id: delivery
+        run: node --input-type=module -e "import source from './scripts/model-source.json' with { type:'json' }; import {appendFileSync} from 'node:fs'; appendFileSync(process.env.GITHUB_OUTPUT, 'archive=' + (source.pagesDelivery === 'archive') + '\n');"
+      - name: Prepare a verified model archive outside the Pages size limit
+        if: steps.delivery.outputs.archive == 'true'
+        run: npm run model:archive
+      - name: Publish the model archive for one-time local import
+        if: steps.delivery.outputs.archive == 'true'
+        run: node scripts/publish-model-release.mjs
         env:
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
+          GH_TOKEN: ${{ github.token }}
+      - name: Build for the repository path
+        run: npm run build:pages
       - run: touch dist/.nojekyll
       - name: Check published site is within the GitHub Pages size limit
         run: node scripts/check-pages-size.mjs

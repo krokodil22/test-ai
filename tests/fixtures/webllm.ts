@@ -16,7 +16,7 @@ export class MLCEngine {
       const cache = await caches.open(file.scope);
       const url = base + file.path;
       if (!await cache.match(url)) await cache.put(url, await fetch(url));
-      if (file.path.endsWith('ndarray-cache.json')) {
+      if (file.path.endsWith('cache.json')) {
         const data = await (await cache.match(url))!.json();
         if (data.externalURL) await fetch(data.externalURL);
       }
@@ -26,7 +26,7 @@ export class MLCEngine {
   }
   async resetChat() { if (this.locked) throw new Error('Model stream lock was not released'); this.interrupted = false; }
   async interruptGenerate() { this.interrupted = true; }
-  chat = { completions: { create: async (request: { messages: Array<{ content: string }>; temperature?: number; top_p?: number; frequency_penalty?: number; presence_penalty?: number; extra_body?: { enable_thinking?: boolean }; max_tokens?: number; stream_options?: { include_usage?: boolean } }) => {
+  chat = { completions: { create: async (request: { messages: Array<{ content: string }>; temperature?: number; top_p?: number; frequency_penalty?: number; presence_penalty?: number; repetition_penalty?: number; extra_body?: { enable_thinking?: boolean }; max_tokens?: number; stream_options?: { include_usage?: boolean } }) => {
     const thinking = request.extra_body?.enable_thinking === true;
     if (request.extra_body?.enable_thinking === undefined) throw new Error('Qwen3 mode must be explicit');
     if (thinking && (request.max_tokens !== 2048 || request.messages.length !== 2 || request.temperature !== 0.7)) throw new Error('Thinking experiment settings were lost');
@@ -36,7 +36,7 @@ export class MLCEngine {
     const diagnosticCase = diagnostic ? profile.cases.find(item => item.prompt === rawPrompt) : undefined;
     if (diagnostic && (!diagnosticCase || request.messages.length !== 2 || request.temperature !== 0 || request.top_p !== 1 || request.max_tokens !== diagnosticCase.maxTokens || thinking || request.frequency_penalty !== 0 || request.presence_penalty !== 0)) throw new Error('Diagnostic request settings were lost');
     const translation = system.startsWith('Translate the user message');
-    const unpenalized = !translation && request.frequency_penalty === 0 && request.presence_penalty === 0;
+    const unpenalized = !translation && !diagnostic && !!request.stream_options?.include_usage && request.repetition_penalty === 1 && request.frequency_penalty === 0 && request.presence_penalty === 0;
     if (unpenalized && !diagnostic && (thinking || request.max_tokens !== 512 || request.temperature !== 0.7)) throw new Error('Penalty comparison settings were lost');
     const prompt = translation ? rawPrompt.match(/<source_text>\n([\s\S]*)\n<\/source_text>/)?.[1] || '' : rawPrompt;
     const slow = prompt.includes('[slow-opus]') || prompt.includes('SLOW_OPUS') ? ' SLOW_OPUS' : prompt.includes('[slow]') || prompt.includes('SLOW') ? ' SLOW' : '';

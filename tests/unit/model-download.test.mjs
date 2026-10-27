@@ -18,18 +18,19 @@ async function fixture() {
   await mkdir(join(root, 'scripts'));
   await mkdir(join(root, 'licenses'));
   await copyFile(join(project, 'scripts/download-model.mjs'), join(root, 'scripts/download-model.mjs'));
+  await copyFile(join(project, 'scripts/model-tokenizer.mjs'), join(root, 'scripts/model-tokenizer.mjs'));
   await symlink(join(project, 'node_modules'), join(root, 'node_modules'), 'junction');
   await writeFile(join(root, 'licenses/fixture.txt'), 'Test fixture license\n');
   const plain = 'Tensor data for the downloader regression test. '.repeat(40);
   const files = {
-    'mlc-chat-config.json': JSON.stringify({ tokenizer_files: ['tokenizer.json'] }),
+    'mlc-chat-config.json': JSON.stringify({ tokenizer_files: ['tokenizer.json'], vocab_size: 10, conv_template: { stop_str: ['<eos>'], stop_token_ids: [9] } }),
     'ndarray-cache.json': JSON.stringify({ records: [{ dataPath: 'params_shard_0.bin' }] }),
-    'tokenizer.json': '{}',
+    'tokenizer.json': JSON.stringify({ added_tokens: [{ content: '<eos>', id: 9 }] }),
     'params_shard_0.bin': plain,
   };
   const source = {
     modelId: 'downloader-test-model', repository: 'test/downloader', revision: 'a'.repeat(40),
-    directory: 'test-model', packaging: 'gzip-shards', license: { file: 'fixture.txt' },
+    directory: 'test-model', packaging: 'gzip-shards', license: { file: 'fixture.txt', name: 'MIT' },
     runtime: { url: 'https://fixture.invalid/model.wasm', bytes: 12, sha256: sha('fixture-wasm'), webllm: '0.2.79' },
   };
   await writeFile(join(root, 'scripts/model-source.json'), JSON.stringify(source));

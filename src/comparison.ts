@@ -1,4 +1,4 @@
-import { BOT_NAME, CONTEXT_TOKENS, GENERATION_OPTIONS, MAX_INPUT_CHARS, MAX_REPLY_TOKENS, MODEL_CHAT_OPTIONS, SYSTEM_PROMPT } from './config';
+import { BOT_NAME, CONTEXT_TOKENS, GENERATION_OPTIONS, MAX_INPUT_CHARS, MAX_REPLY_TOKENS, SYSTEM_PROMPT } from './config';
 import { tokenUpperBound } from './context';
 import type { PromptMessage } from './types';
 import type { ChatCompletionRequestStreaming } from '@mlc-ai/web-llm';
@@ -8,11 +8,10 @@ export const THINKING_STAGES = ['direct', 'thinking'] as const;
 export const THINKING_MAX_TOKENS = 2048;
 export const THINKING_PROTOCOL = 'qwen3-ru-thinking-v1';
 export const PENALTY_STAGES = ['direct', 'no-penalty'] as const;
-export const PENALTY_PROTOCOL = 'qwen3-ru-repetition-v1';
+export const PENALTY_PROTOCOL = 'webllm-ru-repetition-v2';
 export type ComparisonMode = 'penalty' | 'thinking' | 'translation';
 export const TRANSLATION_PROTOCOL = 'qwen-ru-en-opus-en-ru-v1';
-// Translation should retain repeated names and terms. In WebLLM 0.2.79 the
-// explicit zero additive penalties bypass the model's repetition penalty.
+// Translation retains repeated names and terms without additive penalties.
 export const TRANSLATION_OPTIONS = { temperature: 0, top_p: 1, frequency_penalty: 0, presence_penalty: 0 } as const;
 export type ComparisonStage = typeof COMPARISON_STAGES[number] | typeof THINKING_STAGES[number] | typeof PENALTY_STAGES[number];
 export const STAGE_LABELS: Record<ComparisonStage, string> = {
@@ -41,6 +40,7 @@ export interface StageRequest {
   enableThinking: boolean;
   frequencyPenalty?: number;
   presencePenalty?: number;
+  repetitionPenalty?: number;
 }
 export interface StageResult {
   stage: ComparisonStage;
@@ -72,7 +72,7 @@ export type ComparisonUpdate =
 // Keep the public WebLLM request in one place so the pinned-runtime regression
 // test can exercise the exact options the production worker sends.
 export function comparisonCompletionRequest(request: StageRequest): ChatCompletionRequestStreaming {
-  return { messages: request.messages, stream: true, stream_options: { include_usage: true }, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed, extra_body: { enable_thinking: request.enableThinking }, ...(request.frequencyPenalty !== undefined ? { frequency_penalty: request.frequencyPenalty, presence_penalty: request.presencePenalty } : {}) };
+  return { messages: request.messages, stream: true, stream_options: { include_usage: true }, max_tokens: request.maxTokens, temperature: request.temperature, top_p: request.topP, seed: request.seed, extra_body: { enable_thinking: request.enableThinking }, repetition_penalty: request.repetitionPenalty ?? 1, ...(request.frequencyPenalty !== undefined ? { frequency_penalty: request.frequencyPenalty, presence_penalty: request.presencePenalty } : {}) };
 }
 
 const ENGLISH_SYSTEM = `You are ${BOT_NAME}, a helpful AI assistant. Respond in fluent English, clearly and to the point. For creative tasks, write fictional stories. Do not present invented information as facts. If you do not know a factual answer, say so.`;
@@ -179,12 +179,12 @@ export async function comparePenalty(prompt: string, run: StageRunner, onUpdate:
   for (const name of PENALTY_STAGES) {
     if (isStopped()) throw new ComparisonStopped();
     onUpdate({ phase: 'start', stage: name });
-    // Zero additive penalties bypass the model-level multiplicative penalty
-    // in WebLLM 0.2.79. No reload, second model or extra GPU allocation needed.
-    const result = await run({ stage: name, sourceText: input, messages: messages.map(message => ({ ...message })), maxTokens: MAX_REPLY_TOKENS, temperature: GENERATION_OPTIONS.temperature, topP: GENERATION_OPTIONS.top_p, seed, enableThinking: false, ...(name === 'no-penalty' ? { frequencyPenalty: 0, presencePenalty: 0 } : {}) });
+    // WebLLM 0.2.86 forwards the per-request multiplier directly.
+    const repetitionPenalty = name === 'no-penalty' ? 1 : 1.1;
+    const result = await run({ stage: name, sourceText: input, messages: messages.map(message => ({ ...message })), maxTokens: MAX_REPLY_TOKENS, temperature: GENERATION_OPTIONS.temperature, topP: GENERATION_OPTIONS.top_p, seed, enableThinking: false, repetitionPenalty, frequencyPenalty: 0, presencePenalty: 0 });
     if (isStopped()) throw new ComparisonStopped();
     if (!result.text.trim()) throw new ComparisonInputError(`Этап «${STAGE_LABELS[name]}» вернул пустой текст.`);
-    const completed = { ...result, stage: name, effectiveRepetitionPenalty: name === 'no-penalty' ? 1 : MODEL_CHAT_OPTIONS.repetition_penalty };
+    const completed = { ...result, stage: name, effectiveRepetitionPenalty: repetitionPenalty };
     stages.push(completed);
     onUpdate({ phase: 'complete', result: completed });
   }

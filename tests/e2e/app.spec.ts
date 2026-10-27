@@ -7,7 +7,7 @@ const modelId = source.modelId;
 const files = [
   { path: 'model.wasm', scope: 'webllm/wasm', body: 'wasm-test-fixture' },
   { path: 'resolve/main/mlc-chat-config.json', scope: 'webllm/config', body: '{}' },
-  { path: 'resolve/main/ndarray-cache.json', scope: 'webllm/model', body: '{"records":[]}' },
+  { path: `resolve/main/${source.cacheManifest}`, scope: 'webllm/model', body: '{"records":[]}' },
   { path: 'resolve/main/tokenizer.json', scope: 'webllm/model', body: '{}' },
   { path: 'resolve/main/params_shard_0.bin', scope: 'webllm/model', body: 'fixture-weights' },
 ];

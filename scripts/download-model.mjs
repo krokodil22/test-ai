@@ -8,13 +8,14 @@ import { resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createGzip, createGunzip } from 'node:zlib';
 import { EnvHttpProxyAgent, setGlobalDispatcher } from 'undici';
+import { validateStopTokens } from './model-tokenizer.mjs';
 
 // Honor managed proxies, including their CA configuration; TLS verification stays enabled.
 setGlobalDispatcher(new EnvHttpProxyAgent());
 const project = fileURLToPath(new URL('../', import.meta.url));
-const source = JSON.parse(await readFile(new URL('./model-source.json', import.meta.url), 'utf8'));
 const argv = process.argv.slice(2);
 const valueOf = name => { const i = argv.indexOf(name); if (i < 0) return undefined; if (!argv[i + 1] || argv[i + 1].startsWith('--')) throw new Error(`Missing value for ${name}`); return argv[i + 1]; };
+const source = JSON.parse(await readFile(valueOf('--profile') || new URL('./model-source.json', import.meta.url), 'utf8'));
 const destination = resolve(project, valueOf('--output') || `public/models/${source.directory}`);
 const requestedRevision = valueOf('--revision') || source.revision;
 const MB = n => `${(n / 1e6).toFixed(1)} MB`;
@@ -119,14 +120,23 @@ async function main() {
   };
   const config = await downloadFile('mlc-chat-config.json', 'webllm/config');
   const configData = JSON.parse(await readFile(pathFor(config.path), 'utf8'));
+  if (source.chatConfigOverrides) {
+    Object.assign(configData, { ...source.chatConfigOverrides, conv_template: { ...configData.conv_template, ...source.chatConfigOverrides.conv_template } });
+    await writeFile(pathFor(config.path), JSON.stringify(configData, null, 2) + '\n');
+    const patched = await hashes(pathFor(config.path));
+    config.bytes = patched.bytes; config.sha256 = patched.sha256;
+  }
   if (!configData.tokenizer_files?.includes('tokenizer.json')) throw new Error('Expected a WebLLM tokenizer.json');
-  const manifest = await downloadFile('ndarray-cache.json');
+  const manifest = await downloadFile(source.cacheManifest || 'ndarray-cache.json');
   const manifestData = JSON.parse(await readFile(pathFor(manifest.path), 'utf8'));
-  if (!Array.isArray(manifestData.records) || !manifestData.records.length) throw new Error('Invalid ndarray-cache.json');
+  if (!Array.isArray(manifestData.records) || !manifestData.records.length) throw new Error('Invalid model tensor manifest');
   const files = [wasm, config, manifest, await downloadFile('tokenizer.json')];
+  const tokenizerFile = files.at(-1);
+  if (source.tokenizerIntegrity && (tokenizerFile.bytes !== source.tokenizerIntegrity.bytes || tokenizerFile.sha256 !== source.tokenizerIntegrity.sha256)) throw Error('Tokenizer differs from the verified original model');
+  validateStopTokens(configData, JSON.parse(await readFile(pathFor(tokenizerFile.path), 'utf8')));
   const shardNames = [...new Set(manifestData.records.map(record => record.dataPath))];
   for (const name of shardNames) files.push(await downloadFile(name));
-  // Include the upstream model card and its Apache license for redistribution.
+  // Include the upstream model card and the pinned redistribution license.
   for (const name of ['README.md', 'LICENSE']) {
     if (metadata.siblings.some(file => file.rfilename === name)) await downloadFile(name);
   }
@@ -147,10 +157,11 @@ async function main() {
   }
   const info = {
     schema: 1, modelId: source.modelId, revision,
-    webllm: source.runtime.webllm, license: 'Apache-2.0',
+    webllm: source.runtime.webllm, license: source.license.name,
     downloadBytes: files.reduce((total, file) => total + (file.download?.bytes || file.bytes), 0),
     unpackedBytes: files.reduce((total, file) => total + file.bytes, 0), files,
   };
+  if (source.maxDownloadBytes && info.downloadBytes > source.maxDownloadBytes) throw new Error('Packed resources exceed the configured download limit. Do not publish this model.');
   await writeFile(pathFor('model-info.json.part'), JSON.stringify(info, null, 2) + '\n');
   await rename(pathFor('model-info.json.part'), pathFor('model-info.json'));
   // The verified archives are the published files. Retain old model folders;

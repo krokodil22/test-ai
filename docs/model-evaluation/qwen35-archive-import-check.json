@@ -1,0 +1,25 @@
+{
+  "archiveBytes": 2087177728,
+  "files": 82,
+  "audit": {
+    "valid": true,
+    "checkedFiles": 82,
+    "checkedBytes": 2387631807,
+    "completedAt": "2026-10-27T13:23:29.486Z"
+  },
+  "seconds": 95.82620000000298,
+  "storage": {
+    "quota": 13125112576,
+    "usage": 2387694336,
+    "usageDetails": {
+      "caches": 2387694336
+    }
+  },
+  "modelRequests": [],
+  "schema": 1,
+  "kind": "browser-archive-import",
+  "model": "Qwen3.5-4B-q4f16_1-MLC",
+  "browser": "Chromium 154.0.8037.57 built on Debian GNU/Linux 13 (trixie)",
+  "cacheBeforeBytes": 0,
+  "note": "Cold import of the final archive with corrected stop IDs 248044/248046, full SHA-256 audit, then a cache-only preparation. No GPU inference."
+}

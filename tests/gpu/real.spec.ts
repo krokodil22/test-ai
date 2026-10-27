@@ -27,13 +27,13 @@ test('production diagnostics exports capabilities and the actual CPU reference w
   const modelRequests: string[] = [];
   page.on('request', request => { if (request.url().includes('/models/')) modelRequests.push(request.url()); });
   await page.goto('/diagnostics.html');
-  await expect(page.locator('#diagnostic-reference-status')).toContainText('Transformers 4.51.3');
+  await expect(page.locator('#diagnostic-reference-status')).toContainText('Transformers 5.3.0');
   const download = page.waitForEvent('download');
   await page.locator('#diagnostic-export').click();
   const file = await download;
   const report = JSON.parse(await readFile((await file.path())!, 'utf8'));
   expect(report.testing).toBe(false); expect(report.complete).toBe(false);
-  expect(report.reference.complete).toBe(true); expect(report.reference.dtype).toBe('float32');
+  expect(report.reference.complete).toBe(true); expect(report.reference.dtype).toBe('bfloat16');
   expect(report.reference.results).toHaveLength(6); expect(report.environment.browser.userAgent).toBeTruthy();
   expect(modelRequests).toHaveLength(0);
 });

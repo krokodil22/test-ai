@@ -1,0 +1,26 @@
+{
+  "protocol": "candidate-native-greedy-facts-v1",
+  "systemPrompt": "You are a helpful assistant.",
+  "settings": {
+    "temperature": 0,
+    "topP": 1,
+    "seed": 42,
+    "enableThinking": false,
+    "frequencyPenalty": 0,
+    "presencePenalty": 0
+  },
+  "cases": [
+    {
+      "id": "omelet-ru",
+      "label": "Омлет · русский",
+      "prompt": "Как приготовить омлет из двух яиц? Дай короткий список шагов.",
+      "maxTokens": 256
+    },
+    {
+      "id": "seasons-ru",
+      "label": "Времена года · русский",
+      "prompt": "Объясни простыми словами, почему сменяются времена года. Ответь в трёх предложениях.",
+      "maxTokens": 160
+    }
+  ]
+}

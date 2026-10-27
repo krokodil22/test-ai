@@ -1,6 +1,6 @@
 import './style.css';
 import './compare.css';
-import { BOT_NAME, MODEL_ID, MODEL_REVISION, MODEL_ESTIMATE, resourceBase } from './config';
+import { BOT_NAME, MODEL_ID, MODEL_REVISION, MODEL_ESTIMATE, resourceBase, MODEL_ARCHIVE_MODE } from './config';
 import source from '../scripts/model-source.json';
 import { DIAGNOSTIC_PROFILE as profile, validateReference } from './diagnostics';
 import type { CpuReference, DiagnosticResult } from './diagnostics';
@@ -8,6 +8,7 @@ import { browserEnvironment } from './gpu-info';
 import type { RuntimeGpuInfo } from './gpu-info';
 import type { CacheAudit } from './model-resources';
 import { isModelCached } from './cache';
+import { modelDelivery } from './model-delivery';
 import { probeGpu } from '#gpu';
 import { explainError } from './errors';
 import { icon } from './icons';
@@ -24,15 +25,16 @@ document.querySelector('#diagnostics-app')!.innerHTML = `<main class="compare-sh
   <details class="compare-intermediate"><summary>Браузер и GPU, включаемые в JSON</summary><pre id="diagnostic-environment" class="compare-output"></pre><p>Эти сведения сохраняются только по вашей кнопке. Браузер может скрыть название GPU; свободную видеопамять WebGPU не сообщает.</p></details>
   <p id="diagnostic-reference-status" class="compare-hint">Читаем контрольный результат с этого сайта…</p>
   <div id="diagnostic-cases"></div>
-  <footer class="compare-footer"><p>Сравнивайте смысл и выполнение задания. Контрольный результат получен исходной Qwen3 1.7B на CPU через Transformers в FP32, браузер использует четырёхбитную MLC-версию. Дословное совпадение не ожидается; различия сами по себе не доказывают неисправность GPU.</p><p>JSON содержит версии модели и выполнения, настройки, состояние проверки кеша, ответы, времена и доступные сведения о браузере и рабочем GPU. Он сохраняется на устройство; отправки отчёта и аналитики нет. Незавершённый запуск помечается как неполный. <a href="./compare.html">Другие сравнения</a></p></footer>
+  <footer class="compare-footer"><p>Сравнивайте смысл и выполнение задания. Контрольный результат получен исходной Qwen3.5 4B на CPU через Transformers в BF16, браузер использует четырёхбитную MLC-версию. Дословное совпадение не ожидается; различия сами по себе не доказывают неисправность GPU.</p><p>JSON содержит версии модели и выполнения, настройки, состояние проверки кеша, ответы, времена и доступные сведения о браузере и рабочем GPU. Он сохраняется на устройство; отправки отчёта и аналитики нет. Незавершённый запуск помечается как неполный. <a href="./compare.html">Другие сравнения</a></p></footer>
 </main>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const button = (id: string) => $<HTMLButtonElement>(id);
+const delivery = modelDelivery(button('diagnostic-load'), () => update());
 const notice = (text: string) => { $('diagnostic-notice').textContent = text; $('diagnostic-notice').hidden = !text; };
 for (const item of profile.cases) {
   const section = document.createElement('section');
   section.className = 'diagnostic-case';
-  section.innerHTML = `<h2>${item.label}</h2><p class="compare-hint"></p><div class="compare-results"><article><div class="compare-result-head"><h3>Ваш браузер · WebLLM</h3><span id="status-${item.id}">Ожидает</span></div><div id="output-${item.id}" class="compare-output">—</div></article><article><div class="compare-result-head"><h3>Контроль · CPU / FP32</h3></div><div id="reference-${item.id}" class="compare-output">Читаем результат…</div></article></div>`;
+  section.innerHTML = `<h2>${item.label}</h2><p class="compare-hint"></p><div class="compare-results"><article><div class="compare-result-head"><h3>Ваш браузер · WebLLM</h3><span id="status-${item.id}">Ожидает</span></div><div id="output-${item.id}" class="compare-output">—</div></article><article><div class="compare-result-head"><h3>Контроль · CPU / BF16</h3></div><div id="reference-${item.id}" class="compare-output">Читаем результат…</div></article></div>`;
   section.querySelector('p')!.textContent = item.prompt;
   $('diagnostic-cases').append(section);
 }
@@ -56,7 +58,9 @@ function renderEnvironment() { $('diagnostic-environment').textContent = JSON.st
 function update() {
   button('diagnostic-load').hidden = state === 'ready' || state === 'running';
   button('diagnostic-load').disabled = state !== 'idle';
-  button('diagnostic-load').textContent = cached ? 'Запустить из кеша' : `Скачать Qwen ${MODEL_ESTIMATE} и запустить`;
+  button('diagnostic-load').disabled ||= !delivery.available(cached);
+  delivery.update(cached, state === 'loading', state !== 'checking' && state !== 'unsupported');
+  button('diagnostic-load').textContent = cached ? 'Запустить из кеша' : `${MODEL_ARCHIVE_MODE ? 'Открыть' : 'Скачать'} модель ${MODEL_ESTIMATE} и запустить`;
   button('diagnostic-run').disabled = state !== 'ready';
   button('diagnostic-stop').hidden = state !== 'running';
   button('diagnostic-stop').disabled = stopping;
@@ -105,7 +109,7 @@ button('diagnostic-load').onclick = async () => {
     worker.onerror = event => { event.preventDefault(); receive({ type: 'error', fatal: true, message: 'Ошибка Worker. Возможно, не хватает памяти.' }); };
     worker.onmessageerror = () => receive({ type: 'error', fatal: true, message: 'Не удалось прочитать сообщение Worker.' });
     timer = setTimeout(() => receive({ type: 'error', fatal: true, message: 'Запуск не завершился за 15 минут.' }), 15 * 60 * 1000);
-    worker.postMessage({ type: 'init', base });
+    worker.postMessage({ type: 'init', base, archive: delivery.file() });
   } catch (error) { receive({ type: 'error', fatal: true, message: explainError(error) }); }
 };
 button('diagnostic-run').onclick = () => {
@@ -123,7 +127,7 @@ button('diagnostic-stop').onclick = () => {
 button('diagnostic-cancel').onclick = () => { terminate(); state = 'idle'; $('diagnostic-status').textContent = 'Запуск отменён'; update(); };
 button('diagnostic-export').onclick = () => {
   const partial = currentCase ? { caseId: currentCase, text: $(`output-${currentCase}`).textContent, status: 'incomplete' } : undefined;
-  const report = { schema: 1, kind: 'browser-diagnostics', protocol: profile.protocol, createdAt: new Date().toISOString(), testing: __COMPARISON_TEST_ENGINE__, modelId: MODEL_ID, revision: MODEL_REVISION, runtime: { engine: 'WebLLM 0.2.79', wasmSha256: source.runtime.sha256, quantization: 'q4f16_1' }, environment: { browser: environment, gpu }, settings: { ...profile.settings, systemPrompt: profile.systemPrompt, resetContextBeforeEach: true }, cacheAudit: audit || { valid: false, status: 'not-completed' }, complete, stopped, error: lastError || undefined, results, partial, reference: reference || { status: 'unavailable' } };
+  const report = { schema: 1, kind: 'browser-diagnostics', protocol: profile.protocol, createdAt: new Date().toISOString(), testing: __COMPARISON_TEST_ENGINE__, modelId: MODEL_ID, revision: MODEL_REVISION, runtime: { engine: 'WebLLM 0.2.86', wasmSha256: source.runtime.sha256, quantization: 'q4f16_1' }, environment: { browser: environment, gpu }, settings: { ...profile.settings, systemPrompt: profile.systemPrompt, resetContextBeforeEach: true }, cacheAudit: audit || { valid: false, status: 'not-completed' }, complete, stopped, error: lastError || undefined, results, partial, reference: reference || { status: 'unavailable' } };
   const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }));
   const link = document.createElement('a'); link.href = url; link.download = 'tetrikanets-diagnostics.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 };
@@ -133,7 +137,7 @@ async function boot() {
   renderEnvironment(); update();
   void (async () => {
     try {
-      const url = new URL('diagnostics/qwen3-reference.json', new URL(import.meta.env.BASE_URL, location.href));
+      const url = new URL('diagnostics/model-reference.json', new URL(import.meta.env.BASE_URL, location.href));
       const response = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error' });
       if (!response.ok) throw Error(`HTTP ${response.status}`);
       reference = validateReference(await response.json());
@@ -141,7 +145,7 @@ async function boot() {
       $('diagnostic-reference-status').textContent = `${reference.engine}, CPU / ${reference.dtype}, без квантования. Это заранее выполненный контрольный запуск; при открытии страницы CPU-модель не скачивается.`;
     } catch { $('diagnostic-reference-status').textContent = 'Контрольный файл недоступен или несовместим. Диагностику браузера можно выполнить и сохранить отдельно.'; for (const item of profile.cases) $(`reference-${item.id}`).textContent = 'Контрольный результат недоступен.'; }
   })();
-  try { base = resourceBase(); await probeGpu(); cached = await isModelCached(base).catch(() => false); state = 'idle'; $('diagnostic-status').textContent = 'WebGPU доступен'; $('diagnostic-cache').textContent = cached ? 'Модель сохранена в кеше.' : `Загрузка Qwen: ${MODEL_ESTIMATE}. Начнётся по кнопке.`; }
+  try { base = resourceBase(); await probeGpu(); cached = await isModelCached(base).catch(() => false); state = 'idle'; $('diagnostic-status').textContent = 'WebGPU доступен'; $('diagnostic-cache').textContent = cached ? 'Модель сохранена в кеше.' : `Загрузка модели: ${MODEL_ESTIMATE}. Начнётся по кнопке.`; }
   catch (error) { state = 'unsupported'; lastError = explainError(error); $('diagnostic-status').textContent = 'Совместимый WebGPU недоступен'; notice(lastError); }
   update();
 }

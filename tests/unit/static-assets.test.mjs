@@ -22,5 +22,10 @@ it('publishes only the active model, retains other static files, and preserves l
     expect(await readFile(join(output, 'favicon.svg'), 'utf8')).toBe('<svg/>');
     expect(await readFile(join(output, 'index.html'), 'utf8')).toBe('built HTML');
     expect(await readFile(join(input, 'models/qwen2.5-0.5b/weights.bin'), 'utf8')).toBe('qwen2.5-0.5b');
+    await writeFile(join(input, 'models', source.directory, 'model-info.json'), '{}');
+    await writeFile(join(input, 'models', source.directory, 'LICENSE'), 'license');
+    const pages = join(root, 'pages');
+    await copyPublicAssets(input, pages, source.directory, true);
+    expect((await readdir(join(pages, 'models', source.directory))).sort()).toEqual(['LICENSE', 'model-info.json']);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

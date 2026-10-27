@@ -1,0 +1,14 @@
+{
+  "repository": "RefalMachine/RuadaptQwen3-4B-Instruct",
+  "revision": "684adcaf873c3befcac5629804151a606a1b2d57",
+  "files": [
+    "config.json",
+    "generation_config.json",
+    "model-00001-of-00002.safetensors",
+    "model-00002-of-00002.safetensors",
+    "model.safetensors.index.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json"
+  ]
+}

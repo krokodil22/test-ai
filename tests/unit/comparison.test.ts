@@ -155,9 +155,8 @@ it('changes only the penalty for two isolated Russian answers with identical bud
   expect(requests[0].messages).not.toBe(requests[1].messages);
   const baseline = comparisonCompletionRequest(requests[0]);
   const unpenalized = comparisonCompletionRequest(requests[1]);
-  expect(baseline).not.toHaveProperty('frequency_penalty');
-  expect(baseline).not.toHaveProperty('presence_penalty');
-  expect(unpenalized).toEqual({ ...baseline, frequency_penalty: 0, presence_penalty: 0 });
+  expect(baseline).toMatchObject({ frequency_penalty: 0, presence_penalty: 0, repetition_penalty: 1.1 });
+  expect(unpenalized).toEqual({ ...baseline, repetition_penalty: 1 });
   expect(result.mode).toBe('penalty');
   expect(result.stages.map(stage => stage.effectiveRepetitionPenalty)).toEqual([1.1, 1]);
   expect(result.directSeconds).toBe(1); expect(result.noPenaltySeconds).toBe(2);

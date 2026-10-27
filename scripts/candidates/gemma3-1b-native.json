@@ -1,0 +1,13 @@
+{
+  "repository": "unsloth/gemma-3-1b-it",
+  "revision": "5b11413a10db4e486ef16a20101fd028f8f2499c",
+  "files": [
+    "config.json",
+    "generation_config.json",
+    "model.safetensors",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer.model",
+    "tokenizer_config.json"
+  ]
+}
