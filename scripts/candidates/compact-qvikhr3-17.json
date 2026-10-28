@@ -1,0 +1,12 @@
+{
+  "repository": "Vikhrmodels/QVikhr-3-1.7B-Instruction-noreasoning",
+  "revision": "ff7a23e896ebcd28825854b31cee34dfdaedd232",
+  "files": [
+    "config.json",
+    "generation_config.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "model.safetensors"
+  ]
+}

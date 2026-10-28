@@ -1,0 +1,104 @@
+name: Screen compact model Russian quality
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/compact-model-screen.yml'
+      - 'scripts/candidates/compact-selection.json'
+permissions:
+  contents: write
+concurrency:
+  group: compact-model-screen
+  cancel-in-progress: false
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        run: |
+          python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          selected = json.loads(Path('scripts/candidates/compact-selection.json').read_text())
+          assert 1 <= len(selected) <= 6
+          assert all(re.fullmatch('[a-z0-9-]+', item['key']) for item in selected)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('matrix=' + json.dumps(dict(key=[item['key'] for item in selected])) + '\n')
+          PY
+  screen:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_WAIT_POLICY: PASSIVE
+      OMP_NUM_THREADS: '4'
+      OPENBLAS_NUM_THREADS: '4'
+      REFERENCE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      REFERENCE_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/reference-requirements.txt
+      - run: npm ci --ignore-scripts
+      - run: python -m pip install -r scripts/reference-requirements.txt
+      - run: node scripts/candidates/run-compact-screen.mjs '${{ matrix.key }}'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: compact-screen-${{ matrix.key }}
+          path: .cache/compact-results/${{ matrix.key }}/
+          include-hidden-files: false
+          if-no-files-found: error
+  record:
+    needs: screen
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: compact-screen-*
+          path: .cache/compact-merged
+      - name: Collect all measured results, including recorded execution failures
+        run: |
+          python - <<'PY'
+          import json, shutil
+          from pathlib import Path
+          selected = json.loads(Path('scripts/candidates/compact-selection.json').read_text())
+          for item in selected:
+              root = Path('.cache/compact-merged') / ('compact-screen-' + item['key'])
+              status = json.loads((root / 'status.json').read_text())
+              assert status['key'] == item['key']
+              if status['complete']:
+                  assert len(status['results']) == 2
+              destination = Path('docs/model-evaluation/compact-results') / item['key']
+              destination.mkdir(parents=True, exist_ok=True)
+              for source in root.glob('*.json'):
+                  json.loads(source.read_text())
+                  shutil.copyfile(source, destination / source.name)
+          PY
+      - name: Save only small JSON reports, never weights
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/model-evaluation/compact-results/
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record compact model screening results and checkpoint compatibility'
+          git pull --rebase origin main
+          git push origin HEAD:main

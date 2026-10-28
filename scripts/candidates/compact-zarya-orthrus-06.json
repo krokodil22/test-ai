@@ -1,0 +1,12 @@
+{
+  "repository": "ai-forever/ZaryaOrthrus-0.6B",
+  "revision": "6c93071b27ab0d2061007dda0416f0439ed4d7df",
+  "files": [
+    "config.json",
+    "chat_template.jinja",
+    "generation_config.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "model.safetensors"
+  ]
+}

@@ -29,11 +29,14 @@ args.dtype = args.dtype or source.get("dtype", "float32")
 torch.set_num_threads(args.threads)
 torch.manual_seed(profile["settings"]["seed"])
 print("Loading", source["repository"], "on CPU,", args.dtype, "offline", flush=True)
-tokenizer = AutoTokenizer.from_pretrained(args.model, local_files_only=True)
+tokenizer = AutoTokenizer.from_pretrained(args.model, local_files_only=True, trust_remote_code=False)
 model_config = json.loads((Path(args.model) / "config.json").read_text())
 model_class = AutoModelForImageTextToText if model_config.get("model_type") in ["qwen3_5", "gemma3"] else AutoModelForCausalLM
 dtype = torch.float32 if args.dtype == "float32" else torch.bfloat16
-model = model_class.from_pretrained(args.model, torch_dtype=dtype, attn_implementation="eager", local_files_only=True).eval()
+model, loading_info = model_class.from_pretrained(args.model, torch_dtype=dtype, attn_implementation="eager", local_files_only=True, trust_remote_code=False, output_loading_info=True)
+if any(loading_info.get(key) for key in ["missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs"]):
+    raise RuntimeError("Checkpoint differs from the native model implementation: " + json.dumps(loading_info))
+model = model.eval()
 if any(parameter.is_floating_point() and parameter.dtype != dtype for parameter in model.parameters()):
     raise RuntimeError("Reference weights must match the declared dtype")
 eos_ids = model.generation_config.eos_token_id or tokenizer.eos_token_id
