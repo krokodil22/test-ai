@@ -1,0 +1,29 @@
+name: Review compact Zarya architecture source
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/zarya-source-review.yml'
+permissions:
+  contents: write
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node scripts/candidates/review-zarya-source.mjs
+      - name: Save the public source snapshot for read-only review
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/model-evaluation/zarya-source-review.json
+          git commit -m 'Record pinned ZaryaOrthrus architecture source for compatibility review'
+          git pull --rebase origin main
+          git push origin HEAD:main
