@@ -1,0 +1,89 @@
+name: Check original Qwen2.5 0.5B
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/light-model-reference.yml'
+permissions:
+  contents: write
+concurrency:
+  group: original-light-model-reference
+  cancel-in-progress: false
+jobs:
+  reference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HF_HUB_DISABLE_TELEMETRY: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+      OMP_WAIT_POLICY: PASSIVE
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: scripts/reference-requirements.txt
+      - run: npm ci --ignore-scripts
+      - run: python -m pip install -r scripts/reference-requirements.txt
+      - name: Download verified original weights for development-only CPU testing
+        run: npm run reference:download -- --profile scripts/candidates/qwen2.5-0.5b.json --output .cache/reference/qwen25-05-original --parallel 1
+      - name: Run the same six neutral RU and EN questions
+        run: python scripts/run-reference.py --profile scripts/candidates/qwen2.5-0.5b.json --model .cache/reference/qwen25-05-original --dtype float32 --threads 2 --output docs/model-evaluation/reports/qwen25-05-original-diagnostics.json
+      - name: Check Russian grammar, translation and stories
+        run: python scripts/run-reference.py --profile scripts/candidates/qwen2.5-0.5b.json --model .cache/reference/qwen25-05-original --cases scripts/candidates/russian-screening.json --dtype float32 --threads 2 --output docs/model-evaluation/reports/qwen25-05-original-russian-screening.json
+      - name: Validate complete reports and record file hashes and execution provenance
+        env:
+          REFERENCE_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REFERENCE_COMMIT: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          source = json.loads(Path('scripts/candidates/qwen2.5-0.5b.json').read_text())
+          model = Path('.cache/reference/qwen25-05-original')
+          files = []
+          for name in source['files']:
+              path = model / name
+              sha = hashlib.sha256()
+              with path.open('rb') as stream:
+                  for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                      sha.update(chunk)
+              files.append(dict(path=name, bytes=path.stat().st_size, sha256=sha.hexdigest()))
+          for name, cases in [('qwen25-05-original-diagnostics', 'src/diagnostic-cases.json'), ('qwen25-05-original-russian-screening', 'scripts/candidates/russian-screening.json')]:
+              path = Path('docs/model-evaluation/reports') / (name + '.json')
+              report = json.loads(path.read_text())
+              profile = json.loads(Path(cases).read_text())
+              assert report['complete'] is True
+              assert report['model'] == source['repository'] and report['revision'] == source['revision']
+              assert report['dtype'] == 'float32' and report['quantization'] == 'none'
+              assert report['settings'] == profile['settings'] and report['systemPrompt'] == profile['systemPrompt']
+              assert len(report['results']) == len(profile['cases'])
+              for result, case in zip(report['results'], profile['cases']):
+                  assert result['caseId'] == case['id'] and result['prompt'] == case['prompt'] and result['maxTokens'] == case['maxTokens']
+                  assert result['text'].strip() and result['finish'] in ['complete', 'length']
+              report['sourceFiles'] = files
+              report['execution'] = dict(runUrl=os.environ['REFERENCE_RUN_URL'], commit=os.environ['REFERENCE_COMMIT'], purpose='Development-only original-weight control; no user chat or website generation')
+              path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qwen25-05-original-cpu-reports
+          path: docs/model-evaluation/reports/qwen25-05-original-*.json
+          if-no-files-found: error
+      - name: Save only the measured reports for review
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/model-evaluation/reports/qwen25-05-original-diagnostics.json docs/model-evaluation/reports/qwen25-05-original-russian-screening.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record original Qwen2.5 0.5B CPU diagnostic and Russian screening results'
+          git pull --rebase origin main
+          git push origin HEAD:main
