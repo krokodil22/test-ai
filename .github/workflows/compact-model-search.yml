@@ -1,0 +1,38 @@
+name: Discover compact Russian model candidates
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/compact-model-search.yml'
+      - 'scripts/candidates/discover-small-models.mjs'
+permissions:
+  contents: write
+concurrency:
+  group: compact-model-catalog
+  cancel-in-progress: false
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: node scripts/candidates/discover-small-models.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: compact-model-catalog
+          path: docs/model-evaluation/compact-catalog.json
+      - name: Record only public model metadata
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/model-evaluation/compact-catalog.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Record current compact model catalog and architecture compatibility'
+          git pull --rebase origin main
+          git push origin HEAD:main
