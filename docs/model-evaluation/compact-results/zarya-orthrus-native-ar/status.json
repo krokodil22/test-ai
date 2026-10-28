@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "key": "zarya-orthrus-native-ar",
+  "model": "ai-forever/ZaryaOrthrus-0.6B",
+  "revision": "6c93071b27ab0d2061007dda0416f0439ed4d7df",
+  "license": "mit",
+  "reasonForSelection": "Audited ordinary AR branch; require full-vocabulary logit equivalence to the original explicit AR implementation before quality screening.",
+  "complete": true,
+  "execution": {
+    "runUrl": "https://github.com/krokodil22/test-ai/actions/runs/40673562080",
+    "commit": "ade29ab1e0ac905b62f9424d6327479def87f2d8"
+  },
+  "results": [
+    {
+      "profile": "diagnostics",
+      "cases": 6,
+      "report": "diagnostics.json"
+    },
+    {
+      "profile": "production",
+      "cases": 7,
+      "report": "production.json"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "config.json",
+      "bytes": 1533,
+      "sha256": "6de93bb546e5031a2a1f84d3704eca990c8f19b844ed0ebdb87c921f1533f1fd"
+    },
+    {
+      "path": "chat_template.jinja",
+      "bytes": 4168,
+      "sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8"
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 204,
+      "sha256": "40597494cd458007f25bafbf97925d2abdc3dc7e076fa6d83e787e6fcf218301"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 11422843,
+      "sha256": "5fcb0e1d503d2b3d47ecf2e4d3acc9b1237888193adb640efaabafba6a7cdf37"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 470,
+      "sha256": "75739ee66e576c03e21968625fb9c0a8a618d02b3b6ce2ea6a0db41bc70819cb"
+    },
+    {
+      "path": "model.safetensors",
+      "bytes": 1544491184,
+      "sha256": "c4c18aa39cfabe07cf8b6d2cfdca53f8bffcb1f9abbacba1320e6442893babe3"
+    }
+  ]
+}
