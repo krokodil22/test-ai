@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { MLCEngine } from '@mlc-ai/web-llm';
 import { probeGpu, monitorGpu } from '#gpu';
-import { MODEL_ID, MODEL_CHAT_OPTIONS, MAX_REPLY_TOKENS, GENERATION_OPTIONS, MODEL_ARCHIVE_MODE } from './config';
+import { MODEL_ID, MODEL_CHAT_OPTIONS, MAX_REPLY_TOKENS, GENERATION_OPTIONS, MODEL_ARCHIVE_MODE, configureModel, activeModel, SUPPORTS_THINKING } from './config';
 import { archiveResources } from './model-archive';
 import { holdModelLease } from './model-lease';
 import { runtimeFor } from './memory-mode';
@@ -33,6 +33,7 @@ let modelBase = '';
 const nativeFetch = globalThis.fetch.bind(globalThis);
 
 async function comparisonStage(request: StageRequest, onText = (text: string) => send({ type: 'comparison-token', id: active!, stage: request.stage, text })) {
+  if (request.enableThinking && !SUPPORTS_THINKING) throw new ComparisonInputError('Эта модель не поддерживает режим рассуждений. Выберите Qwen3.5 4B.');
   const start = performance.now();
   if (request.stage === 'translate-output') {
     if (!translator) throw new ComparisonInputError('Для обратного перевода нужен локальный OPUS-MT. Откройте обновлённую страницу эксперимента.');
@@ -82,7 +83,7 @@ async function comparisonStage(request: StageRequest, onText = (text: string) =>
   return { text: text.trim(), finish, seconds: (performance.now() - start) / 1000, generatedTokens, firstAnswerSeconds, ...(thinking ? { thinking: { status: thinking.status(), text: reasoning.trim() } } : {}) };
 }
 
-async function init(base: string, translatorBase?: string, archive?: File, memoryMode: MemoryMode = 'standard') {
+async function init(base: string, translatorBase?: string, archive?: File, memoryMode: MemoryMode = 'economy') {
   if (engine || loading) return;
   loading = true;
   try {
@@ -128,7 +129,7 @@ async function init(base: string, translatorBase?: string, archive?: File, memor
     const qwenShare = translatorBase ? 0.8 : 1;
     const resourceFetch = archive ? await archiveResources(archive, base, info) : MODEL_ARCHIVE_MODE ? (async () => { throw Error('Выберите скачанный архив модели .tar. Файлы не отправляются на сервер.'); }) as typeof fetch : nativeFetch;
     await prepareModelCache(base, info, resourceFetch, (value, text) => send({ type: 'progress', progress: value * 0.7 * qwenShare, text }));
-    if (memoryMode === 'economy') {
+    if (memoryMode === 'economy' && activeModel().supportsEconomy) {
       resourceHashes.set(runtimeUrl, runtime.sha256);
       const runtimeFile = { path: runtime.path, bytes: runtime.bytes, sha256: runtime.sha256, scope: 'webllm/wasm' as const };
       // The small optional runtime is hosted beside model-info.json on Pages.
@@ -170,7 +171,12 @@ async function init(base: string, translatorBase?: string, archive?: File, memor
 }
 
 scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
-  if (data.type === 'init') { await init(data.base, data.translatorBase, data.archive, data.memoryMode); return; }
+  if (data.type === 'init') {
+    if (engine || loading) return;
+    try { configureModel(data.modelKey || 'qwen35-4b'); }
+    catch (error) { send({ type: 'error', message: explainError(error), fatal: true }); return; }
+    await init(data.base, data.translatorBase, data.archive, data.memoryMode); return;
+  }
   if (data.type === 'stop') {
     if (active === data.id) { stopped = true; void engine?.interruptGenerate(); translator?.stop(); }
     return;
@@ -201,6 +207,7 @@ scope.onmessage = async ({ data }: MessageEvent<WorkerRequest>) => {
   }
   if (data.type === 'compare') {
     try {
+      if (data.mode === 'thinking' && !SUPPORTS_THINKING) throw new ComparisonInputError('Эта модель не поддерживает режим рассуждений. Выберите Qwen3.5 4B.');
       const compare = data.mode === 'penalty' ? comparePenalty : data.mode === 'thinking' ? compareThinking : compareAnswers;
       const result = await compare(data.prompt, comparisonStage, update => {
         if (update.phase === 'start') send({ type: 'comparison-stage', id: data.id, stage: update.stage });

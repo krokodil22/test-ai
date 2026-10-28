@@ -96,3 +96,30 @@ it.each(['invalid gzip', 'expanded size exceeded'])('reports %s through the CLI 
     if (kind === 'expanded size exceeded') expect(failure?.stderr).toContain('Expanded model resource');
   } finally { await rm(f.root, { recursive: true, force: true }); }
 }, 15000);
+
+it('prepares a pinned model with bundled WASM and aliases its old manifest for WebLLM 0.2.86', async () => {
+  const f = await fixture();
+  try {
+    const profilePath = join(f.root, 'scripts/model-source.json');
+    const profile = JSON.parse(await readFile(profilePath, 'utf8'));
+    const packed = gzipSync('fixture-wasm');
+    await mkdir(join(f.root, 'vendor'));
+    profile.runtime = { webllm: '0.2.86', bundledPath: 'vendor/fixture.wasm.gz', bytes: 12, sha256: sha('fixture-wasm'), compressedBytes: packed.length, compressedSha256: sha(packed) };
+    profile.upstreamCacheManifest = 'ndarray-cache.json'; profile.cacheManifest = 'tensor-cache.json';
+    // Fetch the same deterministic fixture metadata once to pin all resources;
+    // no mutable metadata request should be necessary in the pinned CLI path.
+    const preload = await readFile(join(f.root, 'fixture-fetch.mjs'), 'utf8');
+    const files = JSON.parse(preload.match(/const files = (.*);/)[1]);
+    profile.files = Object.entries(files).map(([path, body]) => ({ path, bytes: Buffer.byteLength(body), sha256: sha(body) }));
+    await writeFile(profilePath, JSON.stringify(profile)); await writeFile(join(f.root, profile.runtime.bundledPath), packed);
+    const first = await f.run();
+    expect(first.stdout).toContain('Ready:');
+    expect(await readFile(join(f.output, 'model.wasm'), 'utf8')).toBe('fixture-wasm');
+    const info = JSON.parse(await readFile(join(f.output, 'model-info.json'), 'utf8'));
+    expect(info.webllm).toBe('0.2.86');
+    expect(info.files.some(file => file.path === 'resolve/main/tensor-cache.json')).toBe(true);
+    expect(info.files.some(file => file.path === 'resolve/main/ndarray-cache.json')).toBe(false);
+    await f.run([], { TETRIKANETS_TEST_OFFLINE: '1' });
+    await f.run(['--verify'], { TETRIKANETS_TEST_OFFLINE: '1' });
+  } finally { await rm(f.root, { recursive: true, force: true }); }
+}, 15000);

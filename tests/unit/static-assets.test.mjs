@@ -19,7 +19,7 @@ it('publishes only the active model, retains other static files, and preserves l
     await mkdir(output);
     await writeFile(join(output, 'index.html'), 'built HTML');
     await copyPublicAssets(input, output, source.directory);
-    expect(await readdir(join(output, 'models'))).toEqual([source.directory]);
+    expect(await readdir(join(output, 'models'))).toEqual(['qwen2.5-0.5b', source.directory].sort());
     expect(await readFile(join(output, 'favicon.svg'), 'utf8')).toBe('<svg/>');
     expect(await readFile(join(output, 'index.html'), 'utf8')).toBe('built HTML');
     expect(await readFile(join(input, 'models/qwen2.5-0.5b/weights.bin'), 'utf8')).toBe('qwen2.5-0.5b');

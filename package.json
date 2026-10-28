@@ -21,7 +21,9 @@
     "test:gpu": "playwright test --config playwright.gpu.config.ts",
     "translator:download": "node scripts/download-translator.mjs",
     "runtime:prepare": "node scripts/prepare-low-memory-runtime.mjs",
-    "prebuild": "node scripts/prepare-low-memory-runtime.mjs"
+    "prebuild": "node scripts/prepare-low-memory-runtime.mjs",
+    "model:download:light": "node scripts/download-model.mjs --profile scripts/light-model-source.json",
+    "runtime:verify:light": "node scripts/verify-light-model-runtime.mjs"
   },
   "dependencies": {
     "@huggingface/transformers": "3.8.1",

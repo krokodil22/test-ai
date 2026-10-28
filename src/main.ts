@@ -2,7 +2,7 @@ import './style.css';
 import { icon, spark } from './icons';
 import { probeGpu } from '#gpu';
 import { explainError } from './errors';
-import { BOT_NAME, MODEL_NAME, MODEL_ESTIMATE, MAX_INPUT_CHARS, resourceBase, formatBytes, MODEL_DESCRIPTION, MODEL_GPU_MEMORY, MODEL_RAM, MODEL_ARCHIVE_MODE } from './config';
+import { BOT_NAME, MODEL_NAME, MODEL_ESTIMATE, MAX_INPUT_CHARS, resourceBase, formatBytes, MODEL_DESCRIPTION, MODEL_GPU_MEMORY, MODEL_RAM, MODEL_ARCHIVE_MODE, MODELS, MODEL_SELECTION_KEY, configureModel, activeModel, CONTEXT_TOKENS, MAX_REPLY_TOKENS } from './config';
 import { isModelCached, removeModelCache } from './cache';
 import { modelDelivery } from './model-delivery';
 import { memoryModeControl } from './memory-mode';
@@ -39,7 +39,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
         <p class="welcome-description">Спросите, придумайте, разберитесь в сложном.<br>Ваш ИИ-помощник работает прямо в браузере.</p>
         <div id="model-card" class="model-card">
           <div class="model-card-head"><span class="model-card-icon">${icon('chip')}</span><div><h2 id="model-card-title">Модель для общения по-русски</h2><p id="model-card-description">Одна загрузка — и можно общаться.</p></div><span id="model-card-tag" class="model-card-tag">ЛОКАЛЬНО</span></div>
-          <div class="model-facts"><span>${icon('download')} <b id="download-size">${MODEL_ESTIMATE}</b> один раз</span><span>${icon('chip')} ${MODEL_GPU_MEMORY}</span><span>${icon('leaf')} Без регистрации</span></div>
+          <div class="model-facts"><span>${icon('download')} <b id="download-size">${MODEL_ESTIMATE}</b> один раз</span><span id="model-gpu-estimate">${icon('chip')} ${MODEL_GPU_MEMORY}</span><span>${icon('leaf')} Без регистрации</span></div>
           <div id="load-progress" class="load-progress" hidden><div class="progress-label"><span id="progress-text">Подготовка…</span><span id="progress-percent">0%</span></div><progress id="progress" max="1" value="0" aria-label="Загрузка модели"></progress></div>
           <button id="load-model" class="primary-button">${icon('download')} <span>Скачать и запустить</span> ${icon('chevron')}</button>
           <button id="cancel-load" class="text-button" hidden>Отменить загрузку</button>
@@ -68,7 +68,7 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
   </main>
   <dialog id="settings" class="settings-dialog" aria-labelledby="settings-title">
     <div class="dialog-header"><div><span class="eyebrow">ВАШЕ УСТРОЙСТВО</span><h2 id="settings-title">Настройки и данные</h2></div><button id="settings-close" class="icon-button" aria-label="Закрыть настройки">${icon('close')}</button></div>
-    <section class="settings-section"><h3>${icon('chip')} Локальная модель</h3><p><strong>${MODEL_DESCRIPTION}</strong><br>Лицензия Apache 2.0 · WebLLM 0.2.86</p><p>Загрузка: <span id="settings-size">${MODEL_ESTIMATE}</span>. ${MODEL_GPU_MEMORY}, желательно 6 ГБ с запасом, и ${MODEL_RAM}. Контекст — 4 096 токенов, ответ — до 512 токенов.</p><p>Модель поддерживает русский язык, но ответы могут быть неточными. После смены модели рекомендуем начать новый чат. Прежняя переписка сохраняется. Старые реплики исключаются из контекста, оставаясь в истории.</p><div id="cache-status" class="cache-status">Проверяем кеш…</div><button id="settings-start" class="secondary-button">Запустить модель</button><button id="unload-model" class="secondary-button" disabled>Освободить память</button><button id="comparison-open" class="secondary-button">Сравнить режимы ответа</button><button id="diagnostics-open" class="secondary-button">Диагностика модели и GPU</button><button id="delete-model" class="secondary-button">${icon('trash')} Удалить модель и старые версии</button></section>
+    <section class="settings-section"><h3>${icon('chip')} Локальная модель</h3><div class="memory-mode"><label for="model-select">Модель</label><select id="model-select" aria-label="Модель">${MODELS.map(model => `<option value="${model.key}" ${model.key === activeModel().key ? 'selected' : ''}>${model.source.displayName}</option>`).join('')}</select></div><p><strong id="settings-model-description">${MODEL_DESCRIPTION}</strong><br>Лицензия Apache 2.0 · WebLLM 0.2.86</p><p id="settings-model-requirements">Загрузка: <span id="settings-size">${MODEL_ESTIMATE}</span>. ${MODEL_GPU_MEMORY}, желательно 6 ГБ с запасом, и ${MODEL_RAM}. Контекст — 4 096 токенов, ответ — до 512 токенов.</p><p>Модель поддерживает русский язык, но ответы могут быть неточными. После смены модели рекомендуем начать новый чат. Прежняя переписка сохраняется. Старые реплики исключаются из контекста, оставаясь в истории.</p><div id="cache-status" class="cache-status">Проверяем кеш…</div><button id="settings-start" class="secondary-button">Запустить модель</button><button id="unload-model" class="secondary-button" disabled>Освободить память</button><button id="comparison-open" class="secondary-button">Сравнить режимы ответа</button><button id="diagnostics-open" class="secondary-button">Диагностика модели и GPU</button><button id="delete-model" class="secondary-button">${icon('trash')} Удалить модель и старые версии</button></section>
     <section class="settings-section"><h3>${icon('chat')} История переписки</h3><p>Чаты сохраняются в этом браузере. Общая история и кеш модели удаляются отдельно. Не используйте общий профиль браузера для личной переписки.</p><button id="delete-history" class="danger-button">${icon('trash')} Удалить всю историю</button></section>
     <section class="settings-section privacy-details"><h3>${icon('lock')} Как устроена приватность</h3><p>Ответы генерируются в Web Worker на вашем GPU. Сервер получает только запросы статических файлов. Внешних API, аналитики и телеметрии нет. Изображения и ссылки из ответов не загружаются.</p><p>Кеш может быть удалён браузером автоматически. Интерфейс сайта требует соединения при открытии; гарантированный офлайн-запуск всей страницы не предусмотрен.</p><p>Ресурсы модели: <code id="resource-location"></code></p></section>
   </dialog>
@@ -166,7 +166,7 @@ function renderMessages(streaming = false) {
       copy.addEventListener('click', () => void copyText(message.content));
       meta.append(copy);
     }
-    const labels = { stopped: 'Ответ остановлен', length: 'Достигнут предел ответа · 512 токенов', error: 'Ответ прерван из-за ошибки', complete: '' };
+    const labels = { stopped: 'Ответ остановлен', length: 'Достигнут предел ответа', error: 'Ответ прерван из-за ошибки', complete: '' };
     if (message.status && labels[message.status]) {
       const label = document.createElement('span');
       label.textContent = labels[message.status];
@@ -198,6 +198,8 @@ async function copyText(text: string) {
 function updateUi() {
   const busy = state === 'generating';
   memory.update(state !== 'idle');
+  $<HTMLSelectElement>('model-select').disabled = state === 'checking' || state === 'loading' || busy;
+  textarea.maxLength = MAX_INPUT_CHARS;
   sendButton.disabled = state !== 'ready' || !textarea.value.trim();
   sendButton.hidden = busy;
   $('stop').hidden = !busy;
@@ -222,15 +224,16 @@ function updateUi() {
   loadButton.querySelector('span')!.textContent = cached ? 'Запустить из кеша' : MODEL_ARCHIVE_MODE ? 'Открыть и запустить' : 'Скачать и запустить';
   $('cache-status').textContent = cached ? 'Ресурсы модели сохранены в браузере' : 'Модель не сохранена полностью. Частично загруженные файлы тоже можно удалить.';
   $('model-card-tag').textContent = state === 'ready' || busy ? 'ГОТОВО' : 'ЛОКАЛЬНО';
-  $('character-count').textContent = textarea.value.length > 800 ? `${textarea.value.length} / ${MAX_INPUT_CHARS}` : '';
+  $('character-count').textContent = textarea.value.length > MAX_INPUT_CHARS * 0.7 ? `${textarea.value.length} / ${MAX_INPUT_CHARS}` : '';
   $('quick-start').hidden = !current()?.messages.length || state !== 'idle';
   $('quick-start').textContent = cached ? 'Запустить из кеша' : `${MODEL_ARCHIVE_MODE ? 'Открыть' : 'Скачать'} модель · ${MODEL_ESTIMATE}`;
   $('settings-start').hidden = state !== 'idle';
   $<HTMLButtonElement>('unload-model').disabled = state !== 'ready';
 }
 async function refreshCache() {
-  try { cached = await isModelCached(base); }
-  catch { cached = false; }
+  const cacheBase = base;
+  try { const value = await isModelCached(cacheBase); if (cacheBase !== base) return; cached = value; }
+  catch { if (cacheBase !== base) return; cached = false; }
   updateUi();
 }
 function stopWorker() {
@@ -259,10 +262,10 @@ async function startModel() {
     worker = new Worker(new URL('./engine.worker.ts', import.meta.url), { type: 'module', name: 'tetrikanets-inference' });
     const thisWorker = worker;
     worker.onmessage = ({ data }: MessageEvent<WorkerEvent>) => { if (worker === thisWorker) onWorkerEvent(data); };
-    worker.onerror = event => { event.preventDefault(); onWorkerEvent({ type: 'error', message: 'Worker модели завершился с ошибкой. Возможно, браузеру не хватает памяти. Запустите модель снова.', fatal: true }); };
-    worker.onmessageerror = () => onWorkerEvent({ type: 'error', message: 'Не удалось получить ответ от worker. Запустите модель снова.', fatal: true });
+    worker.onerror = event => { event.preventDefault(); if (worker !== thisWorker) return; onWorkerEvent({ type: 'error', message: 'Worker модели завершился с ошибкой. Возможно, браузеру не хватает памяти. Запустите модель снова.', fatal: true }); };
+    worker.onmessageerror = () => { if (worker === thisWorker) onWorkerEvent({ type: 'error', message: 'Не удалось получить ответ от worker. Запустите модель снова.', fatal: true }); };
     loadTimer = setTimeout(() => onWorkerEvent({ type: 'error', message: 'Загрузка заняла слишком много времени. Проверьте соединение и попробуйте снова: сохранённые файлы будут использованы повторно.', fatal: true }), 15 * 60 * 1000);
-    sendWorker({ type: 'init', base, archive: delivery.file(), memoryMode: memory.value() });
+    sendWorker({ type: 'init', base, archive: delivery.file(), memoryMode: memory.value(), modelKey: activeModel().key });
   } catch (error) {
     state = 'idle';
     notice(explainError(error), true);
@@ -403,7 +406,7 @@ $('delete-history').addEventListener('click', () => {
   catch { toast('Браузер запретил очистку истории'); }
 });
 $('delete-model').addEventListener('click', async () => {
-  if (state === 'generating' || state === 'loading' || !confirm('Удалить скачанные ресурсы модели и прежних версий? Переписка сохранится.')) return;
+  if (state === 'generating' || state === 'loading' || !confirm(`Удалить скачанную ${MODEL_NAME} и неподдерживаемые старые версии? Другая доступная модель и переписка сохранятся.`)) return;
   const button = $<HTMLButtonElement>('delete-model');
   button.disabled = true;
   stopWorker(); state = 'idle';
@@ -429,8 +432,42 @@ window.addEventListener('storage', event => {
   catch { notice('Не удалось прочитать историю из другой вкладки.', true); }
 });
 
+function refreshModelLabels() {
+  document.querySelector('.model-label')!.textContent = MODEL_NAME;
+  $('download-size').textContent = MODEL_ESTIMATE;
+  $('settings-model-description').textContent = MODEL_DESCRIPTION;
+  $('settings-model-requirements').replaceChildren();
+  const size = document.createElement('span'); size.id = 'settings-size'; size.textContent = MODEL_ESTIMATE;
+  $('settings-model-requirements').append('Загрузка: ', size, `. ${MODEL_GPU_MEMORY} — ориентир, ${MODEL_RAM}. Контекст — ${CONTEXT_TOKENS} токенов, ответ — до ${MAX_REPLY_TOKENS} токенов. Работа на устройствах с 4 ГБ пока не подтверждена.`);
+  $('model-gpu-estimate').innerHTML = `${icon('chip')} ${MODEL_GPU_MEMORY}`;
+  $('delete-model').innerHTML = `${icon('trash')} Удалить выбранную модель и старые версии`;
+}
+let modelCheck = 0;
+$('model-select').addEventListener('change', async () => {
+  if (state === 'loading' || state === 'generating' || state === 'checking') return;
+  const key = $<HTMLSelectElement>('model-select').value as import('./models').ModelKey;
+  const check = ++modelCheck;
+  stopWorker(); state = 'checking'; cached = false; base = '';
+  configureModel(key);
+  try { localStorage.setItem(MODEL_SELECTION_KEY, key); } catch { /* Current-page selection works without persistence. */ }
+  memory.refresh(); refreshModelLabels(); updateUi();
+  try {
+    base = resourceBase(); $('resource-location').textContent = base;
+    const gpu = await probeGpu();
+    if (check !== modelCheck) return;
+    state = 'idle'; $('compatibility').textContent = `WebGPU доступен · ${gpu}`;
+    $('compatibility').classList.remove('compatibility-error');
+    await refreshCache();
+    notice(`Выбрана ${MODEL_NAME}. Переписка и кеш обеих моделей сохранены. Скачивание начнётся только по кнопке запуска.`, true);
+  } catch (error) {
+    if (check !== modelCheck) return;
+    state = 'unsupported'; $('compatibility').textContent = explainError(error); notice(explainError(error), true);
+  }
+  updateUi();
+});
+
 async function boot() {
-  renderChats(); renderMessages(); updateUi();
+  refreshModelLabels(); renderChats(); renderMessages(); updateUi();
   if (initialError) notice(initialError, true);
   try {
     base = resourceBase();

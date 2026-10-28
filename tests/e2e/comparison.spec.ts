@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import source from '../../scripts/model-source.json' with { type: 'json' };
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => { if (!localStorage.getItem('tetrikanets:memory-mode:v1')) localStorage.setItem('tetrikanets:memory-mode:v1', 'standard'); }); });
 
 test.beforeEach(async ({ context }) => {
   const files = [

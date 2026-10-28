@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('tetrikanets:memory-mode:v1', 'standard')); });
 import source from '../../scripts/model-source.json' with { type: 'json' };
 for (const [cors, gzipEncoding] of [[true, false], [true, true], [false, false]]) {
   test(`real second-origin storage, CORS ${cors ? 'enabled' : 'missing'}, gzip encoding ${gzipEncoding}`, async ({ page, context }) => {

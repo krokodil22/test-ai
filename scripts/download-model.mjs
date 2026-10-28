@@ -6,7 +6,7 @@ import { pipeline } from 'node:stream/promises';
 import { Transform } from 'node:stream';
 import { resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createGzip, createGunzip } from 'node:zlib';
+import { createGzip, createGunzip, gunzipSync } from 'node:zlib';
 import { EnvHttpProxyAgent, setGlobalDispatcher } from 'undici';
 import { validateStopTokens } from './model-tokenizer.mjs';
 
@@ -105,10 +105,20 @@ async function main() {
     return;
   }
   await mkdir(destination, { recursive: true });
-  const wasm = await download(source.runtime.url, 'model.wasm', source.runtime, 'webllm/wasm');
+  let wasm;
+  if (source.runtime.bundledPath) {
+    if (!/^vendor\/[a-zA-Z0-9_.-]+\.wasm\.gz$/.test(source.runtime.bundledPath)) throw Error('Unsafe bundled runtime path');
+    const packed = await readFile(resolve(project, source.runtime.bundledPath));
+    if (packed.length !== source.runtime.compressedBytes || createHash('sha256').update(packed).digest('hex') !== source.runtime.compressedSha256) throw Error('Bundled runtime integrity mismatch');
+    const bytes = gunzipSync(packed, { maxOutputLength: source.runtime.bytes });
+    if (bytes.length !== source.runtime.bytes || createHash('sha256').update(bytes).digest('hex') !== source.runtime.sha256) throw Error('Bundled runtime integrity mismatch');
+    await writeFile(pathFor('model.wasm.part'), bytes); await rename(pathFor('model.wasm.part'), pathFor('model.wasm'));
+    wasm = { path: 'model.wasm', bytes: bytes.length, sha256: source.runtime.sha256, scope: 'webllm/wasm' };
+  } else wasm = await download(source.runtime.url, 'model.wasm', source.runtime, 'webllm/wasm');
   if (argv.includes('--runtime-only')) { console.log('Runtime verified. Model weights have NOT been downloaded.'); return; }
   // Resolve a mutable name to an immutable commit before downloading any weights.
-  const metadata = await (await request(`https://huggingface.co/api/models/${source.repository}/revision/${encodeURIComponent(requestedRevision)}?blobs=true`)).json();
+  if (source.files && requestedRevision !== source.revision) throw Error('Pinned file integrity requires the pinned revision');
+  const metadata = source.files ? { sha: source.revision, siblings: source.files.map(file => ({ rfilename: file.path, lfs: { sha256: file.sha256, size: file.bytes } })) } : await (await request(`https://huggingface.co/api/models/${source.repository}/revision/${encodeURIComponent(requestedRevision)}?blobs=true`)).json();
   if (!/^[0-9a-f]{40}$/.test(metadata.sha) || !Array.isArray(metadata.siblings)) throw new Error('Invalid Hugging Face repository metadata');
   const revision = metadata.sha;
   console.log(`Model revision: ${revision}. Use --revision ${revision} to reproduce this download.`);
@@ -127,7 +137,12 @@ async function main() {
     config.bytes = patched.bytes; config.sha256 = patched.sha256;
   }
   if (!configData.tokenizer_files?.includes('tokenizer.json')) throw new Error('Expected a WebLLM tokenizer.json');
-  const manifest = await downloadFile(source.cacheManifest || 'ndarray-cache.json');
+  const manifest = await downloadFile(source.upstreamCacheManifest || source.cacheManifest || 'ndarray-cache.json');
+  if (source.upstreamCacheManifest && source.upstreamCacheManifest !== source.cacheManifest) {
+    const alias = `resolve/main/${source.cacheManifest}`;
+    await writeFile(pathFor(alias), await readFile(pathFor(manifest.path)));
+    manifest.path = alias;
+  }
   const manifestData = JSON.parse(await readFile(pathFor(manifest.path), 'utf8'));
   if (!Array.isArray(manifestData.records) || !manifestData.records.length) throw new Error('Invalid model tensor manifest');
   const files = [wasm, config, manifest, await downloadFile('tokenizer.json')];

@@ -7,7 +7,7 @@ export function modelDelivery(button: HTMLButtonElement, changed: () => void, co
   section.className = 'model-delivery';
   const input = document.createElement('input');
   input.type = 'file'; input.accept = '.tar'; input.setAttribute('aria-label', 'Архив модели .tar');
-  if (MODEL_ARCHIVE_MODE) {
+  {
     const text = document.createElement('p');
     text.textContent = 'Один раз скачайте архив модели, затем выберите его здесь. Файл читается на устройстве и никуда не отправляется. При следующих запусках используется кеш браузера.';
     const address = import.meta.env.VITE_MODEL_ARCHIVE_URL;
@@ -25,6 +25,6 @@ export function modelDelivery(button: HTMLButtonElement, changed: () => void, co
   return {
     file: () => MODEL_ARCHIVE_MODE ? input.files?.[0] : undefined,
     available: (cached: boolean) => !MODEL_ARCHIVE_MODE || cached || !!input.files?.[0],
-    update(cached: boolean, busy: boolean, supported: boolean) { section.hidden = cached || !supported; section.inert = busy; },
+    update(cached: boolean, busy: boolean, supported: boolean) { section.hidden = !MODEL_ARCHIVE_MODE || cached || !supported; section.inert = busy; },
   };
 }

@@ -3,13 +3,15 @@
 import profile from '../../src/diagnostic-cases.json';
 interface File { path: string; scope: string }
 export class MLCEngine {
+  private modelId = '';
   private interrupted = false;
   private locked = false;
   constructor(private options: {
-    appConfig: { model_list: Array<{ model: string; model_lib: string }> };
+    appConfig: { model_list: Array<{ model: string; model_lib: string; model_id: string }> };
     initProgressCallback: (report: { progress: number; text: string }) => void;
   }) {}
   async reload() {
+    this.modelId = this.options.appConfig.model_list[0].model_id;
     if (!await (await caches.open('webllm/wasm')).match(this.options.appConfig.model_list[0].model_lib)) throw Error('Selected WASM runtime was not prepared');
     const base = this.options.appConfig.model_list[0].model.replace(/resolve\/main\/$/, '');
     const info = await (await (await caches.open('ryadom/metadata-v1')).match(base + 'model-info.json'))!.json();
@@ -29,7 +31,9 @@ export class MLCEngine {
   async interruptGenerate() { this.interrupted = true; }
   chat = { completions: { create: async (request: { messages: Array<{ content: string }>; temperature?: number; top_p?: number; frequency_penalty?: number; presence_penalty?: number; repetition_penalty?: number; extra_body?: { enable_thinking?: boolean }; max_tokens?: number; stream_options?: { include_usage?: boolean } }) => {
     const thinking = request.extra_body?.enable_thinking === true;
-    if (request.extra_body?.enable_thinking === undefined) throw new Error('Qwen3 mode must be explicit');
+    const smallModel = this.modelId.startsWith('Qwen2.5-0.5B');
+    if (!smallModel && request.extra_body?.enable_thinking === undefined) throw new Error('Qwen3 mode must be explicit');
+    if (smallModel && request.extra_body !== undefined) throw new Error('Qwen2.5 must not receive the Qwen3 thinking prefix');
     if (thinking && (request.max_tokens !== 2048 || request.messages.length !== 2 || request.temperature !== 0.7)) throw new Error('Thinking experiment settings were lost');
     const rawPrompt = request.messages.at(-1)!.content;
     const system = request.messages[0].content;
@@ -38,10 +42,10 @@ export class MLCEngine {
     if (diagnostic && (!diagnosticCase || request.messages.length !== 2 || request.temperature !== 0 || request.top_p !== 1 || request.max_tokens !== diagnosticCase.maxTokens || thinking || request.frequency_penalty !== 0 || request.presence_penalty !== 0)) throw new Error('Diagnostic request settings were lost');
     const translation = system.startsWith('Translate the user message');
     const unpenalized = !translation && !diagnostic && !!request.stream_options?.include_usage && request.repetition_penalty === 1 && request.frequency_penalty === 0 && request.presence_penalty === 0;
-    if (unpenalized && !diagnostic && (thinking || request.max_tokens !== 512 || request.temperature !== 0.7)) throw new Error('Penalty comparison settings were lost');
+    if (unpenalized && !diagnostic && (thinking || request.max_tokens !== (smallModel ? 256 : 512) || request.temperature !== 0.7)) throw new Error('Penalty comparison settings were lost');
     const prompt = translation ? rawPrompt.match(/<source_text>\n([\s\S]*)\n<\/source_text>/)?.[1] || '' : rawPrompt;
     const slow = prompt.includes('[slow-opus]') || prompt.includes('SLOW_OPUS') ? ' SLOW_OPUS' : prompt.includes('[slow]') || prompt.includes('SLOW') ? ' SLOW' : '';
-    if (translation && (request.messages.length !== 4 || request.temperature !== 0 || request.frequency_penalty !== 0 || request.presence_penalty !== 0)) throw new Error('Translation settings or task framing were lost');
+    if (translation && (request.messages.length !== (smallModel ? 2 : 4) || request.temperature !== 0 || request.frequency_penalty !== 0 || request.presence_penalty !== 0)) throw new Error('Translation settings or task framing were lost');
     if (prompt.includes('[oom]')) throw new Error('GPU out of memory');
     if (prompt.includes('[lost]')) throw new Error('GPU device lost');
     this.locked = true;
@@ -63,7 +67,7 @@ export class MLCEngine {
       if (prompt.includes('[thinking-unfinished]')) text = '<think>Рассуждение ещё не закончено. <img src="https://invalid.test/private">';
       if (prompt.includes('[thinking-empty-answer]')) text = '<think>План составлен.</think>\n\n';
       if (prompt.includes('[thinking-missing]')) text = 'Ответ без ожидаемого блока рассуждений.';
-    } else text = '<think>\n\n</think>\n\n' + text;
+    } else if (!smallModel) text = '<think>\n\n</think>\n\n' + text;
     const engine = this;
     return (async function* () {
       for (let i = 0; i < text.length; i += 5) {

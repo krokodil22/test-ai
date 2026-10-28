@@ -3,6 +3,7 @@ import type { Page, BrowserContext, Request } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import source from '../../scripts/model-source.json' with { type: 'json' };
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => { if (!localStorage.getItem('tetrikanets:memory-mode:v1')) localStorage.setItem('tetrikanets:memory-mode:v1', 'standard'); }); });
 import lowMemory from '../fixtures/low-memory-runtime.json' with { type: 'json' };
 const modelId = source.modelId;
 const files = [
@@ -289,7 +290,9 @@ for (const location of ['legacy-directory', 'legacy-1.5-directory', 'same-url', 
     }, source.directory);
     expect(cacheState.modelId).toBe(modelId);
     expect(cacheState.translatorRetained).toBe(true);
-    expect(cacheState.keys.some(key => key.includes('old-weights') || key.includes('qwen2.5-0.5b') || key.includes('qwen2.5-1.5b'))).toBe(false);
+    expect(cacheState.keys.some(key => key.includes('qwen2.5-0.5b'))).toBe(location === 'legacy-directory');
+    expect(cacheState.keys.some(key => key.includes('qwen2.5-1.5b'))).toBe(false);
+    if (location !== 'legacy-directory') expect(cacheState.keys.some(key => key.includes('old-weights'))).toBe(false);
     expect(cacheState.keys.some(key => key.includes('/another-app/keep.bin'))).toBe(true);
   });
 }

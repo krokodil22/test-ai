@@ -3,6 +3,7 @@ import type { DiagnosticResult } from './diagnostics';
 import type { RuntimeGpuInfo } from './gpu-info';
 import type { CacheAudit } from './model-resources';
 import type { MemoryMode } from './memory-mode';
+import type { ModelKey } from './models';
 
 export interface Message {
   id: string;
@@ -13,7 +14,7 @@ export interface Message {
 export interface Conversation { id: string; title: string; createdAt: number; messages: Message[] }
 export type PromptMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 export type WorkerRequest =
-  | { type: 'init'; base: string; translatorBase?: string; archive?: File; memoryMode?: MemoryMode }
+  | { type: 'init'; base: string; translatorBase?: string; archive?: File; memoryMode?: MemoryMode; modelKey?: ModelKey }
   | { type: 'generate'; id: string; messages: Message[] }
   | { type: 'compare'; id: string; prompt: string; mode: ComparisonMode }
   | { type: 'diagnose'; id: string }

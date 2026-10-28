@@ -1,6 +1,6 @@
 import './style.css';
 import './compare.css';
-import { BOT_NAME, MODEL_ID, MODEL_REVISION, MODEL_ESTIMATE, resourceBase, MODEL_ARCHIVE_MODE } from './config';
+import { BOT_NAME, MODEL_ID, MODEL_REVISION, MODEL_ESTIMATE, resourceBase, MODEL_ARCHIVE_MODE, activeModel, MODEL_NAME } from './config';
 import { DIAGNOSTIC_PROFILE as profile, validateReference } from './diagnostics';
 import type { CpuReference, DiagnosticResult } from './diagnostics';
 import { browserEnvironment } from './gpu-info';
@@ -16,7 +16,7 @@ import type { WorkerEvent } from './types';
 
 document.querySelector('#diagnostics-app')!.innerHTML = `<main class="compare-shell">
   <header class="compare-header"><a href="./">${icon('chevron')} В чат</a><span>${BOT_NAME}</span><span class="compare-local">${icon('lock')} Локальная диагностика</span></header>
-  <section class="compare-intro"><p class="eyebrow">ПОИСК ПРИЧИНЫ ОШИБОК</p><h1>Как работает ваша модель?</h1><p>Шесть коротких проверок на русском и английском. Проверим файлы модели в кеше и сравним ответы с контрольным запуском на CPU. Используются прежние веса Qwen3; переводчик не нужен.</p></section>
+  <section class="compare-intro"><p class="eyebrow">ПОИСК ПРИЧИНЫ ОШИБОК</p><h1>Как работает ваша модель?</h1><p>Шесть коротких проверок на русском и английском. Проверим файлы модели в кеше и сравним ответы с контрольным запуском на CPU. Выбрана ${MODEL_NAME}; переводчик не нужен.</p></section>
   ${__COMPARISON_TEST_ENGINE__ ? '<p id="diagnostic-test-engine" class="notice">ТЕСТОВЫЙ ДВИЖОК: эти ответы не показывают качество модели.</p>' : ''}
   <section class="compare-model"><div><strong id="diagnostic-status">Проверяем WebGPU…</strong><p id="diagnostic-cache">Модель начнёт загружаться только по кнопке.</p></div><button id="diagnostic-load" class="primary-button" disabled>Запустить модель</button><button id="diagnostic-cancel" class="secondary-button" hidden>Отменить запуск</button><progress id="diagnostic-progress" max="1" value="0" hidden aria-label="Загрузка модели"></progress></section>
   <section class="compare-form"><p>Проверки выполняются по очереди: арифметика, омлет и времена года — каждый вопрос на двух языках. Во всех случаях короткий нейтральный системный запрос, без рассуждений и штрафов. Случайность отключена. История чата не используется.</p><div class="compare-actions"><button id="diagnostic-run" class="primary-button" disabled>Запустить 6 проверок</button><button id="diagnostic-stop" class="stop-button" hidden>Остановить</button><button id="diagnostic-export" class="secondary-button">${icon('download')} Скачать диагностику JSON</button></div></section>
@@ -25,7 +25,7 @@ document.querySelector('#diagnostics-app')!.innerHTML = `<main class="compare-sh
   <details class="compare-intermediate"><summary>Браузер и GPU, включаемые в JSON</summary><pre id="diagnostic-environment" class="compare-output"></pre><p>Эти сведения сохраняются только по вашей кнопке. Браузер может скрыть название GPU; свободную видеопамять WebGPU не сообщает.</p></details>
   <p id="diagnostic-reference-status" class="compare-hint">Читаем контрольный результат с этого сайта…</p>
   <div id="diagnostic-cases"></div>
-  <footer class="compare-footer"><p>Сравнивайте смысл и выполнение задания. Контрольный результат получен исходной Qwen3.5 4B на CPU через Transformers в BF16, браузер использует четырёхбитную MLC-версию. Дословное совпадение не ожидается; различия сами по себе не доказывают неисправность GPU.</p><p>JSON содержит версии модели и выполнения, настройки, состояние проверки кеша, ответы, времена и доступные сведения о браузере и рабочем GPU. Он сохраняется на устройство; отправки отчёта и аналитики нет. Незавершённый запуск помечается как неполный. <a href="./compare.html">Другие сравнения</a></p></footer>
+  <footer class="compare-footer"><p>Сравнивайте смысл и выполнение задания. ${activeModel().key === 'qwen35-4b' ? 'Контрольный результат получен исходной Qwen3.5 4B на CPU через Transformers в BF16, браузер использует четырёхбитную MLC-версию.' : 'Для Qwen2.5 0.5B контрольный CPU-результат не подготовлен. Контроль от Qwen3.5 4B для этой модели не используется.'} Дословное совпадение не ожидается; различия сами по себе не доказывают неисправность GPU.</p><p>JSON содержит версии модели и выполнения, настройки, состояние проверки кеша, ответы, времена и доступные сведения о браузере и рабочем GPU. Он сохраняется на устройство; отправки отчёта и аналитики нет. Незавершённый запуск помечается как неполный. <a href="./compare.html">Другие сравнения</a></p></footer>
 </main>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const button = (id: string) => $<HTMLButtonElement>(id);
@@ -36,7 +36,7 @@ const notice = (text: string) => { $('diagnostic-notice').textContent = text; $(
 for (const item of profile.cases) {
   const section = document.createElement('section');
   section.className = 'diagnostic-case';
-  section.innerHTML = `<h2>${item.label}</h2><p class="compare-hint"></p><div class="compare-results"><article><div class="compare-result-head"><h3>Ваш браузер · WebLLM</h3><span id="status-${item.id}">Ожидает</span></div><div id="output-${item.id}" class="compare-output">—</div></article><article><div class="compare-result-head"><h3>Контроль · CPU / BF16</h3></div><div id="reference-${item.id}" class="compare-output">Читаем результат…</div></article></div>`;
+  section.innerHTML = `<h2>${item.label}</h2><p class="compare-hint"></p><div class="compare-results"><article><div class="compare-result-head"><h3>Ваш браузер · WebLLM</h3><span id="status-${item.id}">Ожидает</span></div><div id="output-${item.id}" class="compare-output">—</div></article><article><div class="compare-result-head"><h3>${activeModel().key === 'qwen35-4b' ? 'Контроль · CPU / BF16' : 'CPU-контроль не подготовлен'}</h3></div><div id="reference-${item.id}" class="compare-output">Читаем результат…</div></article></div>`;
   section.querySelector('p')!.textContent = item.prompt;
   $('diagnostic-cases').append(section);
 }
@@ -115,7 +115,7 @@ button('diagnostic-load').onclick = async () => {
     worker.onerror = event => { event.preventDefault(); receive({ type: 'error', fatal: true, message: 'Ошибка Worker. Возможно, не хватает памяти.' }); };
     worker.onmessageerror = () => receive({ type: 'error', fatal: true, message: 'Не удалось прочитать сообщение Worker.' });
     timer = setTimeout(() => receive({ type: 'error', fatal: true, message: 'Запуск не завершился за 15 минут.' }), 15 * 60 * 1000);
-    worker.postMessage({ type: 'init', base, archive: delivery.file(), memoryMode: memory.value() });
+    worker.postMessage({ type: 'init', base, archive: delivery.file(), memoryMode: memory.value(), modelKey: activeModel().key });
   } catch (error) { receive({ type: 'error', fatal: true, message: explainError(error) }); }
 };
 button('diagnostic-run').onclick = () => {
@@ -144,13 +144,14 @@ async function boot() {
   renderEnvironment(); update();
   void (async () => {
     try {
+      if (activeModel().key !== 'qwen35-4b') throw Error('CPU reference is currently available only for Qwen3.5 4B');
       const url = new URL('diagnostics/model-reference.json', new URL(import.meta.env.BASE_URL, location.href));
       const response = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error' });
       if (!response.ok) throw Error(`HTTP ${response.status}`);
       reference = validateReference(await response.json());
       for (const result of reference.results) $(`reference-${result.caseId}`).textContent = result.text + (result.finish === 'length' ? '\n\n[Контрольный ответ достиг лимита токенов.]' : '');
       $('diagnostic-reference-status').textContent = `${reference.engine}, CPU / ${reference.dtype}, без квантования. Это заранее выполненный контрольный запуск; при открытии страницы CPU-модель не скачивается.`;
-    } catch { $('diagnostic-reference-status').textContent = 'Контрольный файл недоступен или несовместим. Диагностику браузера можно выполнить и сохранить отдельно.'; for (const item of profile.cases) $(`reference-${item.id}`).textContent = 'Контрольный результат недоступен.'; }
+    } catch { $('diagnostic-reference-status').textContent = 'Контрольный файл недоступен или несовместим. Диагностику браузера можно выполнить и сохранить отдельно.'; for (const item of profile.cases) $(`reference-${item.id}`).textContent = 'Контрольный результат для выбранной модели недоступен.'; }
   })();
   try { base = resourceBase(); await probeGpu(); cached = await isModelCached(base).catch(() => false); state = 'idle'; $('diagnostic-status').textContent = 'WebGPU доступен'; $('diagnostic-cache').textContent = cached ? 'Модель сохранена в кеше.' : `Загрузка модели: ${MODEL_ESTIMATE}. Начнётся по кнопке.`; }
   catch (error) { state = 'unsupported'; lastError = explainError(error); $('diagnostic-status').textContent = 'Совместимый WebGPU недоступен'; notice(lastError); }

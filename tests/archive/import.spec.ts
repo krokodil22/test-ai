@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 import source from '../../scripts/model-source.json' with { type: 'json' };
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('tetrikanets:memory-mode:v1', 'standard')); });
 // @ts-expect-error Node-only publishing helper is intentionally plain JS.
 import { tarHeader } from '../../scripts/create-model-archive.mjs';
 
@@ -38,5 +39,5 @@ test('rejects a corrupt archive without downloading weights or writing chat data
   await page.goto('./');
   await page.getByLabel('Архив модели .tar').setInputFiles({ name: 'broken.tar', mimeType: 'application/x-tar', buffer: Buffer.alloc(2000) });
   await page.locator('#load-model').click(); await expect(page.locator('#notice')).toContainText('Архив модели');
-  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+  expect(await page.evaluate(() => localStorage.getItem('ryadom:chats:v1'))).toBeNull();
 });

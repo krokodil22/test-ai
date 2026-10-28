@@ -1,8 +1,9 @@
-import source from '../scripts/model-source.json';
+import { activeModel } from './config';
 import { describeGpu } from './gpu-info';
 import type { RuntimeGpuInfo } from './gpu-info';
 
 export async function probeGpu(): Promise<string> {
+  const source = activeModel().source;
   if (!globalThis.isSecureContext) throw new Error('Нужен HTTPS: WebGPU недоступен на незащищённом сайте. Для разработки подходит localhost.');
   if (source.packaging === 'gzip-shards' && !globalThis.DecompressionStream) throw new Error('Браузер не поддерживает распаковку ресурсов модели. Обновите настольный Chrome.');
   if (!navigator.gpu) throw new Error('В этом браузере недоступен WebGPU. Откройте сайт в актуальном Chrome на компьютере и включите аппаратное ускорение.');
@@ -20,6 +21,7 @@ export async function probeGpu(): Promise<string> {
 
 // Observe the actual device allocated by WebLLM, including loss while the engine is idle.
 export function monitorGpu(onLost: () => void, onDevice?: (info: RuntimeGpuInfo) => void): void {
+  const source = activeModel().source;
   const original = navigator.gpu.requestAdapter.bind(navigator.gpu);
   navigator.gpu.requestAdapter = async options => {
     const adapter = await original(options);

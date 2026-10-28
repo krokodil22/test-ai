@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "kind": "light-runtime-metadata-check",
+  "engine": "@mlc-ai/web-llm 0.2.86",
+  "modelId": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+  "revision": "32ff081fe7e4dfe4ffb167b94c66fdf11e02b8ad",
+  "weightsMatchPinnedManifest": true,
+  "compatibleParameters": 267,
+  "runtime": {
+    "sha256": "d9c3009804f978c04c886ff2b1549f28c8be78b198ff6e3a1e16be7d1106d038",
+    "bytes": 4837816,
+    "prefillChunkSize": 256,
+    "maxBatchSize": 1,
+    "compiledContextTokens": 2048,
+    "compilerTemporaryBufferBytes": {
+      "alloc_embedding_tensor": 458752,
+      "argsort_probs": 0,
+      "batch_decode": 646656,
+      "batch_prefill": 10571008,
+      "batch_verify": 165543936,
+      "create_tir_paged_kv_cache": 0,
+      "decode": 646656,
+      "embed": 458752,
+      "prefill": 10571008,
+      "sample_with_top_p": 8,
+      "softmax_with_temperature": 0
+    }
+  },
+  "checks": [
+    "WASM SHA-256 and byte size",
+    "Native WebLLM WASM instantiation and CPU VM _metadata",
+    "All weight parameter names, dimensions and dtypes",
+    "Expected compiled prefill and batch bounds"
+  ],
+  "limitations": "Compiler estimates are not measured GPU/RAM consumption. Shader execution, answer quality and performance on a 4 GB device are not verified here."
+}

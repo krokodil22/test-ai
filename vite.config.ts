@@ -6,11 +6,15 @@ import { copyPublicAssets } from './scripts/static-assets.mjs';
 
 export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  const resource = env.VITE_MODEL_BASE_URL || `models/${source.directory}/`;
-  const external = /^[a-z]+:/i.test(resource) ? new URL(resource) : undefined;
-  const localDevelopment = command === 'serve' && external?.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(external.hostname);
-  if (external && external.protocol !== 'https:' && !localDevelopment) throw new Error('VITE_MODEL_BASE_URL must use HTTPS');
-  const remote = external?.origin || '';
+  const modelResources = [env.VITE_MODEL_BASE_URL, env.VITE_LIGHT_MODEL_BASE_URL, env.VITE_MODELS_BASE_URL].filter(Boolean);
+  const origins = new Set<string>();
+  for (const resource of modelResources) {
+    const external = /^[a-z]+:/i.test(resource) ? new URL(resource) : undefined;
+    const localDevelopment = command === 'serve' && external?.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(external.hostname);
+    if (external && external.protocol !== 'https:' && !localDevelopment) throw new Error('Model resource URLs must use HTTPS');
+    if (external) origins.add(external.origin);
+  }
+  const remote = [...origins].join(' ');
   const translatorResource = env.VITE_TRANSLATOR_BASE_URL;
   const translatorExternal = translatorResource && /^[a-z]+:/i.test(translatorResource) ? new URL(translatorResource) : undefined;
   if (translatorExternal && translatorExternal.protocol !== 'https:' && !(command === 'serve' && translatorExternal.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(translatorExternal.hostname))) throw Error('VITE_TRANSLATOR_BASE_URL must use HTTPS');

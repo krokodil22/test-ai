@@ -1,0 +1,103 @@
+{
+  "modelId": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+  "repository": "mlc-ai/Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+  "revision": "32ff081fe7e4dfe4ffb167b94c66fdf11e02b8ad",
+  "runtime": {
+    "webllm": "0.2.86",
+    "bundledPath": "vendor/Qwen2.5-0.5B-q4f16_1_cs256-b1-webgpu.wasm.gz",
+    "bytes": 4837816,
+    "sha256": "d9c3009804f978c04c886ff2b1549f28c8be78b198ff6e3a1e16be7d1106d038",
+    "compressedBytes": 756983,
+    "compressedSha256": "f6b4652443b31eb0b48034b4b320ce1e97f1ed2bc9b0504e4560f1fa488c355d",
+    "prefillChunkSize": 256,
+    "maxBatchSize": 1,
+    "provenance": "MLC LLM CPU 0.20.0.dev0 / TVM CPU 0.20.0, Emscripten 3.1.69, Binaryen 133; same toolchain as bundled 4B economy runtime"
+  },
+  "license": {
+    "name": "Apache-2.0",
+    "file": "Qwen2.5-APACHE-2.0.txt",
+    "model_card": "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct",
+    "revision": "7ae557604adf67be50417f59c2c2f167def9a775"
+  },
+  "directory": "qwen2.5-0.5b",
+  "cacheManifest": "tensor-cache.json",
+  "upstreamCacheManifest": "ndarray-cache.json",
+  "packaging": "gzip-shards",
+  "displayName": "Qwen2.5 \u00b7 0.5B",
+  "description": "Qwen2.5 0.5B Instruct \u00b7 q4f16_1 \u00b7 \u043b\u0451\u0433\u043a\u0430\u044f \u043c\u043e\u0434\u0435\u043b\u044c \u0434\u043b\u044f \u043a\u043e\u0440\u043e\u0442\u043a\u0438\u0445 \u043e\u0442\u0432\u0435\u0442\u043e\u0432",
+  "downloadBytes": 252806769,
+  "vramRequiredMB": 944.62,
+  "ramRecommendedGB": "2\u20133",
+  "minimumStorageBufferBytes": 134217728,
+  "pagesDelivery": "files",
+  "maxDownloadBytes": 400000000,
+  "files": [
+    {
+      "path": "mlc-chat-config.json",
+      "bytes": 2041,
+      "sha256": "5439c03bdf4ee7cfe0f8a97a6588018b0144dc1280c71bbaea2853cdbab874b9",
+      "scope": "webllm/config"
+    },
+    {
+      "path": "ndarray-cache.json",
+      "bytes": 102431,
+      "sha256": "23a54b5e9b271204561901b513c5b359498733429ee219ccc907eb1cd0790e3f",
+      "scope": "webllm/model"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 7031645,
+      "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539",
+      "scope": "webllm/model"
+    },
+    {
+      "path": "params_shard_0.bin",
+      "bytes": 68067328,
+      "sha256": "9f309954d310dc63adfaf3ef6aa987c681b8aa6d1b9686aa2525b454b0d058d5",
+      "scope": "webllm/model"
+    },
+    {
+      "path": "params_shard_1.bin",
+      "bytes": 33234176,
+      "sha256": "6d174758dd299d9ef4222b1ad4283be832ebd43853951da25b50501ab1b75ba7",
+      "scope": "webllm/model"
+    },
+    {
+      "path": "params_shard_2.bin",
+      "bytes": 33505280,
+      "sha256": "83e0b530bf5c44cbead1a6c220af81040a975f7c81fb708977a02e3ac8d7ffa7",
+      "scope": "webllm/model"
+    },
+    {
+      "path": "params_shard_3.bin",
+      "bytes": 33053696,
+      "sha256": "5ff16197c197d8783d398d0c35fa9641e606e6e2dc1d53b9f26a0c9c17a97921",
+      "scope": "webllm/model"
+    },
+    {
+      "path": "params_shard_4.bin",
+      "bytes": 33020928,
+      "sha256": "a7a3d2b02aa9258154f250a714d1743672e423c5c7c8e5c5eefcb9bf337aa0fd",
+      "scope": "webllm/model"
+    },
+    {
+      "path": "params_shard_5.bin",
+      "bytes": 29211648,
+      "sha256": "19dfd7a3064b84082915575c0e5a57fc1cd7108828e1ce9fbbbaf9db4b63b9af",
+      "scope": "webllm/model"
+    },
+    {
+      "path": "params_shard_6.bin",
+      "bytes": 33297408,
+      "sha256": "192576d43956aa977ec60848b8a7fc8483b5fe38ca9669aa9a3ca2ba795a7a33",
+      "scope": "webllm/model"
+    },
+    {
+      "path": "params_shard_7.bin",
+      "bytes": 14605824,
+      "sha256": "1ee25c2a41dad6833e000b7e3ec13a5a1761c32ffbed0ad8a98a6ad313338dc0",
+      "scope": "webllm/model"
+    }
+  ],
+  "unpackedBytes": 289970221
+}

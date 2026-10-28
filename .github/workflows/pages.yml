@@ -32,6 +32,9 @@ jobs:
       - name: Download verified WebLLM resources (not committed to Git)
         run: npm run model:download
       - run: npm run model:download -- --verify
+      - run: npm run model:download:light
+      - run: npm run model:download:light -- --verify
+      - run: npm run runtime:verify:light
       - run: npm run runtime:prepare
       - run: npm run runtime:prepare -- --verify
       - run: npm run runtime:verify

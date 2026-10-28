@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "kind": "browser-light-resource-check",
+  "modelId": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+  "revision": "32ff081fe7e4dfe4ffb167b94c66fdf11e02b8ad",
+  "browser": "154.0.8037.57",
+  "cached": true,
+  "audit": {
+    "valid": true,
+    "checkedFiles": 12,
+    "checkedBytes": 289970221,
+    "completedAt": "2026-10-28T07:11:09.970Z"
+  },
+  "warmFetches": 0,
+  "cacheAfterDeletion": false,
+  "otherModelRetained": true,
+  "seconds": 10.18639999999851,
+  "requests": [
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/model-info.json",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/model.wasm",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/mlc-chat-config.json",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/tensor-cache.json",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/tokenizer.json",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/params_shard_0.bin.gz",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/params_shard_1.bin.gz",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/params_shard_2.bin.gz",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/params_shard_3.bin.gz",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/params_shard_4.bin.gz",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/params_shard_5.bin.gz",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/params_shard_6.bin.gz",
+      "method": "GET",
+      "body": null
+    },
+    {
+      "url": "http://127.0.0.1:5188/models/qwen2.5-0.5b/resolve/main/params_shard_7.bin.gz",
+      "method": "GET",
+      "body": null
+    }
+  ],
+  "note": "Actual 253 MB static resources and native cache/hash/decompression paths. No GPU generation performed."
+}
