@@ -1,26 +1,42 @@
 [
   {
-    "key": "zarya-orthrus-06",
-    "profile": "scripts/candidates/compact-zarya-orthrus-06.json",
-    "license": "mit",
-    "reason": "Small Russian/English MIT model; inspect custom OrthrusLM checkpoint compatibility before judging quality."
-  },
-  {
-    "key": "vikhr-qwen25-05",
-    "profile": "scripts/candidates/compact-vikhr-qwen25-05.json",
-    "license": "apache-2.0",
-    "reason": "Russian fine-tuning at the same size as the current small model; Apache-2.0 and native Qwen2 architecture."
-  },
-  {
-    "key": "qwen3-06",
+    "key": "qwen3-06-t4513",
     "profile": "scripts/candidates/compact-qwen3-06.json",
     "license": "apache-2.0",
-    "reason": "New compact multilingual baseline with native Qwen3 architecture; non-thinking mode."
+    "reason": "Cross-version control of unexpected tiny-model failures; validate checkpoint and tied embedding loading.",
+    "transformersVersion": "4.51.3",
+    "auditEmbeddingTie": true
   },
   {
-    "key": "qvikhr3-17",
-    "profile": "scripts/candidates/compact-qvikhr3-17.json",
+    "key": "qwen3-06-t581",
+    "profile": "scripts/candidates/compact-qwen3-06.json",
     "license": "apache-2.0",
-    "reason": "Russian instruction-tuned non-thinking fallback; larger than the primary 0.5\u20130.6B targets."
+    "reason": "Cross-version control of unexpected tiny-model failures; validate checkpoint and tied embedding loading.",
+    "transformersVersion": "5.8.1",
+    "auditEmbeddingTie": true
+  },
+  {
+    "key": "vikhr-qwen25-05-t4513",
+    "profile": "scripts/candidates/compact-vikhr-qwen25-05.json",
+    "license": "apache-2.0",
+    "reason": "Cross-version control of unexpected tiny-model failures; validate checkpoint and tied embedding loading.",
+    "transformersVersion": "4.51.3",
+    "auditEmbeddingTie": true
+  },
+  {
+    "key": "vikhr-qwen25-05-t581",
+    "profile": "scripts/candidates/compact-vikhr-qwen25-05.json",
+    "license": "apache-2.0",
+    "reason": "Cross-version control of unexpected tiny-model failures; validate checkpoint and tied embedding loading.",
+    "transformersVersion": "5.8.1",
+    "auditEmbeddingTie": true
+  },
+  {
+    "key": "qwen25-05-t4513",
+    "profile": "scripts/candidates/qwen2.5-0.5b.json",
+    "license": "apache-2.0",
+    "reason": "Control of the original baseline in its contemporary Transformers implementation.",
+    "transformersVersion": "4.51.3",
+    "auditEmbeddingTie": true
   }
 ]

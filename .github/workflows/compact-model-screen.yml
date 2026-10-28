@@ -26,8 +26,9 @@ jobs:
           selected = json.loads(Path('scripts/candidates/compact-selection.json').read_text())
           assert 1 <= len(selected) <= 6
           assert all(re.fullmatch('[a-z0-9-]+', item['key']) for item in selected)
+          assert all(item.get('transformersVersion', '5.3.0') in ['4.51.3', '5.3.0', '5.8.1'] for item in selected)
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
-              output.write('matrix=' + json.dumps(dict(key=[item['key'] for item in selected])) + '\n')
+              output.write('matrix=' + json.dumps(dict(include=[dict(key=item['key'], transformers=item.get('transformersVersion', '5.3.0')) for item in selected])) + '\n')
           PY
   screen:
     needs: plan
@@ -58,6 +59,8 @@ jobs:
           cache-dependency-path: scripts/reference-requirements.txt
       - run: npm ci --ignore-scripts
       - run: python -m pip install -r scripts/reference-requirements.txt
+      - if: matrix.transformers != '5.3.0'
+        run: python -m pip install 'transformers==${{ matrix.transformers }}'
       - run: node scripts/candidates/run-compact-screen.mjs '${{ matrix.key }}'
       - uses: actions/upload-artifact@v4
         with:

@@ -21,6 +21,7 @@ parser.add_argument("--profile", default=str(root / "scripts/reference-source.js
 parser.add_argument("--cases", default=str(root / "src/diagnostic-cases.json"))
 parser.add_argument("--threads", type=int, default=min(4, os.cpu_count() or 1))
 parser.add_argument("--dtype", choices=["float32", "bfloat16"])
+parser.add_argument("--audit-embedding-tie", action="store_true")
 args = parser.parse_args()
 profile = json.loads(Path(args.cases).read_text())
 source = json.loads(Path(args.profile).read_text())
@@ -35,7 +36,7 @@ model_class = AutoModelForImageTextToText if model_config.get("model_type") in [
 dtype = torch.float32 if args.dtype == "float32" else torch.bfloat16
 model, loading_info = model_class.from_pretrained(args.model, torch_dtype=dtype, attn_implementation="eager", local_files_only=True, trust_remote_code=False, output_loading_info=True)
 if any(loading_info.get(key) for key in ["missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs"]):
-    raise RuntimeError("Checkpoint differs from the native model implementation: " + json.dumps(loading_info))
+    raise RuntimeError("Checkpoint differs from the native model implementation: " + json.dumps(loading_info, default=lambda value: sorted(value) if isinstance(value, set) else str(value)))
 model = model.eval()
 if any(parameter.is_floating_point() and parameter.dtype != dtype for parameter in model.parameters()):
     raise RuntimeError("Reference weights must match the declared dtype")
@@ -45,6 +46,10 @@ eos_ids = list(dict.fromkeys([*eos_ids, tokenizer.eos_token_id]))
 pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else eos_ids[0]
 results = []
 report = dict(schema=1, kind="cpu-reference", protocol=profile["protocol"], generatedAt=datetime.now(timezone.utc).isoformat(), model=source["repository"], revision=source["revision"], engine=f"Transformers {transformers.__version__}", torch=torch.__version__, python=platform.python_version(), device="CPU", dtype=args.dtype, quantization="none", systemPrompt=profile["systemPrompt"], settings=profile["settings"], comparable="Same prompts and declared settings; different weights format and precision. Texts need human review, not exact equality.", results=results, complete=False)
+if args.audit_embedding_tie:
+    from reference_embedding_audit import audit_embeddings
+    report["embeddingAudit"] = audit_embeddings(Path(args.model), model)
+    print("Embedding audit:", json.dumps(report["embeddingAudit"]), flush=True)
 output = Path(args.output)
 output.parent.mkdir(parents=True, exist_ok=True)
 partial = root / ".cache/reference" / (output.stem + ".partial.json")

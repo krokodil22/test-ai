@@ -1,0 +1,26 @@
+[
+  {
+    "key": "zarya-orthrus-06",
+    "profile": "scripts/candidates/compact-zarya-orthrus-06.json",
+    "license": "mit",
+    "reason": "Small Russian/English MIT model; inspect custom OrthrusLM checkpoint compatibility before judging quality."
+  },
+  {
+    "key": "vikhr-qwen25-05",
+    "profile": "scripts/candidates/compact-vikhr-qwen25-05.json",
+    "license": "apache-2.0",
+    "reason": "Russian fine-tuning at the same size as the current small model; Apache-2.0 and native Qwen2 architecture."
+  },
+  {
+    "key": "qwen3-06",
+    "profile": "scripts/candidates/compact-qwen3-06.json",
+    "license": "apache-2.0",
+    "reason": "New compact multilingual baseline with native Qwen3 architecture; non-thinking mode."
+  },
+  {
+    "key": "qvikhr3-17",
+    "profile": "scripts/candidates/compact-qvikhr3-17.json",
+    "license": "apache-2.0",
+    "reason": "Russian instruction-tuned non-thinking fallback; larger than the primary 0.5\u20130.6B targets."
+  }
+]
