@@ -36,7 +36,7 @@ try {
     if (!/^[a-z0-9-]+$/.test(name) || !/^(src|scripts\/candidates)\/[a-z0-9.-]+\.json$/.test(cases)) throw Error('Unsafe controlled case profile');
     stage = name;
     const path = `${output}/${name}.json`;
-    run('python', ['scripts/run-reference.py', '--profile', selected.profile, '--model', model, '--cases', cases, '--dtype', 'float32', '--threads', '4', '--output', path, ...(selected.auditEmbeddingTie ? ['--audit-embedding-tie'] : [])]);
+    run('python', ['scripts/run-reference.py', '--profile', selected.profile, '--model', model, '--cases', cases, '--dtype', 'float32', '--threads', '4', '--output', path, ...(selected.auditEmbeddingTie ? ['--audit-embedding-tie'] : []), ...(selected.orthrusNativeAr ? ['--orthrus-native-ar'] : [])]);
     const report = JSON.parse(await readFile(path, 'utf8'));
     const profile = JSON.parse(await readFile(cases, 'utf8'));
     if (!report.complete || report.model !== source.repository || report.revision !== source.revision || report.dtype !== 'float32' || report.quantization !== 'none' || report.results.length !== profile.cases.length || JSON.stringify(report.settings) !== JSON.stringify(profile.settings) || report.systemPrompt !== profile.systemPrompt) throw Error('Reference output does not match the controlled profile');

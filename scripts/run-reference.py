@@ -22,6 +22,7 @@ parser.add_argument("--cases", default=str(root / "src/diagnostic-cases.json"))
 parser.add_argument("--threads", type=int, default=min(4, os.cpu_count() or 1))
 parser.add_argument("--dtype", choices=["float32", "bfloat16"])
 parser.add_argument("--audit-embedding-tie", action="store_true")
+parser.add_argument("--orthrus-native-ar", action="store_true")
 args = parser.parse_args()
 profile = json.loads(Path(args.cases).read_text())
 source = json.loads(Path(args.profile).read_text())
@@ -35,6 +36,11 @@ model_config = json.loads((Path(args.model) / "config.json").read_text())
 model_class = AutoModelForImageTextToText if model_config.get("model_type") in ["qwen3_5", "gemma3"] else AutoModelForCausalLM
 dtype = torch.float32 if args.dtype == "float32" else torch.bfloat16
 model, loading_info = model_class.from_pretrained(args.model, torch_dtype=dtype, attn_implementation="eager", local_files_only=True, trust_remote_code=False, output_loading_info=True)
+ar_variant = None
+if args.orthrus_native_ar:
+    from reference_orthrus_ar import validate_native_ar_load, compare_original_ar_logits
+    ar_variant = validate_native_ar_load(model_config, loading_info)
+    loading_info["unexpected_keys"] = []  # Only the exact, audited auxiliary set was accepted.
 if any(loading_info.get(key) for key in ["missing_keys", "unexpected_keys", "mismatched_keys", "error_msgs"]):
     raise RuntimeError("Checkpoint differs from the native model implementation: " + json.dumps(loading_info, default=lambda value: sorted(value) if isinstance(value, set) else str(value)))
 model = model.eval()
@@ -46,6 +52,10 @@ eos_ids = list(dict.fromkeys([*eos_ids, tokenizer.eos_token_id]))
 pad_id = tokenizer.pad_token_id if tokenizer.pad_token_id is not None else eos_ids[0]
 results = []
 report = dict(schema=1, kind="cpu-reference", protocol=profile["protocol"], generatedAt=datetime.now(timezone.utc).isoformat(), model=source["repository"], revision=source["revision"], engine=f"Transformers {transformers.__version__}", torch=torch.__version__, python=platform.python_version(), device="CPU", dtype=args.dtype, quantization="none", systemPrompt=profile["systemPrompt"], settings=profile["settings"], comparable="Same prompts and declared settings; different weights format and precision. Texts need human review, not exact equality.", results=results, complete=False)
+if ar_variant:
+    report["variant"] = ar_variant
+    report["variant"]["logitEquivalence"] = compare_original_ar_logits(Path(args.model), model, tokenizer, dtype)
+    print("Audited AR variant:", json.dumps(report["variant"]), flush=True)
 if args.audit_embedding_tie:
     from reference_embedding_audit import audit_embeddings
     report["embeddingAudit"] = audit_embeddings(Path(args.model), model)
