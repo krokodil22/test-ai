@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "key": "qvikhr25-15-r",
+  "model": "Vikhrmodels/QVikhr-2.5-1.5B-Instruct-r",
+  "revision": "75879cfb701a5c185c07724171a619932c5ee13f",
+  "license": "apache-2.0",
+  "reasonForSelection": "Additional Russian fine-tune, distinct from the previously rejected SMPO checkpoint.",
+  "complete": true,
+  "execution": {
+    "runUrl": "https://github.com/krokodil22/test-ai/actions/runs/40672001517",
+    "commit": "6826bc42ca2c1ff8b566d6055d0c47bb4a0653df"
+  },
+  "results": [
+    {
+      "profile": "production",
+      "cases": 7,
+      "report": "production.json"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "config.json",
+      "bytes": 806,
+      "sha256": "e28e239f772b29ba4cd8d9f44936933af32e2a9a74b84795308970114b09ecea"
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 170,
+      "sha256": "8599e8fb1678b4f194e24476b63942ad2246aa8311cf7101412a075ce13f8f75"
+    },
+    {
+      "path": "special_tokens_map.json",
+      "bytes": 613,
+      "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 11422063,
+      "sha256": "5eee858c5123a4279c3e1f7b81247343f356ac767940b2692a928ad929543214"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 7361,
+      "sha256": "4750a2716ea2e2fd32816f832d25b640323dde0d039359cea0e1d00abfb13b6c"
+    },
+    {
+      "path": "model.safetensors",
+      "bytes": 3086634632,
+      "sha256": "4a6591c263787509dbcf53b73f2e8a1bf745f251199b9397d8bcba31112c5e99"
+    }
+  ]
+}
