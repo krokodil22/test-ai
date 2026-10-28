@@ -4,7 +4,8 @@ import { readFile, writeFile, readdir } from 'node:fs/promises';
 import { EnvHttpProxyAgent, setGlobalDispatcher } from 'undici';
 setGlobalDispatcher(new EnvHttpProxyAgent());
 
-const queries = ['ruadapt', 'QVikhr', 'Qwen3-0.6B', 'Qwen3-1.7B', 'SmolLM', '1B-Instruct-ru', '1.5B-Instruct-ru', 'Qwen3.5-0.8B', 'LFM2.5', 'gemma-4'];
+const queries = ['ruadapt', 'QVikhr', 'Qwen3-0.6B', 'Qwen3-1.7B', 'SmolLM', '1B-Instruct-ru', '1.5B-Instruct-ru', 'Qwen3.5-0.8B', 'LFM2.5', 'gemma-4', 'RuadaptQwen3-0.6', 'RuadaptQwen3-1.7', '0.6B-Russian', '1B-Russian', '1.5B-Russian', '1.7B-Russian', 'QVikhr-1.5', 'QVikhr-3-1.7'];
+const authors = ['Vikhrmodels', 'RefalMachine', 't-tech', 'IlyaGusev', 'ai-forever'];
 const direct = ['Qwen/Qwen3-0.6B', 'HuggingFaceTB/SmolLM2-1.7B-Instruct', 'LiquidAI/LFM2.5-1.2B-Instruct', 'LiquidAI/LFM2-700M'];
 const mlcTypes = new Set(['llama', 'qwen2', 'qwen3', 'qwen3_5', 'qwen3_5_text', 'gemma', 'gemma2', 'gemma3', 'gemma3_text', 'phi3', 'stablelm', 'olmo', 'olmo2']);
 const known = new Map();
@@ -27,6 +28,13 @@ for (const query of queries) {
     for (const item of await json(url)) if (item.id && !/gguf|gptq|awq|onnx|exl2|mlx|embedding|rerank/i.test(item.id)) names.add(item.id);
   } catch (error) { errors.push({ query, error: error.message }); }
 }
+for (const author of authors) {
+  try {
+    const url = new URL('https://huggingface.co/api/models');
+    url.search = new URLSearchParams({ author, sort: 'downloads', direction: '-1', limit: '100' });
+    for (const item of await json(url)) if (/(?:^|[-_./])(?:0[._][3-9]|1(?:[._][0-9])?)b/i.test(item.id) && !/gguf|gptq|awq|onnx|exl2|mlx/i.test(item.id)) names.add(item.id);
+  } catch (error) { errors.push({ author, error: error.message }); }
+}
 const models = [];
 async function inspect(id) {
   const metadata = await json(`https://huggingface.co/api/models/${id}?blobs=true`);
@@ -35,12 +43,16 @@ async function inspect(id) {
   const files = metadata.siblings || [];
   let config = {};
   if (files.some(file => file.rfilename === 'config.json')) config = await json(`https://huggingface.co/${id}/resolve/${revision}/config.json`);
-  const weights = files.filter(file => /(?:^|\/)model(?:-\d+-of-\d+)?\.safetensors$/.test(file.rfilename));
+  const weights = files.filter(file => /(?:^|\/)model[^/]*\.safetensors$/.test(file.rfilename));
   const parameters = metadata.safetensors?.total ?? Object.values(metadata.safetensors?.parameters || {}).reduce((a, b) => a + b, 0);
   const type = config.model_type || metadata.config?.model_type;
   const card = metadata.cardData || {};
   const language = Array.isArray(card.language) ? card.language : card.language ? [card.language] : [];
-  const hasTemplate = files.some(file => ['tokenizer_config.json', 'chat_template.jinja'].includes(file.rfilename));
+  let hasTemplate = files.some(file => file.rfilename === 'chat_template.jinja');
+  if (!hasTemplate && files.some(file => file.rfilename === 'tokenizer_config.json') && !metadata.gated) {
+    const tokenizerConfig = await json(`https://huggingface.co/${id}/resolve/${revision}/tokenizer_config.json`);
+    hasTemplate = !!tokenizerConfig.chat_template;
+  }
   const compact = parameters > 0 && parameters <= 1_800_000_000;
   const adapterOnly = !weights.length && files.some(file => file.rfilename === 'adapter_config.json');
   return {
@@ -67,6 +79,6 @@ for (let start = 0; start < list.length; start += 3) {
     else errors.push({ id: batch[index], error: result.reason.message });
   }
 }
-const report = { schema: 1, kind: 'compact-model-catalog', createdAt: new Date().toISOString(), maxParameters: 1_800_000_000, queries, models, errors, note: 'Metadata and architecture screening only; no quality, WebGPU or 4 GB compatibility claim.' };
+const report = { schema: 1, kind: 'compact-model-catalog', createdAt: new Date().toISOString(), maxParameters: 1_800_000_000, queries, authors, models, errors, note: 'Metadata and architecture screening only; no quality, WebGPU or 4 GB compatibility claim.' };
 if (!models.length) throw Error('No metadata could be retrieved; refusing to publish an empty catalog');
 await writeFile('docs/model-evaluation/compact-catalog.json', JSON.stringify(report, null, 2) + '\n');
