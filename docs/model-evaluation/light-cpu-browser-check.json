@@ -135,5 +135,11 @@
     "Original BF16/FP32 weights were not tested; cannot distinguish model limitations from upstream quantization/conversion defects.",
     "FP32 CPU execution versus FP16 browser execution can change greedy token choices.",
     "Six fixed short prompts are not a general quality benchmark or a 4 GB device test."
-  ]
+  ],
+  "followUpOriginalControl": {
+    "status": "complete",
+    "report": "light-original-check.json",
+    "note": "The earlier proxy block describes only the initial local attempt. Original unquantized control was subsequently completed in GitHub Actions.",
+    "runUrl": "https://github.com/krokodil22/test-ai/actions/runs/40666014817"
+  }
 }

@@ -1,0 +1,165 @@
+{
+  "schema": 1,
+  "kind": "original-light-model-control",
+  "createdAt": "2026-10-28T09:48:31.844008+00:00",
+  "model": "Qwen/Qwen2.5-0.5B-Instruct",
+  "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+  "originalPrecision": "Original BF16 safetensors loaded and computed in FP32; no quantization",
+  "sourceFiles": [
+    {
+      "path": "config.json",
+      "bytes": 659,
+      "sha256": "18e18afcaccafade98daf13a54092927904649e1dd4eba8299ab717d5d94ff45"
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 242,
+      "sha256": "e558847a8b4402616f1273797b015104dc266fe4b520056fca88823ba8f8ebe6"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 7031645,
+      "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 7305,
+      "sha256": "5b5d4f65d0acd3b2d56a35b56d374a36cbc1c8fa5cf3b3febbbfabf22f359583"
+    },
+    {
+      "path": "model.safetensors",
+      "bytes": 988097824,
+      "sha256": "fdf756fa7fcbe7404d5c60e26bff1a0c8b8aa1f72ced49e7dd0210fe288fb7fe"
+    }
+  ],
+  "execution": {
+    "runUrl": "https://github.com/krokodil22/test-ai/actions/runs/40666014817",
+    "commit": "813227c269e6d3a0b37fcb6f65cad12db9b0f837",
+    "purpose": "Development-only original-weight control; no user chat or website generation"
+  },
+  "sameNeutralSettings": true,
+  "identicalInputTokensForAllNeutralCases": true,
+  "neutralResults": [
+    {
+      "caseId": "arithmetic-ru",
+      "prompt": "Сколько будет 2 + 2? Ответь только числом.",
+      "maxTokens": 16,
+      "identicalInputTokens": true,
+      "original": {
+        "text": "4",
+        "finish": "complete",
+        "generatedTokens": 2
+      },
+      "q4Cpu": {
+        "text": "3",
+        "finish": "complete",
+        "generatedTokens": 2
+      }
+    },
+    {
+      "caseId": "arithmetic-en",
+      "prompt": "What is 2 + 2? Answer with the number only.",
+      "maxTokens": 16,
+      "identicalInputTokens": true,
+      "original": {
+        "text": "4",
+        "finish": "complete",
+        "generatedTokens": 2
+      },
+      "q4Cpu": {
+        "text": "4",
+        "finish": "complete",
+        "generatedTokens": 2
+      }
+    },
+    {
+      "caseId": "omelet-ru",
+      "prompt": "Как приготовить омлет из двух яиц? Дай короткий список шагов.",
+      "maxTokens": 192,
+      "identicalInputTokens": true,
+      "original": {
+        "text": "1. Сначала нужно взять две яйца и выложить их на противень.\n2. Добавьте немного сахара и соль.\n3. Добавьте немного воды, если это необходимо.\n4. Добавьте немного муки, если это необходимо.\n5. Добавьте немного растительного масла, если это необходимо.\n6. Добавьте немного сливочного масла, если это необходимо.\n7. Добавьте немного пчеловодного масла, если это необходимо.\n8. Добавьте немного оливкового масла, если это необходимо.\n9. Добавьте немного сухого сахара, если это необходимо.\n10. Добавьте немного сухого сахара, если это необходимо.\n11. Добавьте немного сухого сахара, если это необходимо.\n12. Добавьте немного сухого сахара, если это необходимо",
+        "finish": "length",
+        "generatedTokens": 192
+      },
+      "q4Cpu": {
+        "text": "Для приготовления омлета из двух яиц, вам нужно будет следовать этим шагам:\n\n1. Запейте омлетный овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной ов",
+        "finish": "length",
+        "generatedTokens": 192
+      }
+    },
+    {
+      "caseId": "omelet-en",
+      "prompt": "How do I make an omelet with two eggs? Give a short list of steps.",
+      "maxTokens": 192,
+      "identicalInputTokens": true,
+      "original": {
+        "text": "Sure! Here are the steps to make an omelet with two eggs:\n\n1. Crack the two eggs into a bowl.\n2. Beat the eggs with a fork until they are well combined.\n3. Heat a non-stick skillet or frying pan over medium heat.\n4. Pour the beaten eggs into the skillet and cook until they are set and lightly golden brown.\n5. Remove the omelet from the skillet and let it cool for a few seconds.\n6. Serve the omelet hot with your favorite toppings.",
+        "finish": "complete",
+        "generatedTokens": 108
+      },
+      "q4Cpu": {
+        "text": "Here's a step-by-step guide on how to make an omelet with two eggs:\n\nIngredients:\n- 2 eggs\n- Salt and pepper (optional)\n\nInstructions:\n\n1. Crack the eggs into a bowl and beat until well combined.\n\n2. Crack the eggs into a large skillet or wok.\n\n3. Heat the oil over medium-high heat.\n\n4. Pour in the beaten eggs and stir until they begin to cook.\n\n5. Cook for about 30 seconds or until the eggs are fully cooked and set.\n\n6. Remove from heat and stir in a little bit of salt and pepper to taste.\n\n7. Serve immediately and enjoy your omelet!",
+        "finish": "complete",
+        "generatedTokens": 136
+      }
+    },
+    {
+      "caseId": "seasons-ru",
+      "prompt": "Объясни простыми словами, почему сменяются времена года. Ответь в трёх предложениях.",
+      "maxTokens": 128,
+      "identicalInputTokens": true,
+      "original": {
+        "text": "1. Смена времён года происходит из-за движения солнца вокруг Земли. Когда солнце движется в сторону Земли, это вызывает изменение времён года. Это происходит в течение года, когда солнце движется в разных местах.\n\n2. Смена времён года также происходит из-за движения Земли вокруг Солнца. Когда Земля движется вдоль оси Солнца, это также вызывает изменение времён года. Это происходит в течение года, когда Земля движется вдоль оси Солнца.",
+        "finish": "length",
+        "generatedTokens": 128
+      },
+      "q4Cpu": {
+        "text": "Сменяются времена года из-за следующих причин:\n\n1. Законченного года - 365 дней - 365 дней.\n\n2. Законченного месяца - 31 день - 31 день.\n\n3. Законченного года - 365 дней - 365 дней.\n\n4. Законченного месяца - 31 день - 31 день.\n\n5. Законченного года - 365 дней - 365 дней.\n\n6. Законченного месяца -",
+        "finish": "length",
+        "generatedTokens": 128
+      }
+    },
+    {
+      "caseId": "seasons-en",
+      "prompt": "Explain in simple terms why seasons change. Answer in three sentences.",
+      "maxTokens": 128,
+      "identicalInputTokens": true,
+      "original": {
+        "text": "Seasons change because Earth's tilt on its rotating axis causes different parts of the planet to receive varying amounts of sunlight throughout the year. This tilt is why we have seasons, as the sun's rays hit different parts of the Earth at different times of the year. As the seasons change, the amount of sunlight that reaches different parts of the Earth also changes, causing the seasons to cycle back and forth.",
+        "finish": "complete",
+        "generatedTokens": 82
+      },
+      "q4Cpu": {
+        "text": "Seasons change because the Earth's orbit around the Sun causes the tilt of its axis, which affects the amount of sunlight received by the Earth. This tilt causes the Earth to move from one side of the Sun to the other, causing the seasons to change.",
+        "finish": "complete",
+        "generatedTokens": 53
+      }
+    }
+  ],
+  "additionalReports": {
+    "russianScreening": "reports/qwen25-05-original-russian-screening.json",
+    "liveChatSettings": "reports/qwen25-05-original-production.json",
+    "q4BrowserComparison": "light-cpu-browser-check.json"
+  },
+  "liveChatSettings": {
+    "temperature": 0.7,
+    "topP": 0.8,
+    "seed": 42,
+    "enableThinking": false,
+    "repetitionPenalty": 1.0,
+    "frequencyPenalty": 0,
+    "presencePenalty": 0
+  },
+  "findings": [
+    "The MLC Q4 bundle degraded Russian arithmetic (original 4, Q4 3) and English factual answers; quantization loss versus an upstream conversion defect was not separately isolated.",
+    "Major Russian recipe, seasons, translation and story failures also occur with original unquantized weights.",
+    "The exact short Russian instruction, sampling and 256-token light-chat budget did not remove major failures.",
+    "No 8-bit fix or 4 GB hardware compatibility is claimed; no runtime replacement is justified by this control."
+  ],
+  "limitations": [
+    "Small fixed test set; manual review, not a general model benchmark.",
+    "Production sampling was tested at one seed; quality can vary on other generations.",
+    "CPU precision differs from browser FP16; not a browser speed or RAM measurement."
+  ]
+}
