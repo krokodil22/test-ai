@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "kind": "compact-model-catalog",
-  "createdAt": "2026-10-28T09:56:31.205Z",
+  "createdAt": "2026-10-28T09:59:42.833Z",
   "maxParameters": 1800000000,
   "queries": [
     "ruadapt",
@@ -13,9 +13,46 @@
     "1.5B-Instruct-ru",
     "Qwen3.5-0.8B",
     "LFM2.5",
-    "gemma-4"
+    "gemma-4",
+    "RuadaptQwen3-0.6",
+    "RuadaptQwen3-1.7",
+    "0.6B-Russian",
+    "1B-Russian",
+    "1.5B-Russian",
+    "1.7B-Russian",
+    "QVikhr-1.5",
+    "QVikhr-3-1.7"
+  ],
+  "authors": [
+    "Vikhrmodels",
+    "RefalMachine",
+    "t-tech",
+    "IlyaGusev",
+    "ai-forever"
   ],
   "models": [
+    {
+      "id": "7Gluk/wav2vec2-large-mms-1b-russian",
+      "revision": "48fcc8329db115dbe37982d740a73aa500af25cc",
+      "downloads": 0,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "language": [],
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer_config.json"
+      ]
+    },
     {
       "id": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
       "revision": "31b70e2e869a7173562077fd711b654946d38674",
@@ -84,11 +121,11 @@
       "gated": false,
       "hasOriginalSafetensors": true,
       "adapterOnly": false,
-      "hasTokenizerConfig": true,
+      "hasTokenizerConfig": false,
       "sameAsPreviouslyProfiled": false,
       "compact": true,
       "mlcArchitectureAvailable": true,
-      "eligibleForScreening": true,
+      "eligibleForScreening": false,
       "config": {
         "hiddenSize": 576,
         "hiddenLayers": 30,
@@ -169,11 +206,11 @@
       "gated": false,
       "hasOriginalSafetensors": true,
       "adapterOnly": false,
-      "hasTokenizerConfig": true,
+      "hasTokenizerConfig": false,
       "sameAsPreviouslyProfiled": false,
       "compact": true,
       "mlcArchitectureAvailable": true,
-      "eligibleForScreening": true,
+      "eligibleForScreening": false,
       "config": {
         "hiddenSize": 960,
         "hiddenLayers": 32,
@@ -283,6 +320,118 @@
         "chat_template.jinja",
         "generation_config.json",
         "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "KRASR/kazakh-russian-asr-xls-r-1b-ctc",
+      "revision": "7a2442658824339581180847e981d2379e01132f",
+      "downloads": 7,
+      "parameterCount": 962556334,
+      "weightBytes": 3850326704,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3850326704,
+          "sha256": "39ac0903722e913e58055b8a3e7522475887a7a5ba21cf1adacff139aa666aef"
+        }
+      ],
+      "modelType": "wav2vec2",
+      "architectures": [
+        "Wav2Vec2ForCTC"
+      ],
+      "language": [
+        "kk",
+        "ru"
+      ],
+      "license": "other",
+      "baseModels": "facebook/wav2vec2-xls-r-1b",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1280,
+        "hiddenLayers": 48,
+        "vocabSize": 46
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "KoLLchIK/DeepSeek-R1-Distill-Qwen-1.5B-Russian_dataset",
+      "revision": "57a3529b2f66c1f97ca063ba028b715fce0cbc7b",
+      "downloads": 397,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "qwen2",
+      "language": [
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": "unsloth/DeepSeek-R1-Distill-Qwen-1.5B",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": true,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Lev384501/qwen3-0.6b-russian-dialogues",
+      "revision": "e49d418ddc53b7b83ef0644f5f263599ddd59d6c",
+      "downloads": 61,
+      "parameterCount": 596049920,
+      "weightBytes": 2384234968,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 2384234968,
+          "sha256": "888b502d0e471221378ada13ca123128cb5811cdc39549b9e6ac9bd16d95777d"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [
+        "ru"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-0.6B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
         "tokenizer.json",
         "tokenizer_config.json"
       ]
@@ -576,7 +725,7 @@
       "gated": false,
       "hasOriginalSafetensors": true,
       "adapterOnly": false,
-      "hasTokenizerConfig": true,
+      "hasTokenizerConfig": false,
       "sameAsPreviouslyProfiled": false,
       "compact": true,
       "mlcArchitectureAvailable": false,
@@ -614,7 +763,7 @@
       "gated": false,
       "hasOriginalSafetensors": true,
       "adapterOnly": false,
-      "hasTokenizerConfig": true,
+      "hasTokenizerConfig": false,
       "sameAsPreviouslyProfiled": false,
       "compact": false,
       "mlcArchitectureAvailable": false,
@@ -733,7 +882,7 @@
       "gated": false,
       "hasOriginalSafetensors": true,
       "adapterOnly": false,
-      "hasTokenizerConfig": true,
+      "hasTokenizerConfig": false,
       "sameAsPreviouslyProfiled": false,
       "compact": true,
       "mlcArchitectureAvailable": false,
@@ -782,7 +931,7 @@
       "gated": false,
       "hasOriginalSafetensors": true,
       "adapterOnly": false,
-      "hasTokenizerConfig": true,
+      "hasTokenizerConfig": false,
       "sameAsPreviouslyProfiled": false,
       "compact": true,
       "mlcArchitectureAvailable": false,
@@ -820,7 +969,7 @@
       "gated": false,
       "hasOriginalSafetensors": true,
       "adapterOnly": false,
-      "hasTokenizerConfig": true,
+      "hasTokenizerConfig": false,
       "sameAsPreviouslyProfiled": false,
       "compact": false,
       "mlcArchitectureAvailable": false,
@@ -858,7 +1007,7 @@
       "gated": false,
       "hasOriginalSafetensors": true,
       "adapterOnly": false,
-      "hasTokenizerConfig": true,
+      "hasTokenizerConfig": false,
       "sameAsPreviouslyProfiled": false,
       "compact": false,
       "mlcArchitectureAvailable": false,
@@ -896,7 +1045,7 @@
       "gated": false,
       "hasOriginalSafetensors": true,
       "adapterOnly": false,
-      "hasTokenizerConfig": true,
+      "hasTokenizerConfig": false,
       "sameAsPreviouslyProfiled": false,
       "compact": false,
       "mlcArchitectureAvailable": false,
@@ -912,8 +1061,14 @@
       "revision": "2fc06364715b967f1860aea9cf38778875588b17",
       "downloads": 3676993,
       "parameterCount": 873438784,
-      "weightBytes": 0,
-      "weightFiles": [],
+      "weightBytes": 1746942600,
+      "weightFiles": [
+        {
+          "path": "model.safetensors-00001-of-00001.safetensors",
+          "bytes": 1746942600,
+          "sha256": "04b1c301231dd422b8860db31311ab2721511346a32cb1e079c4c4e5f1fe4696"
+        }
+      ],
       "modelType": "qwen3_5",
       "architectures": [
         "Qwen3_5ForConditionalGeneration"
@@ -924,7 +1079,7 @@
         "Qwen/Qwen3.5-0.8B-Base"
       ],
       "gated": false,
-      "hasOriginalSafetensors": false,
+      "hasOriginalSafetensors": true,
       "adapterOnly": false,
       "hasTokenizerConfig": true,
       "previouslyProfiledRevision": "2fc06364715b967f1860aea9cf38778875588b17",
@@ -948,8 +1103,14 @@
       "revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
       "downloads": 561414,
       "parameterCount": 873438784,
-      "weightBytes": 0,
-      "weightFiles": [],
+      "weightBytes": 1746942600,
+      "weightFiles": [
+        {
+          "path": "model.safetensors-00001-of-00001.safetensors",
+          "bytes": 1746942600,
+          "sha256": "c2b1e5a17d9c1e27685d92ed9b382911ebb99955ecd89052d1721241adfbab6c"
+        }
+      ],
       "modelType": "qwen3_5",
       "architectures": [
         "Qwen3_5ForConditionalGeneration"
@@ -957,13 +1118,13 @@
       "language": [],
       "license": "apache-2.0",
       "gated": false,
-      "hasOriginalSafetensors": false,
+      "hasOriginalSafetensors": true,
       "adapterOnly": false,
       "hasTokenizerConfig": true,
       "sameAsPreviouslyProfiled": false,
       "compact": true,
       "mlcArchitectureAvailable": true,
-      "eligibleForScreening": false,
+      "eligibleForScreening": true,
       "config": {
         "hiddenSize": 1024,
         "hiddenLayers": 24,
@@ -1233,6 +1394,142 @@
       ]
     },
     {
+      "id": "Vikhrmodels/QVikhr-2.5-1.5B-Instruct-SMPO",
+      "revision": "aa6c5862593166ff96f93b45bd21eba1d4429724",
+      "downloads": 189,
+      "parameterCount": 1543298048,
+      "weightBytes": 3086634632,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3086634632,
+          "sha256": "b4d9f4214669e20fb7766275fc4ee3afe63086bf7e7aedc92295105060148fd3"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "previouslyProfiledRevision": "aa6c5862593166ff96f93b45bd21eba1d4429724",
+      "sameAsPreviouslyProfiled": true,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1536,
+        "hiddenLayers": 28,
+        "vocabSize": 151665
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/QVikhr-2.5-1.5B-Instruct-r",
+      "revision": "75879cfb701a5c185c07724171a619932c5ee13f",
+      "downloads": 109,
+      "parameterCount": 1543298048,
+      "weightBytes": 3086634632,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3086634632,
+          "sha256": "4a6591c263787509dbcf53b73f2e8a1bf745f251199b9397d8bcba31112c5e99"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen2.5-1.5B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 1536,
+        "hiddenLayers": 28,
+        "vocabSize": 151665
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/QVikhr-3-1.7B-Instruction-noreasoning",
+      "revision": "ff7a23e896ebcd28825854b31cee34dfdaedd232",
+      "downloads": 262,
+      "parameterCount": 1720574976,
+      "weightBytes": 3441185608,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3441185608,
+          "sha256": "8c18861c5c1eb26003dead027e2a723c4fe63f1bf16406db6c5a4c2fc4941742"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-1.7B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
       "id": "Vikhrmodels/QVikhr-3-4B-Instruction",
       "revision": "b2a4232a1f3e5833ee0c48450374201f4a07eab7",
       "downloads": 548,
@@ -1345,6 +1642,398 @@
       ]
     },
     {
+      "id": "Vikhrmodels/Qwen3-0.6B-TTS",
+      "revision": "cbc7b50775a3e5c3f92980fcf6954372261d1664",
+      "downloads": 48,
+      "parameterCount": 605215744,
+      "weightBytes": 2420898288,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 2420898288,
+          "sha256": "99d64883cfb36537cb7df698bb07cbf87fdd71cb819f389e3f7a0eb3fc5cd8c4"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 28,
+        "vocabSize": 160887
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/Qwen3-0.6B-experimental",
+      "revision": "acae3b759c9c25185b86ec562b55bbf9840681e7",
+      "downloads": 45,
+      "parameterCount": 605215744,
+      "weightBytes": 2420898288,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 2420898288,
+          "sha256": "71b78939bfbd55b1fa1598a7aac96b4032532c42b52ea3331366a1d2e8cf6ec1"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 28,
+        "vocabSize": 160887
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/Vikhr-Llama-3.2-1B-Instruct",
+      "revision": "7fa9d06a59246629244cdd3b6b92e4fc756baa0f",
+      "downloads": 603,
+      "parameterCount": 1235814400,
+      "weightBytes": 2471645464,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 2471645464,
+          "sha256": "389c73748a00a8a006a4a4a26fa473319676c25672aa188f8337981cd0cc8850"
+        }
+      ],
+      "modelType": "llama",
+      "architectures": [
+        "LlamaForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "llama3.2",
+      "baseModels": [
+        "meta-llama/Llama-3.2-1B-Instruct"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "previouslyProfiledRevision": "7fa9d06a59246629244cdd3b6b92e4fc756baa0f",
+      "sameAsPreviouslyProfiled": true,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 16,
+        "vocabSize": 128256
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/Vikhr-Llama-3.2-1B-Instruct-abliterated",
+      "revision": "c3f53f48b63b2ed1e4cf9222e58e909c05706621",
+      "downloads": 124,
+      "parameterCount": 1235814400,
+      "weightBytes": 2471645464,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 2471645464,
+          "sha256": "a9e6500ec769864eb310878f05445aa9dcd602d0e4cabf5c8c742384b5435d85"
+        }
+      ],
+      "modelType": "llama",
+      "architectures": [
+        "LlamaForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "llama3.2",
+      "baseModels": [
+        "Vikhrmodels/Vikhr-Llama-3.2-1B-Instruct"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 16,
+        "vocabSize": 128256
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/Vikhr-Qwen-2.5-0.5b-Instruct",
+      "revision": "9f827ac4ff36bed1fc6a6d5a41148e2bebb2301e",
+      "downloads": 1059,
+      "parameterCount": 493789952,
+      "weightBytes": 987611904,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 987611904,
+          "sha256": "79c6fe7ea0725279a03f47f84179c12d13c26ef8dac7ef5b3422f275959bc495"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen2.5-0.5B-Instruct"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 896,
+        "hiddenLayers": 24,
+        "vocabSize": 151665
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct",
+      "revision": "c9f763e5097587066e602ebabed4d93ea29bb60c",
+      "downloads": 483,
+      "parameterCount": 1543298048,
+      "weightBytes": 3086634296,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3086634296,
+          "sha256": "417cbb1e06bca1da20f73ae9c0707987a0e107c306c030e9b2479d3a35305c88"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen2.5-1.5B-Instruct"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 1536,
+        "hiddenLayers": 28,
+        "vocabSize": 151665
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/salt-qwen2.5-0.5b-asr",
+      "revision": "c2384236b9a37f301f8e6407fd7a40ef5d9a05f5",
+      "downloads": 56,
+      "parameterCount": 494709248,
+      "weightBytes": 1978869392,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 1978869392,
+          "sha256": "6acace9d3b7633c647a2c4f8a5cb8e2b56c5bae71e76533699330cc04a25b8ac"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [
+        "en"
+      ],
+      "baseModels": [
+        "Qwen/Qwen2.5-0.5B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 896,
+        "hiddenLayers": 24,
+        "vocabSize": 152691
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/salt-qwen2.5-0.5b-asr-tts",
+      "revision": "a966fb84f917f77308516daa5407fb05b2633581",
+      "downloads": 56,
+      "parameterCount": 502049280,
+      "weightBytes": 2008229528,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 2008229528,
+          "sha256": "19f974d949fe3b74305cda7c2669da220154c8b29ba57c74c18f6bdfae13fd29"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [
+        "en",
+        "ru",
+        "uk"
+      ],
+      "baseModels": [
+        "Qwen/Qwen2.5-0.5B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 896,
+        "hiddenLayers": 24,
+        "vocabSize": 160883
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/salt-qwen2.5-0.5b-tts",
+      "revision": "e3337220c41b2a5dedd5c493237ea8cecdeed12b",
+      "downloads": 54,
+      "parameterCount": 501131776,
+      "weightBytes": 2004559512,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 2004559512,
+          "sha256": "154a2c05b22d16eb16111673c6539c9e961c1db50f71c9660328d3392769e63d"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [
+        "en",
+        "ru",
+        "uk"
+      ],
+      "baseModels": [
+        "Qwen/Qwen2.5-0.5B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 896,
+        "hiddenLayers": 24,
+        "vocabSize": 159859
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
       "id": "agapeeva/qwen2.5-1.5b-instruct-abliterated-ru",
       "revision": "6ac2996be62ee39bd405b6a96bffb561afce0ccb",
       "downloads": 30,
@@ -1379,6 +2068,1122 @@
         "generation_config.json",
         "special_tokens_map.json",
         "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/FRED-T5-1.7B",
+      "revision": "fbff67a8b062bb34656fe27794b7874b63f54db8",
+      "downloads": 453,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "t5",
+      "architectures": [
+        "T5ForConditionalGeneration"
+      ],
+      "language": [
+        "ru"
+      ],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 50364
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/RUDOLPH-1.3B",
+      "revision": "2843a1f99c8a2e3ae66b4fe1522eedae1f7509da",
+      "downloads": 0,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "language": [],
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": []
+    },
+    {
+      "id": "ai-forever/RuM2M100-1.2B",
+      "revision": "79d23dd437ae4efe31d8a0a39e94c925cf7d98f8",
+      "downloads": 176,
+      "parameterCount": 1122968576,
+      "weightBytes": 4491995064,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 4491995064,
+          "sha256": "fa63b76f3e521b837510151ef533a5f667febdaebd0fa888f1fe7e1e648b57b6"
+        }
+      ],
+      "modelType": "m2m_100",
+      "architectures": [
+        "M2M100ForConditionalGeneration"
+      ],
+      "language": [
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenLayers": 24,
+        "vocabSize": 14341
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/Zarya-0.6B",
+      "revision": "47a6d507479da86effcfaee2ef834f9a038358fc",
+      "downloads": 354,
+      "parameterCount": 596049920,
+      "weightBytes": 1192137888,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 1192137888,
+          "sha256": "5cfad56b84f3aee103815df5e7a45a0292b83418628f9cc8e3a6eff00611b060"
+        }
+      ],
+      "modelType": "zarya",
+      "architectures": [
+        "Zarya"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/Zarya-1.7B",
+      "revision": "b13b3d80fd5cdadbaaafc1dd5352371ffef26da5",
+      "downloads": 267,
+      "parameterCount": 1720574976,
+      "weightBytes": 3441188400,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3441188400,
+          "sha256": "63ed1e612a02adc37c267e8abcd7095ab01e1b9e547930819034f4d9e3554f9e"
+        }
+      ],
+      "modelType": "zarya",
+      "architectures": [
+        "Zarya"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/ZaryaOrthrus-0.6B",
+      "revision": "6c93071b27ab0d2061007dda0416f0439ed4d7df",
+      "downloads": 46,
+      "parameterCount": 772217856,
+      "weightBytes": 1544491184,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 1544491184,
+          "sha256": "c4c18aa39cfabe07cf8b6d2cfdca53f8bffcb1f9abbacba1320e6442893babe3"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "OrthrusLM"
+      ],
+      "language": [
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "baseModels": [
+        "Qwen/Qwen3-0.6B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/ZaryaOrthrus-1.7B",
+      "revision": "bfe329f70222504482dfc4f2cd0b6ea93bae4b18",
+      "downloads": 38,
+      "parameterCount": 2072903680,
+      "weightBytes": 4145863256,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 4145863256,
+          "sha256": "d35520aee22497d59c0cd2da34abf4d98c1423459c9b7b32c3634cef7a9e0441"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "OrthrusLM"
+      ],
+      "language": [
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "baseModels": [
+        "Qwen/Qwen3-1.7B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/charllama-1.3B",
+      "revision": "c04e5dace803780746e84548e8a463229ea3c196",
+      "downloads": 71,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "llama",
+      "architectures": [
+        "LlamaForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1536,
+        "hiddenLayers": 29,
+        "vocabSize": 375
+      },
+      "tokenizerFiles": [
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-armenian",
+      "revision": "e3a842af0163a226a30146e213f86a1caac7c9ff",
+      "downloads": 105,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "hy",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-azerbaijan",
+      "revision": "8f14207dab731f745712d769bee2745543206117",
+      "downloads": 126,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "az",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-bashkir",
+      "revision": "8093191f032515630643c0f3ff3967aa845f5397",
+      "downloads": 90,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "ba",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-belorussian",
+      "revision": "1a9943254ff7fd16c1f86f44095eef8793b7901c",
+      "downloads": 79,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "be",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-bulgarian",
+      "revision": "dc427c8b5a2f4371dd51b044b1277332864e4101",
+      "downloads": 78,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "bg",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-buryat",
+      "revision": "5b1eefce802831312ff0ad8ca87652e186be5c70",
+      "downloads": 87,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "bua",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-chuvash",
+      "revision": "6a5ee6712d2f997adb702f3f40f3aa68a0bddc80",
+      "downloads": 81,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "cv",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-georgian",
+      "revision": "b93a2c04b1cbb17f494046359e6f45749f812989",
+      "downloads": 86,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "ka",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-kalmyk",
+      "revision": "08e486ea096f435aca2e6d71e2a358dd5be2035a",
+      "downloads": 88,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "xal",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-kazakh",
+      "revision": "0fa0af3eadd275ac8b0094c44d3152b601595ccb",
+      "downloads": 111,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "kk",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-kirgiz",
+      "revision": "8645d653ab436094b4758b64b596ed42866c1df2",
+      "downloads": 85,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "ky",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-mari",
+      "revision": "f5e1aca4f40effc39510f7b455993531fc8febd6",
+      "downloads": 81,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "chm",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-mongol",
+      "revision": "5985cd89b08bdd992c6aa0bcd5b3453cd41e9cc3",
+      "downloads": 87,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "mn",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-ossetian",
+      "revision": "c828a68d68343b15fe4c4d0e71f875134d4fded9",
+      "downloads": 89,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "os",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-persian",
+      "revision": "53cffe6434f6bdff75d8d26adf74d3cfb74bcf71",
+      "downloads": 166,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "fa",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-romanian",
+      "revision": "fc7e07c53ea9ce9a9684a794746888b191f8af26",
+      "downloads": 97,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "ro",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-tajik",
+      "revision": "7c6ec91d3a74553917ca44e4d2df218517219bdf",
+      "downloads": 87,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "tg",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-tatar",
+      "revision": "ced9c16e7871ff8e9c1b298093d529d34fdeacd4",
+      "downloads": 86,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "tt",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-turkmen",
+      "revision": "fd46ed3dd1f8cff030b5396e8f795a516e12052a",
+      "downloads": 86,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "tk",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-tuvan",
+      "revision": "3508d84c91806e8d96d74d8f552d4c73827fa1ef",
+      "downloads": 81,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "tyv",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-ukranian",
+      "revision": "41f6959acef135ea88e60b720ee883c3c7b0bad5",
+      "downloads": 87,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "uk",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-uzbek",
+      "revision": "edd2a4905d706470b3c9c75d66efc42e8c080901",
+      "downloads": 152,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "uz",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/mGPT-1.3B-yakut",
+      "revision": "3a5b3228b6d86d30f3cd246515eb8c45c597a19b",
+      "downloads": 81,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "gpt2",
+      "architectures": [
+        "GPT2LMHeadModel"
+      ],
+      "language": [
+        "sah",
+        "en",
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "vocabSize": 100000
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ai-forever/sage-m2m100-1.2B",
+      "revision": "1773f13bcbf21d7d945a3ba58473acac3aea6690",
+      "downloads": 195,
+      "parameterCount": 1122968576,
+      "weightBytes": 4491994792,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 4491994792,
+          "sha256": "9a2730b2f0a303d5883847fb63c427906e53cd0713fc10d642b01a73a18e99d3"
+        }
+      ],
+      "modelType": "m2m_100",
+      "architectures": [
+        "M2M100ForConditionalGeneration"
+      ],
+      "language": [
+        "ru"
+      ],
+      "license": "mit",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenLayers": 24,
+        "vocabSize": 14341
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
         "tokenizer_config.json"
       ]
     },
@@ -1641,6 +3446,38 @@
       ]
     },
     {
+      "id": "jonatasgrosman/wav2vec2-xls-r-1b-russian",
+      "revision": "f7c7884559acd424304f307dae637d3c5d846ffa",
+      "downloads": 1918,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "wav2vec2",
+      "architectures": [
+        "Wav2Vec2ForCTC"
+      ],
+      "language": [
+        "ru"
+      ],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1280,
+        "hiddenLayers": 48,
+        "vocabSize": 40
+      },
+      "tokenizerFiles": [
+        "special_tokens_map.json"
+      ]
+    },
+    {
       "id": "litert-community/gemma-4-E2B-it-litert-lm",
       "revision": "1caa527c1e88b55f046fcd8d2b4265606680663d",
       "downloads": 1445248,
@@ -1709,8 +3546,14 @@
       "revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
       "downloads": 84989,
       "parameterCount": 873438784,
-      "weightBytes": 0,
-      "weightFiles": [],
+      "weightBytes": 1746942600,
+      "weightFiles": [
+        {
+          "path": "model.safetensors-00001-of-00001.safetensors",
+          "bytes": 1746942600,
+          "sha256": "04b1c301231dd422b8860db31311ab2721511346a32cb1e079c4c4e5f1fe4696"
+        }
+      ],
       "modelType": "qwen3_5",
       "architectures": [
         "Qwen3_5ForConditionalGeneration"
@@ -1721,13 +3564,13 @@
         "Qwen/Qwen3.5-0.8B"
       ],
       "gated": false,
-      "hasOriginalSafetensors": false,
+      "hasOriginalSafetensors": true,
       "adapterOnly": false,
       "hasTokenizerConfig": true,
       "sameAsPreviouslyProfiled": false,
       "compact": true,
       "mlcArchitectureAvailable": true,
-      "eligibleForScreening": false,
+      "eligibleForScreening": true,
       "config": {
         "hiddenSize": 1024,
         "hiddenLayers": 24,
@@ -1736,6 +3579,49 @@
       "tokenizerFiles": [
         "chat_template.jinja",
         "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "ya-yje-krasni/qwen3-0.6b-russian-dialogues",
+      "revision": "605100d97b1ce6ba7cadb5986d7666d305df2f68",
+      "downloads": 65,
+      "parameterCount": 596049920,
+      "weightBytes": 2384234968,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 2384234968,
+          "sha256": "888b502d0e471221378ada13ca123128cb5811cdc39549b9e6ac9bd16d95777d"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [
+        "ru"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-0.6B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": false,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
         "tokenizer.json",
         "tokenizer_config.json"
       ]
