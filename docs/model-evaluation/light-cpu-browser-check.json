@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "kind": "light-model-cpu-browser-comparison",
+  "createdAt": "2026-10-28T09:15:01.962629+00:00",
+  "modelId": "Qwen2.5-0.5B-Instruct-q4f16_1-MLC",
+  "revision": "32ff081fe7e4dfe4ffb167b94c66fdf11e02b8ad",
+  "protocol": "qwen3-diagnostics-v1",
+  "settings": {
+    "temperature": 0,
+    "topP": 1,
+    "seed": 42,
+    "enableThinking": false,
+    "frequencyPenalty": 0,
+    "presencePenalty": 0
+  },
+  "systemPrompt": "You are a helpful assistant.",
+  "sourceBrowserReportSha256": "2a2408054e07dbc6dbe70c7169cb6ab569957528a8ed04fb96521715331f5b67",
+  "sourceBrowserReportCreatedAt": "2026-10-28T09:02:13.038Z",
+  "sourceBrowserCacheAudit": {
+    "valid": true,
+    "checkedFiles": 12,
+    "checkedBytes": 289970221,
+    "completedAt": "2026-10-28T09:02:00.641Z"
+  },
+  "browserWasmSha256": "d9c3009804f978c04c886ff2b1549f28c8be78b198ff6e3a1e16be7d1106d038",
+  "cpuReport": "reports/qwen25-05-mlc-cpu-diagnostics.json",
+  "cpuEngine": "Transformers 5.3.0",
+  "cpuComputeDtype": "float32",
+  "quantization": "q4f16_1 reconstructed through FP16; not original unquantized weights",
+  "originalUnquantizedControl": {
+    "status": "blocked",
+    "reason": "Hugging Face proxy HTTP 403 persisted after a network permission grant. Original weights were not available locally; no original-weight result is claimed."
+  },
+  "exactTextMatches": 3,
+  "results": [
+    {
+      "caseId": "arithmetic-ru",
+      "prompt": "Сколько будет 2 + 2? Ответь только числом.",
+      "maxTokens": 16,
+      "exactTextMatch": true,
+      "cpu": {
+        "text": "3",
+        "finish": "complete",
+        "generatedTokens": 2
+      },
+      "browser": {
+        "text": "3",
+        "finish": "complete",
+        "generatedTokens": 2
+      }
+    },
+    {
+      "caseId": "arithmetic-en",
+      "prompt": "What is 2 + 2? Answer with the number only.",
+      "maxTokens": 16,
+      "exactTextMatch": true,
+      "cpu": {
+        "text": "4",
+        "finish": "complete",
+        "generatedTokens": 2
+      },
+      "browser": {
+        "text": "4",
+        "finish": "complete",
+        "generatedTokens": 2
+      }
+    },
+    {
+      "caseId": "omelet-ru",
+      "prompt": "Как приготовить омлет из двух яиц? Дай короткий список шагов.",
+      "maxTokens": 192,
+      "exactTextMatch": false,
+      "cpu": {
+        "text": "Для приготовления омлета из двух яиц, вам нужно будет следовать этим шагам:\n\n1. Запейте омлетный овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной овощной ов",
+        "finish": "length",
+        "generatedTokens": 192
+      },
+      "browser": {
+        "text": "Для приготовления омлета из двух яиц, вам нужно:\n\n1. Основной яй - 2 штука\n2. Омлет - 2 штука\n3. Омлетный орех - 1 штука\n4. Омлетный хлеб - 1 штука\n5. Омлетный хлеб - 1 штука\n\nСначала выделите омлетный орех и хлеб на обеденный стол. Затем выделите омлет на обеденный стол. Затем выделите омлетный хлеб на обеденный стол. Затем выделите омлетный хлеб на обеденный стол. Затем выделите омлетный орех на обеденный стол",
+        "finish": "length",
+        "generatedTokens": 192
+      }
+    },
+    {
+      "caseId": "omelet-en",
+      "prompt": "How do I make an omelet with two eggs? Give a short list of steps.",
+      "maxTokens": 192,
+      "exactTextMatch": false,
+      "cpu": {
+        "text": "Here's a step-by-step guide on how to make an omelet with two eggs:\n\nIngredients:\n- 2 eggs\n- Salt and pepper (optional)\n\nInstructions:\n\n1. Crack the eggs into a bowl and beat until well combined.\n\n2. Crack the eggs into a large skillet or wok.\n\n3. Heat the oil over medium-high heat.\n\n4. Pour in the beaten eggs and stir until they begin to cook.\n\n5. Cook for about 30 seconds or until the eggs are fully cooked and set.\n\n6. Remove from heat and stir in a little bit of salt and pepper to taste.\n\n7. Serve immediately and enjoy your omelet!",
+        "finish": "complete",
+        "generatedTokens": 136
+      },
+      "browser": {
+        "text": "Here's a simple recipe for making an omelet with two eggs:\n\nIngredients:\n- 2 eggs\n- Salt and pepper (optional)\n\nInstructions:\n\n1. Crack the eggs into a bowl and beat until well combined.\n\n2. Crack the eggs into a large skillet or wok.\n\n3. Heat the oil over medium-high heat.\n\n4. Pour in the beaten eggs and stir until they begin to cook.\n\n5. Cook for about 30 seconds or until the eggs are fully cooked and set.\n\n6. Remove from heat and stir in a little bit of salt and pepper to taste.\n\n7. Serve immediately and enjoy your omelet!",
+        "finish": "complete",
+        "generatedTokens": 132
+      }
+    },
+    {
+      "caseId": "seasons-ru",
+      "prompt": "Объясни простыми словами, почему сменяются времена года. Ответь в трёх предложениях.",
+      "maxTokens": 128,
+      "exactTextMatch": true,
+      "cpu": {
+        "text": "Сменяются времена года из-за следующих причин:\n\n1. Законченного года - 365 дней - 365 дней.\n\n2. Законченного месяца - 31 день - 31 день.\n\n3. Законченного года - 365 дней - 365 дней.\n\n4. Законченного месяца - 31 день - 31 день.\n\n5. Законченного года - 365 дней - 365 дней.\n\n6. Законченного месяца -",
+        "finish": "length",
+        "generatedTokens": 128
+      },
+      "browser": {
+        "text": "Сменяются времена года из-за следующих причин:\n\n1. Законченного года - 365 дней - 365 дней.\n\n2. Законченного месяца - 31 день - 31 день.\n\n3. Законченного года - 365 дней - 365 дней.\n\n4. Законченного месяца - 31 день - 31 день.\n\n5. Законченного года - 365 дней - 365 дней.\n\n6. Законченного месяца -",
+        "finish": "length",
+        "generatedTokens": 128
+      }
+    },
+    {
+      "caseId": "seasons-en",
+      "prompt": "Explain in simple terms why seasons change. Answer in three sentences.",
+      "maxTokens": 128,
+      "exactTextMatch": false,
+      "cpu": {
+        "text": "Seasons change because the Earth's orbit around the Sun causes the tilt of its axis, which affects the amount of sunlight received by the Earth. This tilt causes the Earth to move from one side of the Sun to the other, causing the seasons to change.",
+        "finish": "complete",
+        "generatedTokens": 53
+      },
+      "browser": {
+        "text": "Seasons change because the Earth's orbit around the Sun causes the tilt of its axis, which affects the amount of sunlight received by the Earth. This tilt causes the Earth to move from one side of the Sun to the other, causing the seasons to change. Additionally, the Earth's movement around the Sun also causes the Earth to move from the Northern Hemisphere to the Southern Hemisphere, which also causes the seasons to change.",
+        "finish": "complete",
+        "generatedTokens": 85
+      }
+    }
+  ],
+  "conclusion": "Wrong Russian arithmetic and nonsensical Russian explanations reproduce with the same Q4 weights in independent Transformers CPU execution. Three of six texts match exactly; this is evidence against a browser-only cause, not proof that the original unquantized model has the same failures.",
+  "limitations": [
+    "Original BF16/FP32 weights were not tested; cannot distinguish model limitations from upstream quantization/conversion defects.",
+    "FP32 CPU execution versus FP16 browser execution can change greedy token choices.",
+    "Six fixed short prompts are not a general quality benchmark or a 4 GB device test."
+  ]
+}
