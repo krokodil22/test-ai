@@ -31,7 +31,9 @@ try {
     for await (const chunk of createReadStream(`${model}/${path}`)) { hash.update(chunk); bytes += chunk.length; }
     status.sourceFiles.push({ path, bytes, sha256: hash.digest('hex') });
   }
-  for (const [name, cases] of [['diagnostics', 'src/diagnostic-cases.json'], ['production', 'scripts/candidates/qwen25-light-production.json']]) {
+  const profiles = selected.profiles || [['diagnostics', 'src/diagnostic-cases.json'], ['production', 'scripts/candidates/qwen25-light-production.json']];
+  for (const [name, cases] of profiles) {
+    if (!/^[a-z0-9-]+$/.test(name) || !/^(src|scripts\/candidates)\/[a-z0-9.-]+\.json$/.test(cases)) throw Error('Unsafe controlled case profile');
     stage = name;
     const path = `${output}/${name}.json`;
     run('python', ['scripts/run-reference.py', '--profile', selected.profile, '--model', model, '--cases', cases, '--dtype', 'float32', '--threads', '4', '--output', path, ...(selected.auditEmbeddingTie ? ['--audit-embedding-tie'] : [])]);

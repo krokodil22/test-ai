@@ -1,0 +1,12 @@
+{
+  "repository": "Vikhrmodels/Vikhr-Qwen-2.5-1.5B-Instruct",
+  "revision": "c9f763e5097587066e602ebabed4d93ea29bb60c",
+  "files": [
+    "config.json",
+    "generation_config.json",
+    "special_tokens_map.json",
+    "tokenizer.json",
+    "tokenizer_config.json",
+    "model.safetensors"
+  ]
+}

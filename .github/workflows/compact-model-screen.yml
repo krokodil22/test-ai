@@ -89,7 +89,7 @@ jobs:
               status = json.loads((root / 'status.json').read_text())
               assert status['key'] == item['key']
               if status['complete']:
-                  assert len(status['results']) == 2
+                  assert len(status['results']) == len(item.get('profiles', [1, 2]))
               destination = Path('docs/model-evaluation/compact-results') / item['key']
               destination.mkdir(parents=True, exist_ok=True)
               for source in root.glob('*.json'):

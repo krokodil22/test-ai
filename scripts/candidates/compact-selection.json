@@ -1,42 +1,55 @@
 [
   {
-    "key": "qwen3-06-t4513",
+    "key": "vikhr-qwen25-15",
+    "profile": "scripts/candidates/compact-vikhr-qwen25-15.json",
+    "license": "apache-2.0",
+    "reason": "Additional Russian fine-tune, distinct from the previously rejected SMPO checkpoint.",
+    "transformersVersion": "5.8.1",
+    "profiles": [
+      [
+        "production",
+        "scripts/candidates/qwen25-light-production.json"
+      ]
+    ]
+  },
+  {
+    "key": "qvikhr25-15-r",
+    "profile": "scripts/candidates/compact-qvikhr25-15-r.json",
+    "license": "apache-2.0",
+    "reason": "Additional Russian fine-tune, distinct from the previously rejected SMPO checkpoint.",
+    "transformersVersion": "5.8.1",
+    "profiles": [
+      [
+        "production",
+        "scripts/candidates/qwen25-light-production.json"
+      ]
+    ]
+  },
+  {
+    "key": "vikhr-llama32-1b-production",
+    "profile": "scripts/candidates/vikhr-1b.json",
+    "license": "llama3.2",
+    "reason": "Earlier neutral facts showed errors; Russian instruction and creative tasks were not yet checked.",
+    "transformersVersion": "5.8.1",
+    "profiles": [
+      [
+        "production",
+        "scripts/candidates/qwen25-light-production.json"
+      ]
+    ]
+  },
+  {
+    "key": "qwen3-06-thinking",
     "profile": "scripts/candidates/compact-qwen3-06.json",
     "license": "apache-2.0",
-    "reason": "Cross-version control of unexpected tiny-model failures; validate checkpoint and tied embedding loading.",
-    "transformersVersion": "4.51.3",
-    "auditEmbeddingTie": true
-  },
-  {
-    "key": "qwen3-06-t581",
-    "profile": "scripts/candidates/compact-qwen3-06.json",
-    "license": "apache-2.0",
-    "reason": "Cross-version control of unexpected tiny-model failures; validate checkpoint and tied embedding loading.",
+    "reason": "Check whether native reasoning mode helps the tiny model without increasing weight size; separate conditions and latency tradeoff.",
     "transformersVersion": "5.8.1",
-    "auditEmbeddingTie": true
-  },
-  {
-    "key": "vikhr-qwen25-05-t4513",
-    "profile": "scripts/candidates/compact-vikhr-qwen25-05.json",
-    "license": "apache-2.0",
-    "reason": "Cross-version control of unexpected tiny-model failures; validate checkpoint and tied embedding loading.",
-    "transformersVersion": "4.51.3",
-    "auditEmbeddingTie": true
-  },
-  {
-    "key": "vikhr-qwen25-05-t581",
-    "profile": "scripts/candidates/compact-vikhr-qwen25-05.json",
-    "license": "apache-2.0",
-    "reason": "Cross-version control of unexpected tiny-model failures; validate checkpoint and tied embedding loading.",
-    "transformersVersion": "5.8.1",
-    "auditEmbeddingTie": true
-  },
-  {
-    "key": "qwen25-05-t4513",
-    "profile": "scripts/candidates/qwen2.5-0.5b.json",
-    "license": "apache-2.0",
-    "reason": "Control of the original baseline in its contemporary Transformers implementation.",
-    "transformersVersion": "4.51.3",
-    "auditEmbeddingTie": true
+    "auditEmbeddingTie": true,
+    "profiles": [
+      [
+        "thinking",
+        "scripts/candidates/compact-thinking-facts.json"
+      ]
+    ]
   }
 ]

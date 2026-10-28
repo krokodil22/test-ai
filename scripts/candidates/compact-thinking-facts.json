@@ -1,0 +1,17 @@
+{
+  "protocol": "compact-thinking-facts-v1",
+  "systemPrompt": "Ты — Великий Тетриканец. Отвечай кратко и понятно на русском языке. Сохраняй смысл вопроса и не выдумывай факты. Если не знаешь ответ, скажи об этом.",
+  "settings": {
+    "temperature": 0,
+    "topP": 1,
+    "seed": 42,
+    "enableThinking": true,
+    "frequencyPenalty": 0,
+    "presencePenalty": 0
+  },
+  "cases": [
+    { "id": "arithmetic-ru", "prompt": "Сколько будет 2 + 2? Ответь только числом.", "maxTokens": 256 },
+    { "id": "omelet-ru", "prompt": "Как приготовить омлет из двух яиц? Дай короткий список шагов.", "maxTokens": 768 },
+    { "id": "seasons-ru", "prompt": "Объясни простыми словами, почему сменяются времена года. Ответь в трёх предложениях.", "maxTokens": 768 }
+  ]
+}
