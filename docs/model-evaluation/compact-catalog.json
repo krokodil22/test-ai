@@ -1,0 +1,1751 @@
+{
+  "schema": 1,
+  "kind": "compact-model-catalog",
+  "createdAt": "2026-10-28T09:56:31.205Z",
+  "maxParameters": 1800000000,
+  "queries": [
+    "ruadapt",
+    "QVikhr",
+    "Qwen3-0.6B",
+    "Qwen3-1.7B",
+    "SmolLM",
+    "1B-Instruct-ru",
+    "1.5B-Instruct-ru",
+    "Qwen3.5-0.8B",
+    "LFM2.5",
+    "gemma-4"
+  ],
+  "models": [
+    {
+      "id": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+      "revision": "31b70e2e869a7173562077fd711b654946d38674",
+      "downloads": 280467,
+      "parameterCount": 1711376384,
+      "weightBytes": 3422777952,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3422777952,
+          "sha256": "f55217be716b6a997b97b9d8d7eb6fad02e00858f5010ec24f64603c3a98a0e8"
+        }
+      ],
+      "modelType": "llama",
+      "architectures": [
+        "LlamaForCausalLM"
+      ],
+      "language": [
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "HuggingFaceTB/SmolLM2-1.7B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 24,
+        "vocabSize": 49152
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "HuggingFaceTB/SmolLM2-135M",
+      "revision": "93efa2f097d58c2a74874c7e644dbc9b0cee75a2",
+      "downloads": 2317669,
+      "parameterCount": 134515008,
+      "weightBytes": 269060552,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 269060552,
+          "sha256": "80521b40281d6ce74e35c9282c22539e75aa0ac8578892b2a59955ef78d55da1"
+        }
+      ],
+      "modelType": "llama",
+      "architectures": [
+        "LlamaForCausalLM"
+      ],
+      "language": [
+        "en"
+      ],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 576,
+        "hiddenLayers": 30,
+        "vocabSize": 49152
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "HuggingFaceTB/SmolLM2-135M-Instruct",
+      "revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+      "downloads": 918685,
+      "parameterCount": 134515008,
+      "weightBytes": 269060552,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 269060552,
+          "sha256": "5af571cbf074e6d21a03528d2330792e532ca608f24ac70a143f6b369968ab8c"
+        }
+      ],
+      "modelType": "llama",
+      "architectures": [
+        "LlamaForCausalLM"
+      ],
+      "language": [
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "HuggingFaceTB/SmolLM2-135M"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 576,
+        "hiddenLayers": 30,
+        "vocabSize": 49152
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "HuggingFaceTB/SmolLM2-360M",
+      "revision": "f8027fd0eaeea54caa13c31d31b9fdc459c38b49",
+      "downloads": 114456,
+      "parameterCount": 361821120,
+      "weightBytes": 723674912,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 723674912,
+          "sha256": "7aaff6661428bed033abba9522bec81938678642cca3181fe752b6ca9e1e540f"
+        }
+      ],
+      "modelType": "llama",
+      "architectures": [
+        "LlamaForCausalLM"
+      ],
+      "language": [
+        "en"
+      ],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 960,
+        "hiddenLayers": 32,
+        "vocabSize": 49152
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "HuggingFaceTB/SmolLM2-360M-Instruct",
+      "revision": "a10cc1512eabd3dde888204e902eca88bddb4951",
+      "downloads": 202529,
+      "parameterCount": 361821120,
+      "weightBytes": 723674912,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 723674912,
+          "sha256": "e6bffe7435d7ddc10fd3b9a9efd429dafbacb1cb17015fb5562664e7532bf86e"
+        }
+      ],
+      "modelType": "llama",
+      "architectures": [
+        "LlamaForCausalLM"
+      ],
+      "language": [
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "HuggingFaceTB/SmolLM2-360M"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 960,
+        "hiddenLayers": 32,
+        "vocabSize": 49152
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "HuggingFaceTB/SmolLM3-3B",
+      "revision": "a07cc9a04f16550a088caea529712d1d335b0ac1",
+      "downloads": 681164,
+      "parameterCount": 3075098624,
+      "weightBytes": 6150235008,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00002.safetensors",
+          "bytes": 4966315264,
+          "sha256": "e5eed4113a925264c33e3cdf76cd9f547c06a207ef2270914a7274a2bf685ffd"
+        },
+        {
+          "path": "model-00002-of-00002.safetensors",
+          "bytes": 1183919744,
+          "sha256": "6c3ad90646457295723e4da5ee8afac47006e20407b122df5174693dd8d68a43"
+        }
+      ],
+      "modelType": "smollm3",
+      "architectures": [
+        "SmolLM3ForCausalLM"
+      ],
+      "language": [
+        "en",
+        "fr",
+        "es",
+        "it",
+        "pt",
+        "zh",
+        "ar",
+        "ru"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "HuggingFaceTB/SmolLM3-3B-Base"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 36,
+        "vocabSize": 128256
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "LiquidAI/LFM2-700M",
+      "revision": "86f49fc9a3800c3a325b7320bde179c318062583",
+      "downloads": 4891,
+      "parameterCount": 742489344,
+      "weightBytes": 1484995328,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 1484995328,
+          "sha256": "a7b52669217ecb538740187f41ce2a5802afa1c8d81d8d153b847bbd21d1bdda"
+        }
+      ],
+      "modelType": "lfm2",
+      "architectures": [
+        "Lfm2ForCausalLM"
+      ],
+      "language": [
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja",
+        "ko",
+        "es"
+      ],
+      "license": "other",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1536,
+        "hiddenLayers": 16,
+        "vocabSize": 65536
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "LiquidAI/LFM2.5-1.2B-Instruct",
+      "revision": "0f604ada3f766f9f257460c4c9f0b5d6f69d431b",
+      "downloads": 127105,
+      "parameterCount": 1170340608,
+      "weightBytes": 2340697936,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 2340697936,
+          "sha256": "1ba63d9adb03ae43581db0e136e4416febe0441aff7296397bd455fb6017f73a"
+        }
+      ],
+      "modelType": "lfm2",
+      "architectures": [
+        "Lfm2ForCausalLM"
+      ],
+      "language": [
+        "en",
+        "ar",
+        "zh",
+        "fr",
+        "de",
+        "ja",
+        "ko",
+        "es"
+      ],
+      "license": "other",
+      "baseModels": "LiquidAI/LFM2.5-1.2B-Base",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 16,
+        "vocabSize": 65536
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "PrimeIntellect/Qwen3-0.6B",
+      "revision": "15aba67c8ec68aeac96f57ba7e31d373564ee03c",
+      "downloads": 1162838,
+      "parameterCount": 751632384,
+      "weightBytes": 1503300328,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 1503300328,
+          "sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-0.6B-Base"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-0.6B",
+      "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "downloads": 24162298,
+      "parameterCount": 751632384,
+      "weightBytes": 1503300328,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 1503300328,
+          "sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-0.6B-Base"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-1.7B",
+      "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+      "downloads": 4142404,
+      "parameterCount": 2031739904,
+      "weightBytes": 4063515592,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00002.safetensors",
+          "bytes": 3441185608,
+          "sha256": "169ad53ec313c3a34b06c0809216e4fc072cce444a5d4ff2b59690d064130ed5"
+        },
+        {
+          "path": "model-00002-of-00002.safetensors",
+          "bytes": 622329984,
+          "sha256": "912becff8d60672aa8628ef08c05898d9adf17c2ad4ae3caf99b065622fdeff9"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-1.7B-Base"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-1.7B-Base",
+      "revision": "ea980cb0a6c2ae4b936e82123acc929f1cec04c1",
+      "downloads": 592348,
+      "parameterCount": 1720574976,
+      "weightBytes": 3441185608,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3441185608,
+          "sha256": "6df85b39330e5a425ee36253d0f894e4387e4f0a15b9c53cb467d668e6b3a841"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-ASR-0.6B",
+      "revision": "5eb144179a02acc5e5ba31e748d22b0cf3e303b0",
+      "downloads": 843149,
+      "parameterCount": 938008576,
+      "weightBytes": 1876091704,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 1876091704,
+          "sha256": "79d6cbd4c98c7bbffe9db2edac07f56cd6637d0d5944b27f6c2b8353840323ea"
+        }
+      ],
+      "modelType": "qwen3_asr",
+      "architectures": [
+        "Qwen3ASRForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": [
+        "generation_config.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-ASR-1.7B",
+      "revision": "7278e1e70fe206f11671096ffdd38061171dd6e5",
+      "downloads": 1424258,
+      "parameterCount": 2349217408,
+      "weightBytes": 4698521512,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00002.safetensors",
+          "bytes": 4220320824,
+          "sha256": "a4cd1f1a04d90b757dc7f7dd26254e69a013b19e80efe590a83c6a3bde8608d6"
+        },
+        {
+          "path": "model-00002-of-00002.safetensors",
+          "bytes": 478200688,
+          "sha256": "6e0b9d9e09e2e0238e7ef3cc8a484ab387e91b90f1900bedf88bc92d7929ccfc"
+        }
+      ],
+      "modelType": "qwen3_asr",
+      "architectures": [
+        "Qwen3ASRForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": [
+        "generation_config.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-ASR-1.7B-hf",
+      "revision": "bcd2b5b7f32b480ab5790554cfa8347f246a14f3",
+      "downloads": 326319,
+      "parameterCount": 2038052480,
+      "weightBytes": 4076193080,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 4076193080,
+          "sha256": "2db53c7d81bd9b8cbc6a074e89be2c968a0d373fb4ee68bb1b1e14f7042dfee1"
+        }
+      ],
+      "modelType": "qwen3_asr",
+      "architectures": [
+        "Qwen3ASRForConditionalGeneration"
+      ],
+      "language": [
+        "zh",
+        "en",
+        "yue",
+        "ar",
+        "de",
+        "fr",
+        "es",
+        "pt",
+        "id",
+        "it",
+        "ko",
+        "ru",
+        "th",
+        "vi",
+        "ja",
+        "tr",
+        "hi",
+        "ms",
+        "nl",
+        "sv",
+        "da",
+        "fi",
+        "pl",
+        "cs",
+        "fil",
+        "fa",
+        "el",
+        "hu",
+        "mk",
+        "ro"
+      ],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2048,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-TTS-12Hz-0.6B-Base",
+      "revision": "5d83992436eae1d760afd27aff78a71d676296fc",
+      "downloads": 703275,
+      "parameterCount": 914643008,
+      "weightBytes": 2511637364,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 1829344272,
+          "sha256": "180b3b10eb1c9f1b4db7806d5475bae3071c0243c299d49926bab1da3b6946f6"
+        },
+        {
+          "path": "speech_tokenizer/model.safetensors",
+          "bytes": 682293092,
+          "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+        }
+      ],
+      "modelType": "qwen3_tts",
+      "architectures": [
+        "Qwen3TTSForConditionalGeneration"
+      ],
+      "language": [
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "de",
+        "fr",
+        "ru",
+        "pt",
+        "es",
+        "it"
+      ],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": [
+        "generation_config.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
+      "revision": "85e237c12c027371202489a0ec509ded67b5e4b5",
+      "downloads": 822264,
+      "parameterCount": 905788672,
+      "weightBytes": 2493919668,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 1811626576,
+          "sha256": "bc3c7e785eb961179c25450d1acff03f839e0002f2f3a5aeb67b5735c0fa2adb"
+        },
+        {
+          "path": "speech_tokenizer/model.safetensors",
+          "bytes": 682293092,
+          "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+        }
+      ],
+      "modelType": "qwen3_tts",
+      "architectures": [
+        "Qwen3TTSForConditionalGeneration"
+      ],
+      "language": [
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "de",
+        "fr",
+        "ru",
+        "pt",
+        "es",
+        "it"
+      ],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": [
+        "generation_config.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+      "revision": "fd4b254389122332181a7c3db7f27e918eec64e3",
+      "downloads": 3263001,
+      "parameterCount": 1928677440,
+      "weightBytes": 4539706836,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3857413744,
+          "sha256": "38fc7fc51c5e776e840414b6fd443962e9411b9654888fd7913e4da643cb857c"
+        },
+        {
+          "path": "speech_tokenizer/model.safetensors",
+          "bytes": 682293092,
+          "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+        }
+      ],
+      "modelType": "qwen3_tts",
+      "architectures": [
+        "Qwen3TTSForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": [
+        "generation_config.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-TTS-12Hz-1.7B-CustomVoice",
+      "revision": "0c0e3051f131929182e2c023b9537f8b1c68adfe",
+      "downloads": 1855875,
+      "parameterCount": 1916676352,
+      "weightBytes": 4515695644,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3833402552,
+          "sha256": "38b1d5971bdbd982b561cccec982669a53b0537c3cf5e9bd4778ed07bb2f5137"
+        },
+        {
+          "path": "speech_tokenizer/model.safetensors",
+          "bytes": 682293092,
+          "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+        }
+      ],
+      "modelType": "qwen3_tts",
+      "architectures": [
+        "Qwen3TTSForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": [
+        "generation_config.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3-TTS-12Hz-1.7B-VoiceDesign",
+      "revision": "5ecdb67327fd37bb2e042aab12ff7391903235d3",
+      "downloads": 480227,
+      "parameterCount": 1916676352,
+      "weightBytes": 4515695644,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3833402552,
+          "sha256": "391e8db219f292c515297cdceeb43e4eae67cdde35fa57e79a6a8a532fca0522"
+        },
+        {
+          "path": "speech_tokenizer/model.safetensors",
+          "bytes": 682293092,
+          "sha256": "836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258"
+        }
+      ],
+      "modelType": "qwen3_tts",
+      "architectures": [
+        "Qwen3TTSForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": [
+        "generation_config.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3.5-0.8B",
+      "revision": "2fc06364715b967f1860aea9cf38778875588b17",
+      "downloads": 3676993,
+      "parameterCount": 873438784,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "qwen3_5",
+      "architectures": [
+        "Qwen3_5ForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3.5-0.8B-Base"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "previouslyProfiledRevision": "2fc06364715b967f1860aea9cf38778875588b17",
+      "sameAsPreviouslyProfiled": true,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 24,
+        "vocabSize": 248320
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Qwen/Qwen3.5-0.8B-Base",
+      "revision": "dc7cdfe2ee4154fa7e30f5b51ca41bfa40174e68",
+      "downloads": 561414,
+      "parameterCount": 873438784,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "qwen3_5",
+      "architectures": [
+        "Qwen3_5ForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 24,
+        "vocabSize": 248320
+      },
+      "tokenizerFiles": [
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "RefalMachine/RuadaptQwen2.5-1.5B-instruct",
+      "revision": "6f181bc1ef2364cf5c99bd15769a896af9f31e0c",
+      "downloads": 447,
+      "parameterCount": 1533294080,
+      "weightBytes": 3066626688,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3066626688,
+          "sha256": "e6e3e6a760fa3ced5dcf46192ec032d400f5106c3ed1498c1b1f3dbfaa992f9e"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [
+        "ru"
+      ],
+      "license": "apache-2.0",
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "previouslyProfiledRevision": "6f181bc1ef2364cf5c99bd15769a896af9f31e0c",
+      "sameAsPreviouslyProfiled": true,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1536,
+        "hiddenLayers": 28,
+        "vocabSize": 145152
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "RefalMachine/RuadaptQwen3-4B-Hybrid",
+      "revision": "bb890732923b10dd4184414a522bc30d858ab076",
+      "downloads": 881,
+      "parameterCount": 4007937536,
+      "weightBytes": 8015920880,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00002.safetensors",
+          "bytes": 4987972192,
+          "sha256": "1690325be5816d47393d9f421680ac9ca12cd8c4ca29ef2e9a095415103b5984"
+        },
+        {
+          "path": "model-00002-of-00002.safetensors",
+          "bytes": 3027948688,
+          "sha256": "dc1afb09bfc4387ee17bddf2cb50854c7de9501966e1a5b21b03516184e36e7a"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-4B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2560,
+        "hiddenLayers": 36,
+        "vocabSize": 146260
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "RefalMachine/RuadaptQwen3-4B-Instruct",
+      "revision": "684adcaf873c3befcac5629804151a606a1b2d57",
+      "downloads": 596,
+      "parameterCount": 4007937536,
+      "weightBytes": 8015920880,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00002.safetensors",
+          "bytes": 4987972192,
+          "sha256": "894b1e4f383c540e47601ed5a0a30a689141cdc6a9e85a64f04103b9676b9cd4"
+        },
+        {
+          "path": "model-00002-of-00002.safetensors",
+          "bytes": 3027948688,
+          "sha256": "dd21988581cbc6a7fa764eb51b7b9380c0caaa65c5a9849d0eb3b539ca0dc731"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-4B-Instruct-2507"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "previouslyProfiledRevision": "684adcaf873c3befcac5629804151a606a1b2d57",
+      "sameAsPreviouslyProfiled": true,
+      "compact": false,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2560,
+        "hiddenLayers": 36,
+        "vocabSize": 146260
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "RefalMachine/RuadaptQwen3-8B-Hybrid",
+      "revision": "cf4e4ed309aefc330be7e6de85102f5dc4c9c623",
+      "downloads": 6967,
+      "parameterCount": 8144237568,
+      "weightBytes": 16288521232,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00004.safetensors",
+          "bytes": 4956423312,
+          "sha256": "ad0cea44edc56d9e1ee114817ab284a51f9f873364a1e6101de9d102949394c7"
+        },
+        {
+          "path": "model-00002-of-00004.safetensors",
+          "bytes": 4915960368,
+          "sha256": "6199bd2e85019e96af946b3786d7866374398e6de207bdc1944c49c4977efde9"
+        },
+        {
+          "path": "model-00003-of-00004.safetensors",
+          "bytes": 4915960368,
+          "sha256": "74ba0fd3ae6c94b334dab2d4463d885e899a2d21a40a381d570eacd2ba0e8c3c"
+        },
+        {
+          "path": "model-00004-of-00004.safetensors",
+          "bytes": 1500177184,
+          "sha256": "d82ccad826f604e0dd9ef44a2c88610172495d232c0e718c85d18c0c732e9105"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-8B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 4096,
+        "hiddenLayers": 36,
+        "vocabSize": 146260
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "RefalMachine/ruadapt_qwen2.5_7B_ext_u48_instruct",
+      "revision": "845d58fc59997f82e7fd7909713b73c2605081ba",
+      "downloads": 716,
+      "parameterCount": 7580013056,
+      "weightBytes": 15160064952,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00004.safetensors",
+          "bytes": 4977848024,
+          "sha256": "92580e0dccd8e993b524c324209861f91a5ca901e6a82af0e6e6e98fdad9a782"
+        },
+        {
+          "path": "model-00002-of-00004.safetensors",
+          "bytes": 4991495856,
+          "sha256": "d93fd2e574df32e698cab570d81de3a67f797c17fcf169703d2435a0bb6ea154"
+        },
+        {
+          "path": "model-00003-of-00004.safetensors",
+          "bytes": 4136329648,
+          "sha256": "ded2e882696debc87f7ad84b84c48865a101b78d72396dcebaef3d9219ae3753"
+        },
+        {
+          "path": "model-00004-of-00004.safetensors",
+          "bytes": 1054391424,
+          "sha256": "78d4361516b998390c98d9e8160d6a7950700fc492d9d5cefea8762f9de6947f"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [
+        "ru"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 3584,
+        "hiddenLayers": 28,
+        "vocabSize": 147097
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/QVikhr-3-4B-Instruction",
+      "revision": "b2a4232a1f3e5833ee0c48450374201f4a07eab7",
+      "downloads": 548,
+      "parameterCount": 4022468096,
+      "weightBytes": 8044981592,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00002.safetensors",
+          "bytes": 4967215128,
+          "sha256": "f1e57d3fd11dfd0c76e748c06efccfbb77d839ce239089668622f9a5ee1af913"
+        },
+        {
+          "path": "model-00002-of-00002.safetensors",
+          "bytes": 3077766464,
+          "sha256": "6c949496952f215e078360dd95de8424d8cc1e5c53da6b096f13c6a8738fe0c0"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-4B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2560,
+        "hiddenLayers": 36,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "Vikhrmodels/QVikhr-3-8B-Instruction",
+      "revision": "41fcbccb2804cd696858e65e9b922e5462572042",
+      "downloads": 590,
+      "parameterCount": 8190735360,
+      "weightBytes": 16381516424,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00004.safetensors",
+          "bytes": 4902257592,
+          "sha256": "85a36cf9c2467e244e899d42afd4318d66440a9308e731cdae8a1c26801aa55f"
+        },
+        {
+          "path": "model-00002-of-00004.safetensors",
+          "bytes": 4915960224,
+          "sha256": "c98f7892bd506fb97d9588e5b7a5f8ddee21c53ecf6f6919789af8cf5b1aebda"
+        },
+        {
+          "path": "model-00003-of-00004.safetensors",
+          "bytes": 4983068360,
+          "sha256": "6a0e9e51f5686a6f6825a3ec7552e3f285306ba9266444bf790fa7da0ee4201b"
+        },
+        {
+          "path": "model-00004-of-00004.safetensors",
+          "bytes": 1580230248,
+          "sha256": "228a6d13705822a8f92c926292f3deace38d8ed32cf4f2a8d024364441d89368"
+        }
+      ],
+      "modelType": "qwen3",
+      "architectures": [
+        "Qwen3ForCausalLM"
+      ],
+      "language": [
+        "ru",
+        "en"
+      ],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3-8B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 4096,
+        "hiddenLayers": 36,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "agapeeva/qwen2.5-1.5b-instruct-abliterated-ru",
+      "revision": "6ac2996be62ee39bd405b6a96bffb561afce0ccb",
+      "downloads": 30,
+      "parameterCount": 1543714304,
+      "weightBytes": 3087466808,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3087466808,
+          "sha256": "4e545e977ae6b64752cf69600713a9f280b079138330b8870e5642017b182b0d"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 1536,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "amirdianov/Qwen2.5-1.5B-Instruct-abliterated-ru",
+      "revision": "efeb530e2365c9acb2820a78139c39c70134c7b6",
+      "downloads": 74,
+      "parameterCount": 1543714304,
+      "weightBytes": 3087466808,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 3087466808,
+          "sha256": "a6f71f14ee0cbad0d703eb87b88235549b861245b9ff91114d373b11adf5555c"
+        }
+      ],
+      "modelType": "qwen2",
+      "architectures": [
+        "Qwen2ForCausalLM"
+      ],
+      "language": [],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 1536,
+        "hiddenLayers": 28,
+        "vocabSize": 151936
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "google/gemma-4-12B-it",
+      "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+      "downloads": 1811844,
+      "parameterCount": 11959730224,
+      "weightBytes": 23919549408,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 23919549408,
+          "sha256": "5a84cb313260ac447237b890387116dfa8682e49a6b44bc585ae8353abbff18d"
+        }
+      ],
+      "modelType": "gemma4_unified",
+      "architectures": [
+        "Gemma4UnifiedForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "google/gemma-4-12B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 3840,
+        "hiddenLayers": 48,
+        "vocabSize": 262144
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "google/gemma-4-26B-A4B-it",
+      "revision": "4d7ae4984b7db7de8f8457170b3f1a419ee76d52",
+      "downloads": 7070055,
+      "parameterCount": 25805936206,
+      "weightBytes": 51612009916,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00002.safetensors",
+          "bytes": 49907246508,
+          "sha256": "1127684971bbca40465435a5cad69d67ad603bf5e61c6dfd5561fae4a3bcfdb3"
+        },
+        {
+          "path": "model-00002-of-00002.safetensors",
+          "bytes": 1704763408,
+          "sha256": "aab47033e1e8a492ef8e581efae1cf36478d0433567e7729b3c1728bc8970db7"
+        }
+      ],
+      "modelType": "gemma4",
+      "architectures": [
+        "Gemma4ForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "google/gemma-4-26B-A4B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2816,
+        "hiddenLayers": 30,
+        "vocabSize": 262144
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "google/gemma-4-31B-it",
+      "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "downloads": 8466559,
+      "parameterCount": 31273088876,
+      "weightBytes": 62546338248,
+      "weightFiles": [
+        {
+          "path": "model-00001-of-00002.safetensors",
+          "bytes": 49784788364,
+          "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+        },
+        {
+          "path": "model-00002-of-00002.safetensors",
+          "bytes": 12761549884,
+          "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"
+        }
+      ],
+      "modelType": "gemma4",
+      "architectures": [
+        "Gemma4ForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "google/gemma-4-31B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 5376,
+        "hiddenLayers": 60,
+        "vocabSize": 262144
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "google/gemma-4-E2B-it",
+      "revision": "3e22461f65e89153144f8adb70e3b8c2cc9845a7",
+      "downloads": 3152446,
+      "parameterCount": 5123178051,
+      "weightBytes": 10246621918,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 10246621918,
+          "sha256": "2db5482b20d746879bb3ef79b5203e9075a2e2b98f54ec7c2f281c1477ddc550"
+        }
+      ],
+      "modelType": "gemma4",
+      "architectures": [
+        "Gemma4ForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "google/gemma-4-E2B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1536,
+        "hiddenLayers": 35,
+        "vocabSize": 262144
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "google/gemma-4-E4B-it",
+      "revision": "ee0ef6023621cff504d758262d4e04895a5af4a2",
+      "downloads": 4078212,
+      "parameterCount": 7996156490,
+      "weightBytes": 15992595884,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 15992595884,
+          "sha256": "cfbd3d2f1cd71bd471c37fe2bf8546d5028d41e5736f64e1ca6c6b8893125503"
+        }
+      ],
+      "modelType": "gemma4",
+      "architectures": [
+        "Gemma4ForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "google/gemma-4-E4B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 2560,
+        "hiddenLayers": 42,
+        "vocabSize": 262144
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "litert-community/gemma-4-E2B-it-litert-lm",
+      "revision": "1caa527c1e88b55f046fcd8d2b4265606680663d",
+      "downloads": 1445248,
+      "parameterCount": 0,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "google/gemma-4-E2B-it"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": false,
+      "mlcArchitectureAvailable": false,
+      "eligibleForScreening": false,
+      "config": {},
+      "tokenizerFiles": [
+        "chat_template.jinja"
+      ]
+    },
+    {
+      "id": "modularai/SmolLM-135M-Instruct-FP32",
+      "revision": "1ade67aacf72511c94c55529056f7222c1c0b586",
+      "downloads": 181245,
+      "parameterCount": 134515008,
+      "weightBytes": 538090408,
+      "weightFiles": [
+        {
+          "path": "model.safetensors",
+          "bytes": 538090408,
+          "sha256": "124208d30f92e090e2f668b9cded78ed566e0006f975b1519872b5fc5dc453e1"
+        }
+      ],
+      "modelType": "llama",
+      "architectures": [
+        "LlamaForCausalLM"
+      ],
+      "language": [],
+      "gated": false,
+      "hasOriginalSafetensors": true,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": true,
+      "config": {
+        "hiddenSize": 576,
+        "hiddenLayers": 30,
+        "vocabSize": 49152
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "generation_config.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    },
+    {
+      "id": "unsloth/Qwen3.5-0.8B",
+      "revision": "23c69c53358a07516b5827588b3fdb12ae78fd65",
+      "downloads": 84989,
+      "parameterCount": 873438784,
+      "weightBytes": 0,
+      "weightFiles": [],
+      "modelType": "qwen3_5",
+      "architectures": [
+        "Qwen3_5ForConditionalGeneration"
+      ],
+      "language": [],
+      "license": "apache-2.0",
+      "baseModels": [
+        "Qwen/Qwen3.5-0.8B"
+      ],
+      "gated": false,
+      "hasOriginalSafetensors": false,
+      "adapterOnly": false,
+      "hasTokenizerConfig": true,
+      "sameAsPreviouslyProfiled": false,
+      "compact": true,
+      "mlcArchitectureAvailable": true,
+      "eligibleForScreening": false,
+      "config": {
+        "hiddenSize": 1024,
+        "hiddenLayers": 24,
+        "vocabSize": 248320
+      },
+      "tokenizerFiles": [
+        "chat_template.jinja",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "id": "ikkiren/qwen-2.5-1.5b-instruct-ru-lora-r32-compose-12k",
+      "error": "HTTP 401: https://huggingface.co/ikkiren/qwen-2.5-1.5b-instruct-ru-lora-r32-compose-12k/resolve/5c7b2293db7044df2f8c776fccab5f046111fbde/config.json"
+    }
+  ],
+  "note": "Metadata and architecture screening only; no quality, WebGPU or 4 GB compatibility claim."
+}
