@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "key": "qvikhr3-17",
+  "model": "Vikhrmodels/QVikhr-3-1.7B-Instruction-noreasoning",
+  "revision": "ff7a23e896ebcd28825854b31cee34dfdaedd232",
+  "license": "apache-2.0",
+  "reasonForSelection": "Russian instruction-tuned non-thinking fallback; larger than the primary 0.5–0.6B targets.",
+  "complete": true,
+  "execution": {
+    "runUrl": "https://github.com/krokodil22/test-ai/actions/runs/40669104483",
+    "commit": "69e64b2be230e6223bc6a8ac1226cb96b7a99901"
+  },
+  "results": [
+    {
+      "profile": "diagnostics",
+      "cases": 6,
+      "report": "diagnostics.json"
+    },
+    {
+      "profile": "production",
+      "cases": 7,
+      "report": "production.json"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "config.json",
+      "bytes": 727,
+      "sha256": "4be0e512dfb91b3cd859d47d3a26a2c679c3010924de04b046997ae8bd798fb0"
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 214,
+      "sha256": "81051cd3f6e77013827148d0b8a6ead93f8ac390d5ab805f849199f0af6a08db"
+    },
+    {
+      "path": "special_tokens_map.json",
+      "bytes": 613,
+      "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 11422654,
+      "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 9719,
+      "sha256": "e2305bdeaefc4d88ce90cfd568c84855009acc79aecd947308db0f0b97a4fe3f"
+    },
+    {
+      "path": "model.safetensors",
+      "bytes": 3441185608,
+      "sha256": "8c18861c5c1eb26003dead027e2a723c4fe63f1bf16406db6c5a4c2fc4941742"
+    }
+  ]
+}

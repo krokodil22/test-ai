@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "key": "zarya-orthrus-06",
+  "model": "ai-forever/ZaryaOrthrus-0.6B",
+  "revision": "6c93071b27ab0d2061007dda0416f0439ed4d7df",
+  "license": "mit",
+  "reasonForSelection": "Small Russian/English MIT model; inspect custom OrthrusLM checkpoint compatibility before judging quality.",
+  "complete": false,
+  "execution": {
+    "runUrl": "https://github.com/krokodil22/test-ai/actions/runs/40669104483",
+    "commit": "69e64b2be230e6223bc6a8ac1226cb96b7a99901"
+  },
+  "results": [],
+  "sourceFiles": [
+    {
+      "path": "config.json",
+      "bytes": 1533,
+      "sha256": "6de93bb546e5031a2a1f84d3704eca990c8f19b844ed0ebdb87c921f1533f1fd"
+    },
+    {
+      "path": "chat_template.jinja",
+      "bytes": 4168,
+      "sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8"
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 204,
+      "sha256": "40597494cd458007f25bafbf97925d2abdc3dc7e076fa6d83e787e6fcf218301"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 11422843,
+      "sha256": "5fcb0e1d503d2b3d47ecf2e4d3acc9b1237888193adb640efaabafba6a7cdf37"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 470,
+      "sha256": "75739ee66e576c03e21968625fb9c0a8a618d02b3b6ce2ea6a0db41bc70819cb"
+    },
+    {
+      "path": "model.safetensors",
+      "bytes": 1544491184,
+      "sha256": "c4c18aa39cfabe07cf8b6d2cfdca53f8bffcb1f9abbacba1320e6442893babe3"
+    }
+  ],
+  "failure": {
+    "stage": "diagnostics",
+    "message": "diagnostics: exit 1\n`torch_dtype` is deprecated! Use `dtype` instead!\n\rLoading weights:   0%|          | 0/310 [00:00<?, ?it/s]\rLoading weights:  54%|█████▍    | 168/310 [00:00<00:00, 1678.96it/s]\rLoading weights: 100%|██████████| 310/310 [00:00<00:00, 1514.01it/s]\n\u001b[1mQwen3ForCausalLM LOAD REPORT\u001b[0m from: /home/runner/work/test-ai/test-ai/.cache/reference/compact-zarya-orthrus-06\nKey                                                | Status     |  | \n---------------------------------------------------+------------+--+-\nmodel.layers.{0...27}.self_attn.q_norm_diff.weight | UNEXPECTED |  | \nmodel.layers.{0...27}.self_attn.v_proj_diff.weight | UNEXPECTED |  | \nmodel.layers.{0...27}.self_attn.o_proj_diff.weight | UNEXPECTED |  | \nmodel.layers.{0...27}.self_attn.k_norm_diff.weight | UNEXPECTED |  | \nmodel.layers.{0...27}.self_attn.q_proj_diff.weight | UNEXPECTED |  | \nmodel.layers.{0...27}.self_attn.k_proj_diff.weight | UNEXPECTED |  | \n\n\u001b[3mNotes:\n- UNEXPECTED\u001b[3m\t:can be ignored when loading from different task/architecture; not ok if you expect identical arch.\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/test-ai/test-ai/scripts/run-reference.py\", line 38, in <module>\n    raise RuntimeError(\"Checkpoint differs from the native model implementation: \" + json.dumps(loading_info))\n                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/json/__init__.py\", line 231, in dumps\n    return _default_encoder.encode(obj)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/json/encoder.py\", line 200, in encode\n    chunks = self.iterencode(o, _one_shot=True)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/json/encoder.py\", line 258, in iterencode\n    return _iterencode(o, 0)\n           ^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/json/encoder.py\", line 180, in default\n    raise TypeError(f'Object of type {o.__class__.__name__} '\nTypeError: Object of type set is not JSON serializable\n"
+  }
+}
