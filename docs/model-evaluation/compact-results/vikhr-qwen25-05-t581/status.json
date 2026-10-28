@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "key": "vikhr-qwen25-05-t581",
+  "model": "Vikhrmodels/Vikhr-Qwen-2.5-0.5b-Instruct",
+  "revision": "9f827ac4ff36bed1fc6a6d5a41148e2bebb2301e",
+  "license": "apache-2.0",
+  "reasonForSelection": "Cross-version control of unexpected tiny-model failures; validate checkpoint and tied embedding loading.",
+  "complete": true,
+  "execution": {
+    "runUrl": "https://github.com/krokodil22/test-ai/actions/runs/40670886164",
+    "commit": "01338bb1030beebd82f899d55b44b45b95f64186"
+  },
+  "results": [
+    {
+      "profile": "diagnostics",
+      "cases": 6,
+      "report": "diagnostics.json"
+    },
+    {
+      "profile": "production",
+      "cases": 7,
+      "report": "production.json"
+    }
+  ],
+  "sourceFiles": [
+    {
+      "path": "config.json",
+      "bytes": 730,
+      "sha256": "13bc054c05bce6aa70eb35ba885f9690c50c1a8f5461bf3b9f52a99127d10ede"
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 242,
+      "sha256": "618e17516628ef1afd77a17918308e3c0c1e63feb90e89a87197e4b465430dd0"
+    },
+    {
+      "path": "special_tokens_map.json",
+      "bytes": 613,
+      "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd"
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 11421896,
+      "sha256": "9c5ae00e602b8860cbd784ba82a8aa14e8feecec692e7076590d014d7b7fdafa"
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 7306,
+      "sha256": "7e88129d9769a0b14b1587a7d5e829fe93ac0e1511636471fdfc0811951418e6"
+    },
+    {
+      "path": "model.safetensors",
+      "bytes": 987611904,
+      "sha256": "79c6fe7ea0725279a03f47f84179c12d13c26ef8dac7ef5b3422f275959bc495"
+    }
+  ]
+}
