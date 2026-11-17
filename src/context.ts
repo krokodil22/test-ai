@@ -39,7 +39,7 @@ export function buildContext(history: Message[]): { messages: PromptMessage[]; d
   for (const message of history) {
     const { role, status } = message;
     const content = messageText(message);
-    if (!content || status === 'error') continue;
+    if (!content || status === 'error' || status === 'incomplete') continue;
     // An unanswered/failed old question must not create consecutive user roles.
     if (role === 'user' && candidates.at(-1)?.role === 'user') candidates.pop();
     if (role === 'assistant' && candidates.at(-1)?.role !== 'user') continue;

@@ -10,7 +10,7 @@ export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  status?: 'complete' | 'stopped' | 'error' | 'length';
+  status?: 'complete' | 'stopped' | 'error' | 'length' | 'incomplete';
   attachment?: Attachment;
   outputFormat?: 'xlsx';
 }

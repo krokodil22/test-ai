@@ -19,8 +19,8 @@ describe('bounded context', () => {
   it('rejects an oversized newest message instead of overflowing GPU context', () => {
     expect(() => buildContext([user('я'.repeat(5000))])).toThrow('слишком длинное');
   });
-  it('never feeds an errored assistant response into another generation', () => {
-    const result = buildContext([user('вопрос'), { ...assistant('ошибка'), status: 'error' }, user('ещё вопрос')]);
+  it.each(['error', 'incomplete'] as const)('never feeds a %s assistant response into another generation', status => {
+    const result = buildContext([user('вопрос'), { ...assistant('ошибка'), status }, user('ещё вопрос')]);
     expect(result.messages.map(message => message.role)).toEqual(['system', 'user']);
     expect(result.messages.some(message => message.content === 'ошибка')).toBe(false);
   });

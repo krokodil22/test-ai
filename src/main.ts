@@ -198,8 +198,8 @@ function renderMessages(streaming = false) {
         }
       }
     }
-    const labels = { stopped: 'Ответ остановлен', length: 'Достигнут предел ответа', error: 'Ответ прерван из-за ошибки', complete: '' };
-    if (message.status && labels[message.status]) {
+    const labels = { stopped: 'Ответ остановлен', length: 'Достигнут предел ответа', error: 'Ответ прерван из-за ошибки', incomplete: 'Ответ не завершён. Повторите запрос.', complete: '' };
+    if (message !== activeResponse && message.status && labels[message.status]) {
       const label = document.createElement('span');
       label.textContent = labels[message.status];
       meta.append(label);
@@ -398,7 +398,7 @@ function submit() {
   question.id = crypto.randomUUID();
   chat.messages.push(question);
   const requestMessages = chat.messages.map(message => ({ ...message }));
-  activeResponse = { id: crypto.randomUUID(), role: 'assistant', content: '' };
+  activeResponse = { id: crypto.randomUUID(), role: 'assistant', content: '', status: 'incomplete' };
   generationId = activeResponse.id;
   chat.messages.push(activeResponse);
   state = 'generating';

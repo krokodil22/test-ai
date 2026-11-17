@@ -85,6 +85,28 @@ test('creates downloadable Excel and CSV files from a completed answer, includin
   const csv = await csvDownload;
   expect(await readFile((await csv.path())!, 'utf8')).toContain('"Книга";"250"');
 });
+test('does not export an incomplete table restored after a browser crash or a length-limited answer', async ({ page, context }) => {
+  await resources(context);
+  await page.addInitScript(() => {
+    if (localStorage.getItem('ryadom:chats:v1')) return;
+    localStorage.setItem('ryadom:chats:v1', JSON.stringify({ activeId: 'crash', conversations: [{ id: 'crash', title: 'Незавершённая таблица', createdAt: 1, messages: [
+      { id: 'q', role: 'user', content: 'Создай таблицу', outputFormat: 'xlsx' },
+      { id: 'a', role: 'assistant', content: '| A | B |\n| --- | --- |\n| 1 | 2 |', status: 'incomplete' },
+    ] }] }));
+  });
+  await page.goto('./');
+  await expect(page.locator('.message-assistant .message-meta')).toContainText('не завершён');
+  await expect(page.getByRole('button', { name: 'Скачать Excel' })).toHaveCount(0);
+  await page.locator('#quick-start').click();
+  await expect(page.locator('#engine-status')).toContainText('Готов к разговору');
+  await page.locator('#new-chat').click();
+  await page.locator('#excel-output').check();
+  await page.locator('#prompt').fill('[length] Создай таблицу.');
+  await page.locator('#send').click();
+  await expect(page.locator('#stop')).toBeHidden();
+  await expect(page.locator('.message-assistant .message-meta')).toContainText('предел ответа');
+  await expect(page.getByRole('button', { name: 'Скачать Excel' })).toHaveCount(0);
+});
 test('shows context truncation, rejects invalid uploads, removes drafts and clears stored file data', async ({ page, context }) => {
   await resources(context); await start(page);
   await page.locator('#chat-file').setInputFiles({ name: 'large.txt', mimeType: 'text/plain', buffer: Buffer.from('Данные строки.\n'.repeat(1000)) });
