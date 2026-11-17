@@ -26,10 +26,12 @@
     "runtime:verify:light": "node scripts/verify-light-model-runtime.mjs"
   },
   "dependencies": {
+    "@e965/xlsx": "0.20.3",
     "@huggingface/transformers": "3.8.1",
     "@mlc-ai/web-llm": "0.2.86",
     "@noble/hashes": "2.0.1",
     "dompurify": "3.4.17",
+    "fflate": "0.8.3",
     "highlight.js": "11.11.1",
     "marked": "18.1.1"
   },

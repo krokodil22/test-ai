@@ -7,6 +7,11 @@ import { isModelCached, removeModelCache } from './cache';
 import { modelDelivery } from './model-delivery';
 import { memoryModeControl } from './memory-mode';
 import { markdown } from './markdown';
+import { buildContext, fitAttachment } from './context';
+import { FILE_ACCEPT } from './files';
+import type { Attachment } from './files';
+import { readAttachment, downloadTable } from './file-client';
+import { tablesFromMarkdown } from './tables';
 import { readHistory, saveHistory, deleteHistory, MAX_CHATS, MAX_MESSAGES, HISTORY_KEY } from './storage';
 import type { History } from './storage';
 import type { Message, WorkerEvent, WorkerRequest } from './types';
@@ -58,6 +63,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <div id="notice" class="notice" role="status" hidden></div>
       <div id="generation-status" class="generation-status" role="status" hidden></div>
       <form id="composer" class="composer">
+        <div class="file-controls"><button id="attach-file" class="file-button" type="button">${icon('plus')} Загрузить файл</button><input id="chat-file" type="file" accept="${FILE_ACCEPT}" hidden><label class="excel-toggle"><input id="excel-output" type="checkbox"> Таблица Excel</label></div>
+        <div id="file-preview" class="file-preview" hidden><div class="file-preview-heading"><strong id="file-name"></strong><button id="remove-file" class="file-button" type="button">Убрать</button></div><p id="file-status" role="status"></p><details id="file-details"><summary>Данные, которые получит модель</summary><pre id="file-text"></pre></details></div>
+        <p class="file-help">XLSX, CSV, TXT, MD, JSON · один файл до 2 МБ · только на устройстве</p>
         <label class="sr-only" for="prompt">Сообщение для ИИ</label>
         <textarea id="prompt" rows="1" maxlength="${MAX_INPUT_CHARS}" placeholder="Какая мысль у вас сегодня?" aria-describedby="input-help"></textarea>
         <div class="composer-bottom"><span id="engine-status" class="engine-status"><span class="status-dot"></span> Модель не запущена</span><span id="character-count" class="character-count"></span><button id="cancel-inline" class="stop-button" type="button" hidden>Отменить</button><button id="stop" class="stop-button" type="button" hidden><span></span> Остановить</button><button id="send" class="send-button" type="submit" aria-label="Отправить" disabled>${icon('arrow')}</button></div>
@@ -97,6 +105,9 @@ let toastTimer: ReturnType<typeof setTimeout> | undefined;
 let noticeTimer: ReturnType<typeof setTimeout> | undefined;
 let persistWarning = false;
 let initialError = '';
+let pendingAttachment: Attachment | undefined;
+let fileRead: AbortController | undefined;
+let filePreviewError = '';
 try { history = readHistory(); } catch { initialError = 'Не удалось прочитать локальную историю. Можно продолжить без неё или удалить повреждённые данные в настройках.'; }
 
 const current = () => history.conversations.find(chat => chat.id === history.activeId);
@@ -136,7 +147,7 @@ function renderChats() {
     button.querySelector('span')!.textContent = chat.title;
     button.title = chat.title;
     if (chat.id === history.activeId) button.setAttribute('aria-current', 'true');
-    button.addEventListener('click', () => { history.activeId = chat.id; persist(); renderChats(); renderMessages(); closeSidebar(); });
+    button.addEventListener('click', () => { clearDraftFile(); history.activeId = chat.id; persist(); renderChats(); renderMessages(); updateUi(); closeSidebar(); });
     list.append(button);
   }
 }
@@ -165,6 +176,27 @@ function renderMessages(streaming = false) {
       copy.innerHTML = `${icon('copy')} Копировать`;
       copy.addEventListener('click', () => void copyText(message.content));
       meta.append(copy);
+      if (!message.status || message.status === 'complete') {
+        const tables = tablesFromMarkdown(message.content);
+        tables.forEach((table, index) => {
+          for (const format of ['xlsx', 'csv'] as const) {
+            const download = document.createElement('button');
+            download.className = 'download-table';
+            download.textContent = `${format === 'xlsx' ? 'Скачать Excel' : 'CSV'}${tables.length > 1 ? ` · ${index + 1}` : ''}`;
+            download.addEventListener('click', async () => {
+              download.disabled = true;
+              try { await downloadTable(table, format, `Тетриканец — таблица ${index + 1}`); }
+              catch (error) { notice(error instanceof Error ? error.message : 'Не удалось создать файл.', true); }
+              finally { download.disabled = false; }
+            });
+            meta.append(download);
+          }
+        });
+        const question = messages[messages.indexOf(message) - 1];
+        if (question?.outputFormat === 'xlsx' && !tables.length) {
+          const hint = document.createElement('span'); hint.textContent = 'Модель не создала таблицу для скачивания. Уточните запрос.'; meta.append(hint);
+        }
+      }
     }
     const labels = { stopped: 'Ответ остановлен', length: 'Достигнут предел ответа', error: 'Ответ прерван из-за ошибки', complete: '' };
     if (message.status && labels[message.status]) {
@@ -177,7 +209,17 @@ function renderMessages(streaming = false) {
   if (shouldScroll) scrollArea.scrollTop = scrollArea.scrollHeight;
 }
 function renderContent(element: HTMLElement, message: Message) {
-  if (message.role === 'user') { element.textContent = message.content; return; }
+  if (message.role === 'user') {
+    element.textContent = message.content;
+    if (message.outputFormat === 'xlsx') { const label = document.createElement('p'); label.className = 'file-help'; label.textContent = 'Формат ответа: таблица Excel'; element.append(label); }
+    if (message.attachment) {
+      const details = document.createElement('details'); details.className = 'message-attachment';
+      const summary = document.createElement('summary'); summary.textContent = `${message.attachment.name} · ${message.attachment.truncated ? 'фрагмент файла' : 'данные файла'}`;
+      const pre = document.createElement('pre'); pre.textContent = message.attachment.text;
+      details.append(summary, pre); element.append(details);
+    }
+    return;
+  }
   if (!message.content && message === activeResponse) {
     element.innerHTML = '<span class="thinking-dots" aria-label="Готовлю ответ"><i></i><i></i><i></i></span>';
     return;
@@ -200,7 +242,10 @@ function updateUi() {
   memory.update(state !== 'idle');
   $<HTMLSelectElement>('model-select').disabled = state === 'checking' || state === 'loading' || busy;
   textarea.maxLength = MAX_INPUT_CHARS;
-  sendButton.disabled = state !== 'ready' || !textarea.value.trim();
+  refreshFilePreview();
+  sendButton.disabled = state !== 'ready' || !!fileRead || !!filePreviewError || (!textarea.value.trim() && !pendingAttachment);
+  $<HTMLButtonElement>('attach-file').disabled = busy || !!fileRead;
+  $<HTMLInputElement>('excel-output').disabled = busy;
   sendButton.hidden = busy;
   $('stop').hidden = !busy;
   $('new-chat').toggleAttribute('disabled', busy);
@@ -328,13 +373,20 @@ function onWorkerEvent(event: WorkerEvent) {
 function newChat() {
   if (state === 'generating') return;
   history.activeId = null;
+  clearDraftFile();
+  $<HTMLInputElement>('excel-output').checked = false;
   textarea.value = '';
   resizeInput();
   persist(); renderChats(); renderMessages(); closeSidebar(); textarea.focus();
 }
 function submit() {
-  const content = textarea.value.trim();
-  if (state !== 'ready' || !content) return;
+  if (state !== 'ready' || fileRead || (!textarea.value.trim() && !pendingAttachment)) return;
+  let question: Message;
+  try {
+    question = fitAttachment(draftMessage());
+    buildContext([...(current()?.messages || []), question]);
+  } catch (error) { notice(error instanceof Error ? error.message : 'Не удалось подготовить контекст.', true); return; }
+  const content = question.content;
   let chat = current();
   if (!chat) {
     if (history.conversations.length >= MAX_CHATS) { notice('Достигнут предел: 30 чатов. Удалите историю в настройках, чтобы начать заново.', true); return; }
@@ -343,12 +395,14 @@ function submit() {
     history.activeId = chat.id;
   }
   if (chat.messages.length >= MAX_MESSAGES - 1) { notice('В этом чате уже 500 сообщений. Начните новый чат.', true); return; }
-  chat.messages.push({ id: crypto.randomUUID(), role: 'user', content });
+  question.id = crypto.randomUUID();
+  chat.messages.push(question);
   const requestMessages = chat.messages.map(message => ({ ...message }));
   activeResponse = { id: crypto.randomUUID(), role: 'assistant', content: '' };
   generationId = activeResponse.id;
   chat.messages.push(activeResponse);
   state = 'generating';
+  clearDraftFile();
   textarea.value = '';
   resizeInput();
   $('notice').hidden = true;
@@ -360,6 +414,46 @@ function resizeInput() {
   textarea.style.height = `${Math.min(160, textarea.scrollHeight)}px`;
   updateUi();
 }
+function draftMessage(): Message {
+  const excel = $<HTMLInputElement>('excel-output').checked;
+  return { id: '', role: 'user', content: textarea.value.trim() || (excel ? 'Составь небольшую таблицу по данным файла.' : 'Кратко опиши данные файла.'),
+    ...(pendingAttachment ? { attachment: pendingAttachment } : {}), ...(excel ? { outputFormat: 'xlsx' as const } : {}) };
+}
+function clearDraftFile() {
+  fileRead?.abort(); fileRead = undefined; pendingAttachment = undefined; filePreviewError = '';
+  $<HTMLInputElement>('chat-file').value = '';
+  $('file-preview').hidden = true;
+}
+function refreshFilePreview() {
+  filePreviewError = '';
+  $('file-preview').hidden = !pendingAttachment && !fileRead;
+  if (fileRead) {
+    $('file-name').textContent = 'Читаем файл…'; $('file-status').textContent = 'Обработка в браузере. Файл не отправляется на сервер.'; $('file-details').hidden = true; return;
+  }
+  if (!pendingAttachment) return;
+  $('file-name').textContent = pendingAttachment.name;
+  $('file-details').hidden = false;
+  try {
+    const fitted = fitAttachment(draftMessage()).attachment!;
+    $('file-text').textContent = fitted.text;
+    $('file-status').textContent = `${fitted.truncated ? 'Внимание: модель получит только показанный фрагмент, а не весь файл. Для анализа остальных строк загрузите их отдельно. ' : 'Данные помещаются в контекст. '}${fitted.note}`;
+  } catch (error) {
+    filePreviewError = error instanceof Error ? error.message : 'Недостаточно места в контексте.';
+    $('file-status').textContent = filePreviewError; $('file-text').textContent = '';
+  }
+}
+$('attach-file').addEventListener('click', () => $<HTMLInputElement>('chat-file').click());
+$('chat-file').addEventListener('change', async () => {
+  const file = $<HTMLInputElement>('chat-file').files?.[0];
+  if (!file || state === 'generating') return;
+  fileRead?.abort(); pendingAttachment = undefined;
+  const controller = new AbortController(); fileRead = controller; updateUi();
+  try { const attachment = await readAttachment(file, controller.signal); if (fileRead === controller) pendingAttachment = attachment; }
+  catch (error) { if (fileRead === controller && !controller.signal.aborted) notice(error instanceof Error ? error.message : 'Не удалось прочитать файл.', true); }
+  finally { if (fileRead === controller) { fileRead = undefined; $<HTMLInputElement>('chat-file').value = ''; updateUi(); } }
+});
+$('remove-file').addEventListener('click', () => { clearDraftFile(); updateUi(); });
+$('excel-output').addEventListener('change', updateUi);
 $('composer').addEventListener('submit', event => { event.preventDefault(); submit(); });
 textarea.addEventListener('input', resizeInput);
 textarea.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); submit(); } });
@@ -402,7 +496,7 @@ $('diagnostics-open').addEventListener('click', () => {
 settings.addEventListener('click', event => { if (event.target === settings) { const rect = settings.getBoundingClientRect(); const mouse = event as MouseEvent; if (mouse.clientX < rect.left || mouse.clientX > rect.right || mouse.clientY < rect.top || mouse.clientY > rect.bottom) settings.close(); } });
 $('delete-history').addEventListener('click', () => {
   if (state === 'generating' || !confirm('Удалить всю историю переписки в этом браузере? Модель останется в кеше.')) return;
-  try { deleteHistory(); history = { conversations: [], activeId: null }; renderChats(); renderMessages(); toast('Вся история удалена'); }
+  try { deleteHistory(); clearDraftFile(); history = { conversations: [], activeId: null }; renderChats(); renderMessages(); updateUi(); toast('Вся история удалена'); }
   catch { toast('Браузер запретил очистку истории'); }
 });
 $('delete-model').addEventListener('click', async () => {
@@ -428,7 +522,7 @@ window.addEventListener('storage', event => {
     stopWorker(); state = 'idle'; activeResponse = undefined; generationId = undefined;
     clearTimeout(renderTimer); renderTimer = undefined;
   }
-  try { history = readHistory(); renderChats(); renderMessages(); updateUi(); notice('История обновлена в другой вкладке.'); }
+  try { clearDraftFile(); history = readHistory(); renderChats(); renderMessages(); updateUi(); notice('История обновлена в другой вкладке.'); }
   catch { notice('Не удалось прочитать историю из другой вкладки.', true); }
 });
 

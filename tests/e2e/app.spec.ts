@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 import type { Page, BrowserContext, Request } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
+import * as XLSX from '@e965/xlsx';
+import { readFile } from 'node:fs/promises';
 import source from '../../scripts/model-source.json' with { type: 'json' };
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => { if (!localStorage.getItem('tetrikanets:memory-mode:v1')) localStorage.setItem('tetrikanets:memory-mode:v1', 'standard'); }); });
 import lowMemory from '../fixtures/low-memory-runtime.json' with { type: 'json' };
@@ -37,6 +39,74 @@ async function start(page: Page) {
   await page.locator('#load-model').click();
   await expect(page.locator('#engine-status')).toContainText('Готов к разговору');
 }
+test('reads an actual XLSX locally, sends its preview to inference and preserves the fragment in history', async ({ page, context }) => {
+  const requests = await resources(context);
+  await start(page);
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([['Адрес', 'Продажи'], ['Арбат', 125]]), 'Данные');
+  const bytes = XLSX.write(book, { type: 'buffer', bookType: 'xlsx' });
+  await page.locator('#chat-file').setInputFiles({ name: 'clients.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: bytes });
+  await expect(page.locator('#file-status')).toContainText('помещаются');
+  await page.locator('#file-details summary').click();
+  await expect(page.locator('#file-text')).toContainText('Арбат');
+  await page.locator('#prompt').fill('[file-echo] Опиши данные.');
+  await page.locator('#send').click();
+  await expect(page.locator('#file-preview')).toBeHidden();
+  await expect(page.locator('#stop')).toBeHidden();
+  await expect(page.locator('.message-assistant')).toContainText('движок получил данные файла: Арбат, 125');
+  await page.reload();
+  await page.locator('.message-attachment summary').click();
+  await expect(page.locator('.message-attachment pre')).toContainText('125');
+  for (const request of requests) {
+    expect(new URL(request.url()).origin).toBe('http://127.0.0.1:5174');
+    expect(request.method()).toBe('GET');
+    expect(request.postData()).toBeNull();
+    expect(request.url()).not.toContain('clients.xlsx');
+    expect(request.url()).not.toContain('Арбат');
+  }
+});
+test('creates downloadable Excel and CSV files from a completed answer, including after reload', async ({ page, context }) => {
+  await resources(context); await start(page);
+  await page.locator('#excel-output').check();
+  await page.locator('#prompt').fill('Составь таблицу товаров с ценами.');
+  await page.locator('#send').click();
+  await expect(page.locator('#stop')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Скачать Excel' })).toHaveCount(0);
+  await expect(page.locator('#stop')).toBeHidden();
+  const xlsxDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Скачать Excel', exact: true }).click();
+  const xlsx = await xlsxDownload;
+  expect(xlsx.suggestedFilename()).toMatch(/\.xlsx$/);
+  const book = XLSX.read(await readFile((await xlsx.path())!), { type: 'buffer' });
+  expect(XLSX.utils.sheet_to_json(book.Sheets['Таблица'], { header: 1 })).toEqual([['Товар', 'Цена'], ['Книга', 250], ['Тетрадь', 80]]);
+  await page.reload();
+  const csvDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'CSV', exact: true }).click();
+  const csv = await csvDownload;
+  expect(await readFile((await csv.path())!, 'utf8')).toContain('"Книга";"250"');
+});
+test('shows context truncation, rejects invalid uploads, removes drafts and clears stored file data', async ({ page, context }) => {
+  await resources(context); await start(page);
+  await page.locator('#chat-file').setInputFiles({ name: 'large.txt', mimeType: 'text/plain', buffer: Buffer.from('Данные строки.\n'.repeat(1000)) });
+  await expect(page.locator('#file-status')).toContainText('только показанный фрагмент');
+  await page.locator('#remove-file').click();
+  await expect(page.locator('#file-preview')).toBeHidden();
+  await page.locator('#chat-file').setInputFiles({ name: 'test.pdf', mimeType: 'application/pdf', buffer: Buffer.from('not pdf') });
+  await expect(page.locator('#notice')).toContainText('Поддерживаются');
+  await expect(page.locator('#file-preview')).toBeHidden();
+  await page.locator('#chat-file').setInputFiles({ name: 'broken.xlsx', mimeType: 'application/octet-stream', buffer: Buffer.from('not xlsx') });
+  await expect(page.locator('#notice')).toContainText('не файл .xlsx');
+  await page.locator('#chat-file').setInputFiles({ name: 'secret.txt', mimeType: 'text/plain', buffer: Buffer.from('Тестовые личные данные 5678') });
+  await expect(page.locator('#file-status')).toContainText('помещаются');
+  await page.locator('#send').click();
+  await expect(page.locator('#stop')).toBeHidden();
+  expect(await page.evaluate(() => localStorage.getItem('ryadom:chats:v1'))).toContain('5678');
+  await page.locator('#settings-open').click();
+  page.once('dialog', dialog => dialog.accept());
+  await page.locator('#delete-history').click();
+  expect(await page.evaluate(() => localStorage.getItem('ryadom:chats:v1'))).toBeNull();
+  expect(await page.evaluate(async () => (await caches.keys()).includes('webllm/model'))).toBe(true);
+});
 test('allows one model across tabs and releases its GPU lease without deleting the cache or history', async ({ page, context }) => {
   const requests = await resources(context);
   await start(page);

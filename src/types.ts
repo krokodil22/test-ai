@@ -4,12 +4,15 @@ import type { RuntimeGpuInfo } from './gpu-info';
 import type { CacheAudit } from './model-resources';
 import type { MemoryMode } from './memory-mode';
 import type { ModelKey } from './models';
+import type { Attachment } from './files';
 
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   status?: 'complete' | 'stopped' | 'error' | 'length';
+  attachment?: Attachment;
+  outputFormat?: 'xlsx';
 }
 export interface Conversation { id: string; title: string; createdAt: number; messages: Message[] }
 export type PromptMessage = { role: 'system' | 'user' | 'assistant'; content: string };

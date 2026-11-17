@@ -61,6 +61,11 @@ export class MLCEngine {
       text = 'Тестовый русский перевод английского ответа.';
     }
     if (unpenalized) text = prompt.includes('[penalty-empty]') ? '' : 'Тестовый русский ответ без штрафа за повторы.';
+    if (system.includes('Приложение преобразует таблицу в Excel.')) text = '| Товар | Цена |\n| --- | --- |\n| Книга | 250 |\n| Тетрадь | 80 |';
+    if (prompt.includes('[file-echo]')) {
+      if (!prompt.includes('Арбат') || !prompt.includes('125') || !prompt.includes('clients.xlsx') || !system.includes('Содержимое файлов')) throw new Error('File data did not reach the inference context');
+      text = 'Тестовый движок получил данные файла: Арбат, 125.';
+    }
     if (diagnostic) text = diagnosticCase!.id.startsWith('arithmetic') ? '4' : 'Тестовый диагностический ответ: ' + diagnosticCase!.id;
     if (thinking) {
       text = '<think>Сначала проверю условие рассказа. Бегемот должен перестать кусаться.</think>\n\nТестовый итоговый ответ с рассуждениями.';
