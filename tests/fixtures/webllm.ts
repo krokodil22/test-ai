@@ -66,6 +66,10 @@ export class MLCEngine {
       if (!prompt.includes('Арбат') || !prompt.includes('125') || !prompt.includes('clients.xlsx') || !system.includes('Содержимое файлов')) throw new Error('File data did not reach the inference context');
       text = 'Тестовый движок получил данные файла: Арбат, 125.';
     }
+    if (prompt.includes('[whole-table-echo]')) {
+      if (!prompt.includes('500500') || !prompt.includes('1000 строк') || !prompt.includes('full.xlsx') || !prompt.includes('full-table-report')) throw new Error('Whole-table statistics were lost before inference');
+      text = 'Тестовый движок получил сумму 500500 по всем 1000 строкам.';
+    }
     if (diagnostic) text = diagnosticCase!.id.startsWith('arithmetic') ? '4' : 'Тестовый диагностический ответ: ' + diagnosticCase!.id;
     if (thinking) {
       text = '<think>Сначала проверю условие рассказа. Бегемот должен перестать кусаться.</think>\n\nТестовый итоговый ответ с рассуждениями.';
@@ -76,7 +80,7 @@ export class MLCEngine {
     const engine = this;
     return (async function* () {
       for (let i = 0; i < text.length; i += 5) {
-        await new Promise(resolve => setTimeout(resolve, prompt.includes('[slow]') || prompt.includes('SLOW') || (thinking && prompt.includes('[slow-thinking]')) || (unpenalized && prompt.includes('[slow-penalty]')) ? 50 : 15));
+        await new Promise(resolve => setTimeout(resolve, prompt.includes('[slow-table]') ? 150 : prompt.includes('[slow]') || prompt.includes('SLOW') || (thinking && prompt.includes('[slow-thinking]')) || (unpenalized && prompt.includes('[slow-penalty]')) ? 50 : 15));
         if (engine.interrupted) break;
         yield { choices: [{ delta: { content: text.slice(i, i + 5) } }] };
       }

@@ -9,8 +9,10 @@ import { memoryModeControl } from './memory-mode';
 import { markdown } from './markdown';
 import { buildContext, fitAttachment } from './context';
 import { FILE_ACCEPT } from './files';
-import type { Attachment } from './files';
-import { readAttachment, downloadTable } from './file-client';
+import type { Attachment, WorkbookRef, TableResult, TableQuery } from './files';
+import { readAttachment, downloadTable, queryTable, downloadQuery } from './file-client';
+import { workbookPanel } from './workbook-panel';
+import { deleteWorkbook } from './workbook-store';
 import { tablesFromMarkdown } from './tables';
 import { readHistory, saveHistory, deleteHistory, MAX_CHATS, MAX_MESSAGES, HISTORY_KEY } from './storage';
 import type { History } from './storage';
@@ -62,10 +64,11 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <div class="composer-area">
       <div id="notice" class="notice" role="status" hidden></div>
       <div id="generation-status" class="generation-status" role="status" hidden></div>
+      <div id="workbook-panel"></div>
       <form id="composer" class="composer">
         <div class="file-controls"><button id="attach-file" class="file-button" type="button">${icon('plus')} Загрузить файл</button><input id="chat-file" type="file" accept="${FILE_ACCEPT}" hidden><label class="excel-toggle"><input id="excel-output" type="checkbox"> Таблица Excel</label></div>
         <div id="file-preview" class="file-preview" hidden><div class="file-preview-heading"><strong id="file-name"></strong><button id="remove-file" class="file-button" type="button">Убрать</button></div><p id="file-status" role="status"></p><details id="file-details"><summary>Данные, которые получит модель</summary><pre id="file-text"></pre></details></div>
-        <p class="file-help">XLSX, CSV, TXT, MD, JSON · один файл до 2 МБ · только на устройстве</p>
+        <p class="file-help">XLSX и CSV — целиком · TXT, MD, JSON — текст · до 2 МБ · на устройстве</p>
         <label class="sr-only" for="prompt">Сообщение для ИИ</label>
         <textarea id="prompt" rows="1" maxlength="${MAX_INPUT_CHARS}" placeholder="Какая мысль у вас сегодня?" aria-describedby="input-help"></textarea>
         <div class="composer-bottom"><span id="engine-status" class="engine-status"><span class="status-dot"></span> Модель не запущена</span><span id="character-count" class="character-count"></span><button id="cancel-inline" class="stop-button" type="button" hidden>Отменить</button><button id="stop" class="stop-button" type="button" hidden><span></span> Остановить</button><button id="send" class="send-button" type="submit" aria-label="Отправить" disabled>${icon('arrow')}</button></div>
@@ -108,9 +111,39 @@ let initialError = '';
 let pendingAttachment: Attachment | undefined;
 let fileRead: AbortController | undefined;
 let filePreviewError = '';
+let preparation: AbortController | undefined;
+let draftQuery: TableQuery | undefined;
 try { history = readHistory(); } catch { initialError = 'Не удалось прочитать локальную историю. Можно продолжить без неё или удалить повреждённые данные в настройках.'; }
 
 const current = () => history.conversations.find(chat => chat.id === history.activeId);
+function setWorkbook(ref?: WorkbookRef) {
+  clearDraftFile();
+  let chat = current();
+  if (!chat && ref) {
+    if (history.conversations.length >= MAX_CHATS) { notice('Достигнут предел: 30 чатов. Удалите историю в настройках.', true); return; }
+    chat = { id: crypto.randomUUID(), title: 'Таблица', createdAt: Date.now(), messages: [] };
+    history.conversations.push(chat); history.activeId = chat.id;
+  }
+  if (chat) { if (ref) chat.workbook = { ...ref }; else delete chat.workbook; }
+  persist(); renderChats(); updateUi();
+}
+const tablePanel = workbookPanel($('workbook-panel'), {
+  select: setWorkbook,
+  error: text => notice(text, true),
+  record(result) {
+    const chat = current();
+    if (!chat || state === 'generating' || preparation) return;
+    if (chat.messages.length >= MAX_MESSAGES - 1) { notice('В этом чате уже 500 сообщений. Начните новый чат.', true); return; }
+    chat.messages.push({ id: crypto.randomUUID(), role: 'user', content: `Локальная операция: ${result.summary}` });
+    chat.messages.push({ id: crypto.randomUUID(), role: 'assistant', content: result.attachment.reportCore! + '\n\nРасчёт выполнен в браузере по всем строкам. Полный результат доступен по кнопке ниже.', status: 'complete', tableResult: resultReference(result) });
+    persist(); renderChats(); renderMessages(); updateUi();
+  },
+  explain(result) {
+    pendingAttachment = result.attachment; draftQuery = result.query;
+    textarea.value = 'Объясни результат расчёта по всей таблице.'; resizeInput(); textarea.focus();
+  },
+});
+function resultReference(result: TableResult) { return { workbook: { ...result.workbook }, query: { ...result.query }, summary: result.summary, totalRows: result.totalRows, scannedRows: result.scannedRows }; }
 function notice(text: string, persistent = false) {
   clearTimeout(noticeTimer);
   $('notice').textContent = text;
@@ -142,7 +175,7 @@ function renderChats() {
   for (const chat of [...history.conversations].reverse()) {
     const button = document.createElement('button');
     button.className = `chat-item ${chat.id === history.activeId ? 'active' : ''}`;
-    button.disabled = state === 'generating';
+    button.disabled = state === 'generating' || !!preparation;
     button.innerHTML = `${icon('chat')}<span></span>`;
     button.querySelector('span')!.textContent = chat.title;
     button.title = chat.title;
@@ -177,6 +210,16 @@ function renderMessages(streaming = false) {
       copy.addEventListener('click', () => void copyText(message.content));
       meta.append(copy);
       if (!message.status || message.status === 'complete') {
+        if (message.tableResult) {
+          const open = document.createElement('button'); open.className = 'download-table'; open.textContent = 'Полный результат расчёта';
+          open.addEventListener('click', () => {
+            if (state === 'generating' || preparation) return;
+            setWorkbook(message.tableResult!.workbook); void tablePanel.openResult(message.tableResult!);
+          });
+          const download = document.createElement('button'); download.className = 'download-table'; download.textContent = 'Весь результат Excel';
+          download.addEventListener('click', async () => { download.disabled = true; try { await downloadQuery(message.tableResult!.workbook, message.tableResult!.query, 'xlsx', 'Тетриканец — полный результат'); } catch (error) { notice(error instanceof Error ? error.message : 'Не удалось скачать результат.', true); } finally { download.disabled = false; } });
+          meta.append(open, download);
+        }
         const tables = tablesFromMarkdown(message.content);
         tables.forEach((table, index) => {
           for (const format of ['xlsx', 'csv'] as const) {
@@ -214,7 +257,7 @@ function renderContent(element: HTMLElement, message: Message) {
     if (message.outputFormat === 'xlsx') { const label = document.createElement('p'); label.className = 'file-help'; label.textContent = 'Формат ответа: таблица Excel'; element.append(label); }
     if (message.attachment) {
       const details = document.createElement('details'); details.className = 'message-attachment';
-      const summary = document.createElement('summary'); summary.textContent = `${message.attachment.name} · ${message.attachment.truncated ? 'фрагмент файла' : 'данные файла'}`;
+      const summary = document.createElement('summary'); summary.textContent = `${message.attachment.name} · ${message.attachment.workbook ? 'отчёт по всей таблице' : message.attachment.truncated ? 'фрагмент файла' : 'данные файла'}`;
       const pre = document.createElement('pre'); pre.textContent = message.attachment.text;
       details.append(summary, pre); element.append(details);
     }
@@ -239,18 +282,20 @@ async function copyText(text: string) {
 }
 function updateUi() {
   const busy = state === 'generating';
+  const locked = busy || !!preparation;
+  tablePanel.update(current()?.workbook, locked || !!fileRead);
   memory.update(state !== 'idle');
-  $<HTMLSelectElement>('model-select').disabled = state === 'checking' || state === 'loading' || busy;
+  $<HTMLSelectElement>('model-select').disabled = state === 'checking' || state === 'loading' || locked;
   textarea.maxLength = MAX_INPUT_CHARS;
   refreshFilePreview();
-  sendButton.disabled = state !== 'ready' || !!fileRead || !!filePreviewError || (!textarea.value.trim() && !pendingAttachment);
-  $<HTMLButtonElement>('attach-file').disabled = busy || !!fileRead;
-  $<HTMLInputElement>('excel-output').disabled = busy;
-  sendButton.hidden = busy;
-  $('stop').hidden = !busy;
-  $('new-chat').toggleAttribute('disabled', busy);
+  sendButton.disabled = state !== 'ready' || !!preparation || !!fileRead || !!filePreviewError || (!textarea.value.trim() && !pendingAttachment && !current()?.workbook);
+  $<HTMLButtonElement>('attach-file').disabled = locked || !!fileRead;
+  $<HTMLInputElement>('excel-output').disabled = locked;
+  sendButton.hidden = locked;
+  $('stop').hidden = !locked;
+  $('new-chat').toggleAttribute('disabled', locked);
   $<HTMLButtonElement>('delete-model').disabled = busy || state === 'loading' || !base;
-  $<HTMLButtonElement>('delete-history').disabled = busy;
+  $<HTMLButtonElement>('delete-history').disabled = locked;
   $<HTMLButtonElement>('comparison-open').disabled = busy || state === 'loading';
   $<HTMLButtonElement>('diagnostics-open').disabled = busy || state === 'loading';
   loadButton.disabled = ['checking', 'unsupported', 'loading', 'ready', 'generating'].includes(state);
@@ -262,8 +307,8 @@ function updateUi() {
   $('load-progress').hidden = state !== 'loading';
   const labels = { checking: 'Проверяем WebGPU…', idle: 'Модель не запущена', loading: 'Загрузка модели…', ready: `Готов к разговору${memory.value() === 'economy' ? ' · Экономичный режим' : ''}`, generating: 'Генерирую ответ…', unsupported: 'WebGPU недоступен' };
   $('engine-status').innerHTML = `<span class="status-dot ${state === 'ready' || busy ? 'green' : ''}"></span>${labels[state]}`;
-  $('generation-status').hidden = !busy && state !== 'loading';
-  $('generation-status').textContent = busy ? `${BOT_NAME} обдумывает ответ…` : state === 'loading' ? 'Подготавливаем модель…' : '';
+  $('generation-status').hidden = !locked && state !== 'loading';
+  $('generation-status').textContent = preparation ? 'Считаем данные по всей таблице…' : busy ? `${BOT_NAME} обдумывает ответ…` : state === 'loading' ? 'Подготавливаем модель…' : '';
   $('model-card-title').textContent = state === 'ready' || busy ? 'Всё готово. Начнём разговор?' : 'Модель для общения по-русски';
   $('model-card-description').textContent = state === 'ready' || busy ? 'Задайте вопрос — ответ появится прямо здесь.' : cached ? 'Ресурсы в кеше. Осталось запустить модель.' : 'Одна загрузка — и можно общаться.';
   loadButton.querySelector('span')!.textContent = cached ? 'Запустить из кеша' : MODEL_ARCHIVE_MODE ? 'Открыть и запустить' : 'Скачать и запустить';
@@ -371,7 +416,7 @@ function onWorkerEvent(event: WorkerEvent) {
   }
 }
 function newChat() {
-  if (state === 'generating') return;
+  if (state === 'generating' || preparation) return;
   history.activeId = null;
   clearDraftFile();
   $<HTMLInputElement>('excel-output').checked = false;
@@ -379,13 +424,23 @@ function newChat() {
   resizeInput();
   persist(); renderChats(); renderMessages(); closeSidebar(); textarea.focus();
 }
-function submit() {
-  if (state !== 'ready' || fileRead || (!textarea.value.trim() && !pendingAttachment)) return;
+async function submit() {
+  if (state !== 'ready' || fileRead || preparation || (!textarea.value.trim() && !pendingAttachment && !current()?.workbook)) return;
   let question: Message;
+  let calculation: TableResult | undefined;
+  const activeChat = history.activeId;
+  const controller = new AbortController(); preparation = controller;
+  updateUi();
   try {
-    question = fitAttachment(draftMessage());
+    const draft = draftMessage();
+    const ref = draft.attachment?.workbook || current()?.workbook;
+    if (ref && !pendingAttachment?.workbook) calculation = await queryTable(ref, undefined, draft.content, undefined, controller.signal);
+    else if (ref && draftQuery) calculation = await queryTable(ref, draftQuery, undefined, undefined, controller.signal);
+    if (controller.signal.aborted || history.activeId !== activeChat || state !== 'ready') return;
+    question = fitAttachment(calculation ? { ...draft, attachment: calculation.attachment } : draft);
     buildContext([...(current()?.messages || []), question]);
-  } catch (error) { notice(error instanceof Error ? error.message : 'Не удалось подготовить контекст.', true); return; }
+  } catch (error) { if (!controller.signal.aborted) notice(error instanceof Error ? error.message : 'Не удалось подготовить контекст.', true); return; }
+  finally { if (preparation === controller) preparation = undefined; updateUi(); }
   const content = question.content;
   let chat = current();
   if (!chat) {
@@ -399,6 +454,7 @@ function submit() {
   chat.messages.push(question);
   const requestMessages = chat.messages.map(message => ({ ...message }));
   activeResponse = { id: crypto.randomUUID(), role: 'assistant', content: '', status: 'incomplete' };
+  if (calculation) activeResponse.tableResult = resultReference(calculation);
   generationId = activeResponse.id;
   chat.messages.push(activeResponse);
   state = 'generating';
@@ -420,6 +476,7 @@ function draftMessage(): Message {
     ...(pendingAttachment ? { attachment: pendingAttachment } : {}), ...(excel ? { outputFormat: 'xlsx' as const } : {}) };
 }
 function clearDraftFile() {
+  preparation?.abort(); preparation = undefined; draftQuery = undefined;
   fileRead?.abort(); fileRead = undefined; pendingAttachment = undefined; filePreviewError = '';
   $<HTMLInputElement>('chat-file').value = '';
   $('file-preview').hidden = true;
@@ -436,7 +493,7 @@ function refreshFilePreview() {
   try {
     const fitted = fitAttachment(draftMessage()).attachment!;
     $('file-text').textContent = fitted.text;
-    $('file-status').textContent = `${fitted.truncated ? 'Внимание: модель получит только показанный фрагмент, а не весь файл. Для анализа остальных строк загрузите их отдельно. ' : 'Данные помещаются в контекст. '}${fitted.note}`;
+    $('file-status').textContent = `${fitted.workbook ? 'Модель получит отчёт локального расчёта по всей таблице. ' : fitted.truncated ? 'Внимание: модель получит только показанный фрагмент, а не весь файл. Для анализа остальных строк загрузите их отдельно. ' : 'Данные помещаются в контекст. '}${fitted.note}`;
   } catch (error) {
     filePreviewError = error instanceof Error ? error.message : 'Недостаточно места в контексте.';
     $('file-status').textContent = filePreviewError; $('file-text').textContent = '';
@@ -445,10 +502,19 @@ function refreshFilePreview() {
 $('attach-file').addEventListener('click', () => $<HTMLInputElement>('chat-file').click());
 $('chat-file').addEventListener('change', async () => {
   const file = $<HTMLInputElement>('chat-file').files?.[0];
-  if (!file || state === 'generating') return;
+  if (!file || state === 'generating' || preparation) return;
   fileRead?.abort(); pendingAttachment = undefined;
   const controller = new AbortController(); fileRead = controller; updateUi();
-  try { const attachment = await readAttachment(file, controller.signal); if (fileRead === controller) pendingAttachment = attachment; }
+  try {
+    const attachment = await readAttachment(file, controller.signal);
+    if (fileRead === controller) {
+      if (attachment.workbook) {
+        fileRead = undefined; setWorkbook(attachment.workbook);
+        const chat = current(); if (chat && !chat.messages.length) chat.title = attachment.name.slice(0, 42);
+        persist(); renderChats(); notice('Таблица загружена целиком. «Операции с таблицей» работают по всем строкам, даже без запуска модели.');
+      } else pendingAttachment = attachment;
+    }
+  }
   catch (error) { if (fileRead === controller && !controller.signal.aborted) notice(error instanceof Error ? error.message : 'Не удалось прочитать файл.', true); }
   finally { if (fileRead === controller) { fileRead = undefined; $<HTMLInputElement>('chat-file').value = ''; updateUi(); } }
 });
@@ -458,6 +524,7 @@ $('composer').addEventListener('submit', event => { event.preventDefault(); subm
 textarea.addEventListener('input', resizeInput);
 textarea.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); submit(); } });
 $('stop').addEventListener('click', () => {
+  if (preparation) { preparation.abort(); preparation = undefined; updateUi(); renderChats(); return; }
   if (!generationId || stopTimer) return;
   sendWorker({ type: 'stop', id: generationId });
   $('generation-status').textContent = 'Останавливаем ответ…';
@@ -494,10 +561,10 @@ $('diagnostics-open').addEventListener('click', () => {
   location.assign(new URL('diagnostics.html', new URL(import.meta.env.BASE_URL, location.href)).href);
 });
 settings.addEventListener('click', event => { if (event.target === settings) { const rect = settings.getBoundingClientRect(); const mouse = event as MouseEvent; if (mouse.clientX < rect.left || mouse.clientX > rect.right || mouse.clientY < rect.top || mouse.clientY > rect.bottom) settings.close(); } });
-$('delete-history').addEventListener('click', () => {
+$('delete-history').addEventListener('click', async () => {
   if (state === 'generating' || !confirm('Удалить всю историю переписки в этом браузере? Модель останется в кеше.')) return;
-  try { deleteHistory(); clearDraftFile(); history = { conversations: [], activeId: null }; renderChats(); renderMessages(); updateUi(); toast('Вся история удалена'); }
-  catch { toast('Браузер запретил очистку истории'); }
+  try { deleteHistory(); clearDraftFile(); history = { conversations: [], activeId: null }; renderChats(); renderMessages(); updateUi(); await deleteWorkbook(); toast('Вся история и таблицы удалены'); }
+  catch (error) { notice(error instanceof Error ? error.message : 'Браузер запретил очистку истории или таблиц.', true); }
 });
 $('delete-model').addEventListener('click', async () => {
   if (state === 'generating' || state === 'loading' || !confirm(`Удалить скачанную ${MODEL_NAME} и неподдерживаемые старые версии? Другая доступная модель и переписка сохранятся.`)) return;

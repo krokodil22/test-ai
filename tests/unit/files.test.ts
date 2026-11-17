@@ -1,7 +1,7 @@
 import { describe, expect, it, afterEach } from 'vitest';
 import * as XLSX from '@e965/xlsx';
 import { zipSync } from 'fflate';
-import { exportTable, readFileData } from '../../src/file-data';
+import { exportTable, readFileData, readWorkbook } from '../../src/file-data';
 import { validateFile, MAX_FILE_BYTES, safeDownloadName, validAttachment } from '../../src/files';
 import { tablesFromMarkdown } from '../../src/tables';
 import { fitAttachment, buildContext, messageText, tokenUpperBound } from '../../src/context';
@@ -30,11 +30,11 @@ describe('local file input and output', () => {
     expect(result.text).toContain('строка 1\\nстрока 2');
     expect(result.text).toContain('=1+2');
   });
-  it('bounds extracted rows/columns and marks omitted data explicitly', () => {
-    const result = readFileData('many.xlsx', workbook(Array.from({ length: 105 }, (_, i) => Array.from({ length: 15 }, (_, j) => `r${i}c${j}`))));
-    expect(result.truncated).toBe(true);
-    expect(result.text).not.toContain('r100c0');
-    expect(result.text).not.toContain('r0c12');
+  it('reads rows and columns beyond the old preview cutoff completely', () => {
+    const result = readWorkbook('many.xlsx', workbook(Array.from({ length: 105 }, (_, i) => Array.from({ length: 15 }, (_, j) => `r${i}c${j}`))));
+    expect(result.sheets[0].cells).toHaveLength(105);
+    expect(result.sheets[0].cells[104][14]).toBe('r104c14');
+    expect(result.sheets[0].cells[0][12]).toBe('r0c12');
   });
   it('rejects unsupported, oversized, empty, encrypted, corrupted and non-UTF8 input', () => {
     expect(() => validateFile({ name: 'a.pdf', size: 10 })).toThrow('Поддерживаются');

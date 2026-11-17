@@ -1,5 +1,5 @@
 import { validateFile, safeDownloadName } from './files';
-import type { FileRequest, FileResult, Attachment, DataTable } from './files';
+import type { FileRequest, FileResult, Attachment, DataTable, WorkbookRef, TableQuery, TableResult, WorkbookInfo } from './files';
 
 /** One short-lived worker per task; timeout/cancel also releases parser memory. */
 export function runFileTask(request: FileRequest, signal?: AbortSignal): Promise<Exclude<FileResult, { type: 'error' }>> {
@@ -25,9 +25,27 @@ export async function readAttachment(file: File, signal?: AbortSignal): Promise<
 export async function downloadTable(table: DataTable, format: 'xlsx' | 'csv', name: string) {
   const result = await runFileTask({ type: 'export', table, format });
   if (result.type !== 'export') throw new Error('Не удалось создать файл.');
-  const url = URL.createObjectURL(new Blob([result.bytes as Uint8Array<ArrayBuffer>], { type: result.mime }));
+  downloadBytes(result.bytes, result.mime, name, format);
+}
+function downloadBytes(bytes: Uint8Array, mime: string, name: string, format: string) {
+  const url = URL.createObjectURL(new Blob([bytes as Uint8Array<ArrayBuffer>], { type: mime }));
   const anchor = document.createElement('a');
   anchor.href = url; anchor.download = `${safeDownloadName(name)}.${format}`;
   document.body.append(anchor); anchor.click(); anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+export async function getWorkbookInfo(ref: WorkbookRef, signal?: AbortSignal): Promise<WorkbookInfo> {
+  const result = await runFileTask({ type: 'workbook-info', ref }, signal);
+  if (result.type !== 'workbook-info') throw new Error('Не удалось прочитать сведения о таблице.');
+  return result.info;
+}
+export async function queryTable(ref: WorkbookRef, query?: TableQuery, question?: string, page?: number, signal?: AbortSignal): Promise<TableResult> {
+  const result = await runFileTask({ type: 'query', ref, query, question, page }, signal);
+  if (result.type !== 'query') throw new Error('Не удалось выполнить операцию с таблицей.');
+  return result.result;
+}
+export async function downloadQuery(ref: WorkbookRef, query: TableQuery, format: 'xlsx' | 'csv', name: string, signal?: AbortSignal) {
+  const result = await runFileTask({ type: 'export-query', ref, query, format }, signal);
+  if (result.type !== 'export') throw new Error('Не удалось скачать результат.');
+  downloadBytes(result.bytes, result.mime, name, format);
 }

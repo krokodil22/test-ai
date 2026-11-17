@@ -46,9 +46,12 @@ test('reads an actual XLSX locally, sends its preview to inference and preserves
   XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([['Адрес', 'Продажи'], ['Арбат', 125]]), 'Данные');
   const bytes = XLSX.write(book, { type: 'buffer', bookType: 'xlsx' });
   await page.locator('#chat-file').setInputFiles({ name: 'clients.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: bytes });
-  await expect(page.locator('#file-status')).toContainText('помещаются');
-  await page.locator('#file-details summary').click();
-  await expect(page.locator('#file-text')).toContainText('Арбат');
+  await expect(page.locator('#workbook-coverage')).toContainText('Загружено целиком');
+  await page.locator('#workbook-open').click();
+  await page.locator('#table-operation').selectOption('rows');
+  await page.locator('#table-run').click();
+  await expect(page.locator('#table-grid')).toContainText('Арбат');
+  await page.locator('#table-close').click();
   await page.locator('#prompt').fill('[file-echo] Опиши данные.');
   await page.locator('#send').click();
   await expect(page.locator('#file-preview')).toBeHidden();
@@ -68,7 +71,7 @@ test('reads an actual XLSX locally, sends its preview to inference and preserves
 test('creates downloadable Excel and CSV files from a completed answer, including after reload', async ({ page, context }) => {
   await resources(context); await start(page);
   await page.locator('#excel-output').check();
-  await page.locator('#prompt').fill('Составь таблицу товаров с ценами.');
+  await page.locator('#prompt').fill('[slow-table] Составь таблицу товаров с ценами.');
   await page.locator('#send').click();
   await expect(page.locator('#stop')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Скачать Excel' })).toHaveCount(0);
@@ -84,6 +87,29 @@ test('creates downloadable Excel and CSV files from a completed answer, includin
   await page.getByRole('button', { name: 'CSV', exact: true }).click();
   const csv = await csvDownload;
   expect(await readFile((await csv.path())!, 'utf8')).toContain('"Книга";"250"');
+});
+test('uses all-row statistics in consecutive model questions without uploading the workbook again', async ({ page, context }) => {
+  await resources(context); await start(page);
+  const book = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([
+    Array.from({ length: 18 }, (_, i) => i === 17 ? 'Выручка' : `Поле ${i}`),
+    ...Array.from({ length: 1000 }, (_, i) => Array.from({ length: 18 }, () => i + 1)),
+  ]), 'Все строки');
+  await page.locator('#chat-file').setInputFiles({ name: 'full.xlsx', mimeType: 'application/octet-stream', buffer: XLSX.write(book, { type: 'buffer', bookType: 'xlsx', compression: true }) });
+  await expect(page.locator('#workbook-coverage')).toContainText('1000 строк');
+  await page.locator('#prompt').fill('[whole-table-echo] Какая сумма Выручка?');
+  await page.locator('#send').click();
+  await expect(page.locator('.message-assistant').last()).toContainText('500500 по всем 1000 строкам');
+  await expect(page.locator('#stop')).toBeHidden();
+  await page.locator('#prompt').fill('[whole-table-echo] Какая средняя Выручка?');
+  await page.locator('#send').click();
+  await expect(page.locator('.message-assistant')).toHaveCount(2);
+  await expect(page.locator('.message-assistant').last()).toContainText('500500 по всем 1000 строкам');
+  await expect(page.locator('#stop')).toBeHidden();
+  await page.locator('#prompt').fill('Какая сумма Выручка только в Москве?');
+  await page.locator('#send').click();
+  await expect(page.locator('#notice')).toContainText('Считать только строки по условию');
+  await expect(page.locator('.message-assistant')).toHaveCount(2);
 });
 test('does not export an incomplete table restored after a browser crash or a length-limited answer', async ({ page, context }) => {
   await resources(context);

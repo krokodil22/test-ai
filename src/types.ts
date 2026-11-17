@@ -4,7 +4,7 @@ import type { RuntimeGpuInfo } from './gpu-info';
 import type { CacheAudit } from './model-resources';
 import type { MemoryMode } from './memory-mode';
 import type { ModelKey } from './models';
-import type { Attachment } from './files';
+import type { Attachment, WorkbookRef, TableResultRef } from './files';
 
 export interface Message {
   id: string;
@@ -13,8 +13,9 @@ export interface Message {
   status?: 'complete' | 'stopped' | 'error' | 'length' | 'incomplete';
   attachment?: Attachment;
   outputFormat?: 'xlsx';
+  tableResult?: TableResultRef;
 }
-export interface Conversation { id: string; title: string; createdAt: number; messages: Message[] }
+export interface Conversation { id: string; title: string; createdAt: number; messages: Message[]; workbook?: WorkbookRef }
 export type PromptMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 export type WorkerRequest =
   | { type: 'init'; base: string; translatorBase?: string; archive?: File; memoryMode?: MemoryMode; modelKey?: ModelKey }
